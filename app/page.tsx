@@ -21,98 +21,10 @@ import {
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
-
-function IconBadge({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      title={label}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-black/5 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)] dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)]"
-    >
-      {children}
-    </div>
-  );
-}
-
-function IconButton({
-  label,
-  children,
-  onClick,
-  pressed,
-  className,
-}: {
-  label: string;
-  children: ReactNode;
-  onClick?: () => void;
-  pressed?: boolean;
-  className?: string;
-}) {
-  return (
-    <button
-      aria-label={label}
-      aria-pressed={pressed}
-      title={label}
-      onClick={onClick}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-black/5 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.12)] transition hover:bg-black/10 hover:text-zinc-900 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] dark:border-white/10 dark:bg-white/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white ${
-        pressed ? "bg-black/10 dark:bg-white/10" : ""
-      } ${className ?? ""}`}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function PillButton({
-  label,
-  children,
-  onClick,
-  pressed,
-}: {
-  label: string;
-  children: ReactNode;
-  onClick?: () => void;
-  pressed?: boolean;
-}) {
-  return (
-    <IconButton
-      label={label}
-      onClick={onClick}
-      pressed={pressed}
-      className="w-auto px-3"
-    >
-      {children}
-    </IconButton>
-  );
-}
-
-function ToolbarButton({
-  label,
-  children,
-  onClick,
-  pressed,
-}: {
-  label: string;
-  children: ReactNode;
-  onClick?: () => void;
-  pressed?: boolean;
-}) {
-  return (
-    <IconButton
-      label={label}
-      onClick={onClick}
-      pressed={pressed}
-      className="h-10 w-10"
-    >
-      {children}
-    </IconButton>
-  );
-}
+import { IconBadge } from "@/components/ui/icon-badge";
+import { IconButton } from "@/components/ui/icon-button";
+import { PillButton } from "@/components/ui/pill-button";
+import { ToolbarButton } from "@/components/ui/toolbar-button";
 
 export default function Home() {
   const [focusMode, setFocusMode] = useState(false);
@@ -152,8 +64,8 @@ export default function Home() {
   const drawerClass = focusMode
     ? "opacity-0 pointer-events-none translate-x-[420px]"
     : drawerOpen
-    ? "opacity-100 translate-x-0"
-    : "opacity-0 pointer-events-none translate-x-[420px]";
+      ? "opacity-100 translate-x-0"
+      : "opacity-0 pointer-events-none translate-x-[420px]";
 
   const toggleFocus = () => {
     setFocusMode((prev) => {
@@ -176,16 +88,6 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <IconBadge label="Justwrite">
                   <HugeiconsIcon icon={NoteIcon} size={18} strokeWidth={1.6} />
-                </IconBadge>
-                <IconBadge label="Auto-saved locally">
-                  <span className="relative">
-                    <HugeiconsIcon
-                      icon={CheckmarkCircle01Icon}
-                      size={18}
-                      strokeWidth={1.6}
-                    />
-                    <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_2px_rgba(255,255,255,0.7)] dark:shadow-[0_0_0_2px_rgba(18,18,20,0.9)]" />
-                  </span>
                 </IconBadge>
               </div>
               <div className="flex items-center gap-3">

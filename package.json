@@ -9,8 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@heroui/system": "^2.4.28",
+    "@heroui/theme": "^2.4.26",
+    "@heroui/tooltip": "^2.2.29",
     "@hugeicons/core-free-icons": "^4.0.0",
     "@hugeicons/react": "^1.1.6",
+    "framer-motion": "^12.38.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
