@@ -8,18 +8,20 @@ export function PillButton({
   children,
   onClick,
   pressed,
+  className,
 }: {
   label: string;
   children: ReactNode;
   onClick?: () => void;
   pressed?: boolean;
+  className?: string;
 }) {
   return (
     <IconButton
       label={label}
       onClick={onClick}
       pressed={pressed}
-      className="w-auto px-3"
+      className={`w-auto px-3 ${className ?? ""}`}
     >
       {children}
     </IconButton>

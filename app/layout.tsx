@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Pixelify_Sans, Figtree } from "next/font/google";
 import "./globals.css";
 import { FontProvider } from "@/components/font-context";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+const figtree = Figtree({subsets:['latin'],variable:'--font-sans'});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,13 +44,13 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${pixelFont.variable}`}
+      className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans", figtree.variable)}
     >
       <body className="antialiased">
-        <FontProvider>{children}</FontProvider>
+        <TooltipProvider>
+          <FontProvider>{children}</FontProvider>
+        </TooltipProvider>
       </body>
     </html>
   );
 }
-
-
