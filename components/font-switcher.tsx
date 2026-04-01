@@ -11,10 +11,10 @@ export function FontSwitcher() {
     label: string;
     icon: IconSvgElement;
   }[] = [
-    { id: "sans", label: "Sans Serif", icon: TextFontIcon },
-    { id: "mono", label: "Monospace", icon: CodeIcon },
-    { id: "pixel", label: "Pixel Font", icon: GridIcon },
-  ];
+      { id: "sans", label: "Sans Serif", icon: TextFontIcon },
+      { id: "mono", label: "Monospace", icon: CodeIcon },
+      { id: "pixel", label: "Pixel Font", icon: GridIcon },
+    ];
 
   const activeFont = fonts.find((f) => f.id === font) || fonts[0];
 
@@ -40,11 +40,10 @@ export function FontSwitcher() {
             <DropdownMenuPrimitive.Item
               key={f.id}
               onClick={() => setFont(f.id)}
-              className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium outline-none transition-colors ${
-                font === f.id
-                  ? "bg-black/5 text-zinc-900 dark:bg-white/10 dark:text-white"
-                  : "text-zinc-500 hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
-              }`}
+              className={`flex cursor-pointer m-1 items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium outline-none transition-colors ${font === f.id
+                ? "bg-black/5 text-zinc-900 dark:bg-white/10 dark:text-white"
+                : "text-zinc-500 hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                }`}
             >
               <HugeiconsIcon icon={f.icon} size={14} strokeWidth={1.6} />
               {f.label}
