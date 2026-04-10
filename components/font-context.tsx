@@ -11,16 +11,19 @@ interface FontContextType {
 
 const FontContext = createContext<FontContextType | undefined>(undefined);
 
-export function FontProvider({ children }: { children: React.ReactNode }) {
-  const [font, setFontState] = useState<FontType>("sans");
+function isValidFont(value: string | null): value is FontType {
+  return value === "sans" || value === "mono" || value === "pixel";
+}
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedFont = localStorage.getItem("app-font") as FontType;
-    if (savedFont && ["sans", "mono", "pixel"].includes(savedFont)) {
-      setFontState(savedFont);
+export function FontProvider({ children }: { children: React.ReactNode }) {
+  const [font, setFontState] = useState<FontType>(() => {
+    if (typeof window === "undefined") {
+      return "sans";
     }
-  }, []);
+
+    const savedFont = window.localStorage.getItem("app-font");
+    return isValidFont(savedFont) ? savedFont : "sans";
+  });
 
   const setFont = (newFont: FontType) => {
     setFontState(newFont);
@@ -29,7 +32,7 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
 
   // Sync state to DOM
   useEffect(() => {
-    if (typeof document !== 'undefined') {
+    if (typeof document !== "undefined") {
       document.documentElement.setAttribute("data-font", font);
     }
   }, [font]);
