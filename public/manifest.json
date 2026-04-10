@@ -1,6 +1,9 @@
 {
-  "name": "JustWrite",
-  "short_name": "JustWrite",
+  "name": "Justwrite",
+  "short_name": "Justwrite",
+  "description": "A local-first notes app for fast, private, distraction-free writing.",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/favicon/android-chrome-192x192.png",
