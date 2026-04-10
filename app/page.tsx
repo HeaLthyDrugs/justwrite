@@ -4,13 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CenterFocusIcon,
-  Clock01Icon,
   FileExportIcon,
   MoonIcon,
   NoteAddIcon,
   PanelRightCloseIcon,
   PanelRightOpenIcon,
-  Share01Icon,
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
@@ -197,10 +195,10 @@ export default function Home() {
       notes: previousState.notes.map((note) =>
         note.id === noteId
           ? {
-              ...note,
-              isPinned: !note.isPinned,
-              updatedAt: new Date().toISOString(),
-            }
+            ...note,
+            isPinned: !note.isPinned,
+            updatedAt: new Date().toISOString(),
+          }
           : note
       ),
     }));
@@ -214,9 +212,28 @@ export default function Home() {
           <div
             className={`absolute -top-13 shadow-xs right-0 z-10 flex items-center gap-1 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/80 ${chromeClass}`}
           >
+            <IconButton
+              label="New note"
+              className="h-8 w-8 border-none"
+              onClick={handleCreateNote}
+            >
+              <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
+            </IconButton>
+
+            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+
             <FontSwitcher />
 
-            <div className="mx-1 h-5 w-px bg-black/10 dark:bg-white/10" />
+            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+
+            <IconButton
+              label="Export"
+              className="h-8 w-8 border-none"
+            >
+              <HugeiconsIcon icon={FileExportIcon} size={16} strokeWidth={1.6} />
+            </IconButton>
+
+            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
 
             <IconButton
               label={
@@ -226,11 +243,11 @@ export default function Home() {
                 setTheme((current) => (current === "dark" ? "light" : "dark"))
               }
               pressed={theme === "dark"}
-              className="h-9 w-9 border-none"
+              className="h-8 w-8 border-none"
             >
               <HugeiconsIcon
                 icon={theme === "dark" ? Sun01Icon : MoonIcon}
-                size={18}
+                size={16}
                 strokeWidth={1.6}
               />
             </IconButton>
@@ -239,13 +256,22 @@ export default function Home() {
               label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
               onClick={() => setDrawerOpen((prev) => !prev)}
               pressed={drawerOpen}
-              className="h-9 w-9 border-none"
+              className="h-8 w-8 border-none"
             >
               <HugeiconsIcon
                 icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
-                size={18}
+                size={16}
                 strokeWidth={1.6}
               />
+            </IconButton>
+
+            <IconButton
+              label={focusMode ? "Exit focus" : "Focus mode"}
+              onClick={toggleFocus}
+              pressed={focusMode}
+              className="h-8 w-8 border-none"
+            >
+              <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
             </IconButton>
           </div>
 
@@ -280,43 +306,10 @@ export default function Home() {
             </span>
             <div className="h-3.5 w-px bg-black/10 dark:bg-white/10" />
             <span className="inline-flex items-center gap-1.5">
-              <HugeiconsIcon icon={Clock01Icon} size={13} strokeWidth={1.8} />
               Saved {formatNoteDateTime(activeNote.updatedAt)}
             </span>
           </div>
 
-          <div
-            className={`absolute -bottom-13 right-0 flex items-center gap-2 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/80 ${chromeClass}`}
-          >
-            <IconButton
-              label="New note"
-              className="h-9 w-9 border-none"
-              onClick={handleCreateNote}
-            >
-              <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-            <IconButton
-              label="Export"
-              className="h-9 w-9 border-none"
-            >
-              <HugeiconsIcon icon={FileExportIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-            <IconButton
-              label="Share"
-              className="h-9 w-9 border-none"
-            >
-              <HugeiconsIcon icon={Share01Icon} size={16} strokeWidth={1.6} />
-            </IconButton>
-            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
-            <IconButton
-              label={focusMode ? "Exit focus" : "Focus mode"}
-              onClick={toggleFocus}
-              pressed={focusMode}
-              className="h-9 w-9 border-none"
-            >
-              <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-          </div>
         </main>
       </div>
 

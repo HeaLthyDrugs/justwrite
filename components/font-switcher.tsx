@@ -33,7 +33,7 @@ export function FontSwitcher() {
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
           sideOffset={8}
-          align="end"
+          align="start"
           className="z-50 min-w-[140px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 p-1 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
         >
           {fonts.map((f) => (
