@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
@@ -263,6 +264,21 @@ export default function Home() {
         }`}
       >
         <main className="relative flex h-full w-full flex-col">
+          {!focusMode ? (
+            <div className="flex items-center gap-3 px-4 py-4 md:hidden">
+              <Image
+                src="/favicon/android-chrome-512x512.png"
+                alt="Just write logo"
+                width={28}
+                height={28}
+                className="rounded-xl shadow-sm"
+              />
+              <span className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                Just write
+              </span>
+            </div>
+          ) : null}
+
           {focusMode ? (
             <IconButton
               label="Exit focus mode"
@@ -292,7 +308,26 @@ export default function Home() {
           </section>
 
           {!focusMode ? (
-            <div className={`mt-3 hidden items-center justify-end gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
+            <div className={`mt-3 hidden items-center justify-between gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
+              <div className="flex items-center gap-3 px-2 group cursor-default transition-all duration-300 hover:opacity-90">
+                <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)] ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
+                  <Image
+                    src="/favicon/android-chrome-512x512.png"
+                    alt="Just write logo"
+                    width={20}
+                    height={20}
+                    className="transition-transform duration-500 group-hover:scale-110"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
+                    Just write
+                  </span>
+                  <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-1">
+                    Private local notes
+                  </span>
+                </div>
+              </div>
               <div className="flex items-center gap-2 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
                 <IconButton
                   label="New note"
