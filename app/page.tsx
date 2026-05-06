@@ -20,6 +20,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
+import { Logo } from "@/components/ui/logo";
 import { NotesDrawer } from "@/components/notes-drawer";
 import { FamilyDrawer } from "@/components/ui/family-drawer";
 import {
@@ -259,21 +260,15 @@ export default function Home() {
   return (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
       <div
-        className={`relative flex h-full w-full max-w-[1000px] flex-col ${
-          focusMode ? "pb-0" : "pb-16 md:pb-0"
-        }`}
+        className={`relative flex h-full w-full max-w-[1000px] flex-col ${focusMode ? "pb-0" : "pb-16 md:pb-0"
+          }`}
       >
         <main className="relative flex h-full w-full flex-col">
           {!focusMode ? (
             <div className="flex items-center justify-between px-5 py-4 md:hidden">
               <div className="flex items-center gap-3">
-                <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-sm ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
-                  <Image
-                    src="/favicon/android-chrome-512x512.png"
-                    alt="Just write logo"
-                    width={24}
-                    height={24}
-                  />
+                <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl shadow-sm ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
+                  <Logo className="h-6 w-6" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
@@ -319,13 +314,7 @@ export default function Home() {
             <div className={`mt-3 hidden items-center justify-between gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
               <div className="flex items-center gap-3 px-2 group cursor-default transition-all duration-300 hover:opacity-90">
                 <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)] ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
-                  <Image
-                    src="/favicon/android-chrome-512x512.png"
-                    alt="Just write logo"
-                    width={20}
-                    height={20}
-                    className="transition-transform duration-500 group-hover:scale-110"
-                  />
+                  <Logo className="h-5 w-5 transition-transform duration-500 group-hover:scale-110" />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
