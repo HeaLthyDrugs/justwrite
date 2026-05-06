@@ -265,17 +265,25 @@ export default function Home() {
       >
         <main className="relative flex h-full w-full flex-col">
           {!focusMode ? (
-            <div className="flex items-center gap-3 px-4 py-4 md:hidden">
-              <Image
-                src="/favicon/android-chrome-512x512.png"
-                alt="Just write logo"
-                width={28}
-                height={28}
-                className="rounded-xl shadow-sm"
-              />
-              <span className="text-base font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Just write
-              </span>
+            <div className="flex items-center justify-between px-5 py-4 md:hidden">
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-sm ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
+                  <Image
+                    src="/favicon/android-chrome-512x512.png"
+                    alt="Just write logo"
+                    width={24}
+                    height={24}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
+                    Just write
+                  </span>
+                  <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-1">
+                    Private local notes
+                  </span>
+                </div>
+              </div>
             </div>
           ) : null}
 

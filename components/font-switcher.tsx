@@ -50,20 +50,24 @@ export function FontSwitcher({
     </button>
   );
 
+  const menuTrigger = (
+    <DropdownMenuPrimitive.Trigger asChild>
+      {triggerButton}
+    </DropdownMenuPrimitive.Trigger>
+  );
+
   return (
     <DropdownMenuPrimitive.Root>
-      <DropdownMenuPrimitive.Trigger asChild>
-        {showTooltip ? (
-          <Tooltip>
-            <TooltipTrigger asChild>{triggerButton}</TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={8}>
-              Font: {activeFont.label}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          triggerButton
-        )}
-      </DropdownMenuPrimitive.Trigger>
+      {showTooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{menuTrigger}</TooltipTrigger>
+          <TooltipContent side="bottom" sideOffset={8}>
+            Font: {activeFont.label}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        menuTrigger
+      )}
 
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
