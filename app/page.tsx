@@ -2,18 +2,25 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
+  ArrowDown01Icon,
+  ArrowDown02Icon,
+  ArrowDown03Icon,
   CenterFocusIcon,
+  ChevronDown,
   FileExportIcon,
   MoonIcon,
   NoteAddIcon,
   PanelRightCloseIcon,
   PanelRightOpenIcon,
+  Settings02Icon,
   Sun01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotesDrawer } from "@/components/notes-drawer";
+import { FamilyDrawer } from "@/components/ui/family-drawer";
 import {
   createEmptyNote,
   formatNoteDateTime,
@@ -63,6 +70,7 @@ function getInitialNotesState(): NotesState {
 export default function Home() {
   const [focusMode, setFocusMode] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
 
@@ -117,6 +125,7 @@ export default function Home() {
       const next = !prev;
       if (next) {
         setDrawerOpen(false);
+        setSettingsOpen(false);
       }
       return next;
     });
@@ -204,77 +213,56 @@ export default function Home() {
     }));
   };
 
+  const downloadFile = (content: string, filename: string, type: string) => {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportItems = [
+    {
+      id: "txt",
+      label: "Plain Text (.txt)",
+      icon: ArrowDown01Icon,
+      onClick: () => downloadFile(body, "note.txt", "text/plain;charset=utf-8"),
+    },
+    {
+      id: "md",
+      label: "Markdown (.md)",
+      icon: ArrowDown02Icon,
+      onClick: () => downloadFile(body, "note.md", "text/markdown;charset=utf-8"),
+    },
+    {
+      id: "json",
+      label: "JSON (.json)",
+      icon: ArrowDown03Icon,
+      onClick: () => {
+        const payload = {
+          id: activeNote.id,
+          body: activeNote.body,
+          updatedAt: activeNote.updatedAt,
+        };
+        downloadFile(
+          JSON.stringify(payload, null, 2),
+          "note.json",
+          "application/json;charset=utf-8"
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="flex h-screen w-full items-center justify-center p-4">
-      <div className={`relative flex h-[95vh] w-full max-w-[1000px] flex-col transition-all duration-500 ease-in-out ${focusMode ? "py-0" : "py-14"}`}>
+    <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
+      <div
+        className={`relative flex h-full w-full max-w-[1000px] flex-col ${
+          focusMode ? "pb-0" : "pb-16 md:pb-0"
+        }`}
+      >
         <main className="relative flex h-full w-full flex-col">
-          {/* Top Actions  */}
-          <div
-            className={`absolute -top-13 shadow-xs right-0 z-10 flex items-center gap-1 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/80 ${chromeClass}`}
-          >
-            <IconButton
-              label="New note"
-              className="h-8 w-8 border-none"
-              onClick={handleCreateNote}
-            >
-              <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-
-            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
-
-            <FontSwitcher />
-
-            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
-
-            <IconButton
-              label="Export"
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon icon={FileExportIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-
-            <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
-
-            <IconButton
-              label={
-                theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-              }
-              onClick={() =>
-                setTheme((current) => (current === "dark" ? "light" : "dark"))
-              }
-              pressed={theme === "dark"}
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon
-                icon={theme === "dark" ? Sun01Icon : MoonIcon}
-                size={16}
-                strokeWidth={1.6}
-              />
-            </IconButton>
-
-            <IconButton
-              label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-              onClick={() => setDrawerOpen((prev) => !prev)}
-              pressed={drawerOpen}
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon
-                icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
-                size={16}
-                strokeWidth={1.6}
-              />
-            </IconButton>
-
-            <IconButton
-              label={focusMode ? "Exit focus" : "Focus mode"}
-              onClick={toggleFocus}
-              pressed={focusMode}
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-          </div>
-
           {focusMode ? (
             <IconButton
               label="Exit focus mode"
@@ -289,29 +277,217 @@ export default function Home() {
             </IconButton>
           ) : null}
 
-          <section className="flex h-full w-full flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
+          <section className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
             <textarea
               value={body}
               onChange={(event) => updateActiveNote({ body: event.target.value })}
               placeholder="Type here"
-              className="h-full w-full resize-none px-8 py-8 text-lg leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-12 md:text-xl lg:px-16 lg:py-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+              className="h-full w-full resize-none px-8 py-8 pb-24 text-lg leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 md:text-xl lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             />
+            {!focusMode ? (
+              <div className="pointer-events-none absolute bottom-4 left-6 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
+                {wordCount} words - Saved {formatNoteDateTime(activeNote.updatedAt)}
+              </div>
+            ) : null}
           </section>
 
-          <div
-            className={`absolute -bottom-10 left-0 flex items-center gap-2 rounded-full border border-black/5 bg-white/80 px-4 py-2 text-xs font-medium text-zinc-600 backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-300 ${chromeClass}`}
-          >
-            <span className="text-zinc-800 dark:text-zinc-100">
-              {wordCount} words
-            </span>
-            <div className="h-3.5 w-px bg-black/10 dark:bg-white/10" />
-            <span className="inline-flex items-center gap-1.5">
-              Saved {formatNoteDateTime(activeNote.updatedAt)}
-            </span>
-          </div>
+          {!focusMode ? (
+            <div className={`mt-3 hidden items-center justify-end gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
+              <div className="flex items-center gap-2 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
+                <IconButton
+                  label="New note"
+                  className="h-8 w-8 border-none"
+                  onClick={handleCreateNote}
+                >
+                  <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
+                </IconButton>
 
+                <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+
+                <FontSwitcher menuSide="top" />
+
+                <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+
+                <DropdownMenuPrimitive.Root>
+                  <DropdownMenuPrimitive.Trigger asChild>
+                    <button
+                      aria-label="Export"
+                      className="flex h-9 max-w-[120px] items-center gap-1.5 rounded-full border border-black/5 bg-transparent px-2.5 py-2 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 dark:border-white/10 dark:bg-zinc-800/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
+                      type="button"
+                    >
+                      <HugeiconsIcon icon={FileExportIcon} size={14} strokeWidth={1.6} />
+                      <span className="truncate text-xs font-medium">Export</span>
+                      <HugeiconsIcon icon={ChevronDown} size={12} strokeWidth={1.6} className="rotate-180 text-zinc-400" />
+                    </button>
+                  </DropdownMenuPrimitive.Trigger>
+                  <DropdownMenuPrimitive.Portal>
+                    <DropdownMenuPrimitive.Content
+                      side="top"
+                      sideOffset={8}
+                      align="end"
+                      className="z-50 min-w-[170px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
+                    >
+                      {exportItems.map((item) => (
+                        <DropdownMenuPrimitive.Item
+                          key={item.id}
+                          onClick={item.onClick}
+                          className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                        >
+                          <HugeiconsIcon icon={item.icon} size={14} strokeWidth={1.6} />
+                          {item.label}
+                        </DropdownMenuPrimitive.Item>
+                      ))}
+                    </DropdownMenuPrimitive.Content>
+                  </DropdownMenuPrimitive.Portal>
+                </DropdownMenuPrimitive.Root>
+
+                <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
+
+                <IconButton
+                  label={settingsOpen ? "Close settings" : "Open settings"}
+                  onClick={() => setSettingsOpen((prev) => !prev)}
+                  pressed={settingsOpen}
+                  className="h-8 w-8 border-none"
+                >
+                  <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
+                </IconButton>
+
+                <IconButton
+                  label={
+                    theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+                  }
+                  onClick={() =>
+                    setTheme((current) => (current === "dark" ? "light" : "dark"))
+                  }
+                  pressed={theme === "dark"}
+                  className="h-8 w-8 border-none"
+                >
+                  <HugeiconsIcon
+                    icon={theme === "dark" ? Sun01Icon : MoonIcon}
+                    size={16}
+                    strokeWidth={1.6}
+                  />
+                </IconButton>
+
+                <IconButton
+                  label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
+                  onClick={() => setDrawerOpen((prev) => !prev)}
+                  pressed={drawerOpen}
+                  className="h-8 w-8 border-none"
+                >
+                  <HugeiconsIcon
+                    icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
+                    size={16}
+                    strokeWidth={1.6}
+                  />
+                </IconButton>
+
+                <IconButton
+                  label={focusMode ? "Exit focus" : "Focus mode"}
+                  onClick={toggleFocus}
+                  pressed={focusMode}
+                  className="h-8 w-8 border-none"
+                >
+                  <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
+                </IconButton>
+              </div>
+            </div>
+          ) : null}
         </main>
       </div>
+
+      {!focusMode ? (
+        <div className="fixed bottom-2 left-1/2 z-40 flex w-auto max-w-[calc(100%-0.75rem)] -translate-x-1/2 items-center gap-1 rounded-full border border-black/5 bg-white/85 px-1.5 py-1 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/85 md:hidden">
+          <IconButton
+            label="New note"
+            className="h-8 w-8 border-none"
+            onClick={handleCreateNote}
+          >
+            <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
+          </IconButton>
+
+          <FontSwitcher menuSide="top" compact showTooltip={false} />
+
+          <DropdownMenuPrimitive.Root>
+            <DropdownMenuPrimitive.Trigger asChild>
+              <button
+                aria-label="Export"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
+                type="button"
+              >
+                <HugeiconsIcon icon={FileExportIcon} size={16} strokeWidth={1.6} />
+              </button>
+            </DropdownMenuPrimitive.Trigger>
+            <DropdownMenuPrimitive.Portal>
+              <DropdownMenuPrimitive.Content
+                side="top"
+                sideOffset={8}
+                align="center"
+                className="z-50 min-w-[170px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
+              >
+                {exportItems.map((item) => (
+                  <DropdownMenuPrimitive.Item
+                    key={`mobile-${item.id}`}
+                    onClick={item.onClick}
+                    className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <HugeiconsIcon icon={item.icon} size={14} strokeWidth={1.6} />
+                    {item.label}
+                  </DropdownMenuPrimitive.Item>
+                ))}
+              </DropdownMenuPrimitive.Content>
+            </DropdownMenuPrimitive.Portal>
+          </DropdownMenuPrimitive.Root>
+
+          <IconButton
+            label={settingsOpen ? "Close settings" : "Open settings"}
+            onClick={() => setSettingsOpen((prev) => !prev)}
+            pressed={settingsOpen}
+            className="h-8 w-8 border-none"
+          >
+            <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
+          </IconButton>
+
+          <IconButton
+            label={
+              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            }
+            onClick={() =>
+              setTheme((current) => (current === "dark" ? "light" : "dark"))
+            }
+            pressed={theme === "dark"}
+            className="h-8 w-8 border-none"
+          >
+            <HugeiconsIcon
+              icon={theme === "dark" ? Sun01Icon : MoonIcon}
+              size={16}
+              strokeWidth={1.6}
+            />
+          </IconButton>
+
+          <IconButton
+            label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
+            onClick={() => setDrawerOpen((prev) => !prev)}
+            pressed={drawerOpen}
+            className="h-8 w-8 border-none"
+          >
+            <HugeiconsIcon
+              icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
+              size={16}
+              strokeWidth={1.6}
+            />
+          </IconButton>
+
+          <IconButton
+            label={focusMode ? "Exit focus" : "Focus mode"}
+            onClick={toggleFocus}
+            pressed={focusMode}
+            className="h-8 w-8 border-none"
+          >
+            <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
+          </IconButton>
+        </div>
+      ) : null}
 
       <NotesDrawer
         isOpen={drawerOpen}
@@ -329,6 +505,9 @@ export default function Home() {
         onDeleteNote={handleDeleteNote}
         className={drawerClass}
       />
+      <FamilyDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
+
+
