@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
@@ -37,6 +36,8 @@ interface NotesState {
   activeNoteId: string;
 }
 
+const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
+
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
     return "light";
@@ -69,12 +70,46 @@ function getInitialNotesState(): NotesState {
   };
 }
 
+function getInitialTypingEffectsEnabled() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  const storedValue = window.localStorage.getItem(TYPING_EFFECTS_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return true;
+}
+
+function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
+  if (event.ctrlKey || event.metaKey || event.altKey) {
+    return false;
+  }
+
+  if (event.key === " ") {
+    return true;
+  }
+
+  return (
+    event.key.length === 1 ||
+    event.key === "Backspace" ||
+    event.key === "Delete" ||
+    event.key === "Enter" ||
+    event.key === "Tab"
+  );
+}
+
 export default function Home() {
   const [focusMode, setFocusMode] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const [typingEffectsEnabled, setTypingEffectsEnabled] = useState(
+    getInitialTypingEffectsEnabled
+  );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
+  const keyAudioRef = useRef<HTMLAudioElement | null>(null);
+  const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const notes = notesState.notes;
   const activeNoteId = notesState.activeNoteId;
@@ -97,6 +132,28 @@ export default function Home() {
     root.classList.toggle("dark", theme === "dark");
     localStorage.setItem("app-theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(TYPING_EFFECTS_STORAGE_KEY, String(typingEffectsEnabled));
+  }, [typingEffectsEnabled]);
+
+  useEffect(() => {
+    const keyAudio = new Audio("/sounds/keystorkes.mp3");
+    keyAudio.preload = "auto";
+    keyAudio.volume = 0.24;
+
+    const spaceAudio = new Audio("/sounds/spacebar.mp3");
+    spaceAudio.preload = "auto";
+    spaceAudio.volume = 0.24;
+
+    keyAudioRef.current = keyAudio;
+    spaceAudioRef.current = spaceAudio;
+
+    return () => {
+      keyAudioRef.current = null;
+      spaceAudioRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -257,6 +314,38 @@ export default function Home() {
     },
   ];
 
+  const playAudioEffect = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+
+    audio.currentTime = 0;
+    void audio.play().catch(() => {
+      // Ignore playback errors (for example browser autoplay restrictions).
+    });
+  };
+
+  const triggerHapticEffect = () => {
+    if (
+      typeof navigator !== "undefined" &&
+      typeof navigator.vibrate === "function"
+    ) {
+      navigator.vibrate(8);
+    }
+  };
+
+  const handleTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!typingEffectsEnabled || !shouldPlayTypingFeedback(event)) {
+      return;
+    }
+
+    if (event.key === " ") {
+      playAudioEffect(spaceAudioRef.current);
+    } else {
+      playAudioEffect(keyAudioRef.current);
+    }
+
+    triggerHapticEffect();
+  };
+
   return (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
       <div
@@ -300,6 +389,7 @@ export default function Home() {
             <textarea
               value={body}
               onChange={(event) => updateActiveNote({ body: event.target.value })}
+              onKeyDown={handleTextareaKeyDown}
               placeholder="Type here"
               className="h-full w-full resize-none px-8 py-8 pb-24 text-lg leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 md:text-xl lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
             />
@@ -537,9 +627,12 @@ export default function Home() {
         onDeleteNote={handleDeleteNote}
         className={drawerClass}
       />
-      <FamilyDrawer isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <FamilyDrawer
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        typingEffectsEnabled={typingEffectsEnabled}
+        onTypingEffectsEnabledChange={setTypingEffectsEnabled}
+      />
     </div>
   );
 }
-
-
