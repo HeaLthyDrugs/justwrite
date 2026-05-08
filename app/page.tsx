@@ -37,6 +37,7 @@ interface NotesState {
 }
 
 const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
+const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -81,6 +82,17 @@ function getInitialTypingEffectsEnabled() {
   return true;
 }
 
+function getInitialShowWordCount() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  const storedValue = window.localStorage.getItem(SHOW_WORD_COUNT_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return true;
+}
+
 function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return false;
@@ -107,6 +119,7 @@ export default function Home() {
   const [typingEffectsEnabled, setTypingEffectsEnabled] = useState(
     getInitialTypingEffectsEnabled
   );
+  const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -136,6 +149,10 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(TYPING_EFFECTS_STORAGE_KEY, String(typingEffectsEnabled));
   }, [typingEffectsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
+  }, [showWordCount]);
 
   useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
@@ -395,7 +412,7 @@ export default function Home() {
             />
             {!focusMode ? (
               <div className="pointer-events-none absolute bottom-4 left-6 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
-                {wordCount} words - Saved {formatNoteDateTime(activeNote.updatedAt)}
+                {showWordCount ? `${wordCount} words - ` : ""}Saved {formatNoteDateTime(activeNote.updatedAt)}
               </div>
             ) : null}
           </section>
@@ -632,6 +649,8 @@ export default function Home() {
         onClose={() => setSettingsOpen(false)}
         typingEffectsEnabled={typingEffectsEnabled}
         onTypingEffectsEnabledChange={setTypingEffectsEnabled}
+        showWordCount={showWordCount}
+        onShowWordCountChange={setShowWordCount}
       />
     </div>
   );
