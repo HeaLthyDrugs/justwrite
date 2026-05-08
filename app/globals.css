@@ -126,6 +126,14 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Font Switching Logic */
@@ -170,5 +178,39 @@ body {
   }
   html {
     @apply font-sans;
+  }
+}
+
+/* Notebook Lines effect for textarea */
+.notebook-lines {
+  --line-h: rgba(0, 0, 0, 0.1);
+  --line-v: rgba(239, 68, 68, 0.4);
+  background-image: 
+    linear-gradient(90deg, transparent 24px, var(--line-v) 24px, var(--line-v) 25px, transparent 25px),
+    repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
+  background-attachment: local;
+  background-position: 0 0, 0 calc(32px + 1.25em);
+}
+
+.dark .notebook-lines {
+  --line-h: rgba(255, 255, 255, 0.1);
+  --line-v: rgba(239, 68, 68, 0.4);
+}
+
+@media (min-width: 768px) {
+  .notebook-lines {
+    background-image: 
+      linear-gradient(90deg, transparent 32px, var(--line-v) 32px, var(--line-v) 33px, transparent 33px),
+      repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
+    background-position: 0 0, 0 calc(40px + 1.25em);
+  }
+}
+
+@media (min-width: 1024px) {
+  .notebook-lines {
+    background-image: 
+      linear-gradient(90deg, transparent 48px, var(--line-v) 48px, var(--line-v) 49px, transparent 49px),
+      repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
+    background-position: 0 0, 0 calc(48px + 1.25em);
   }
 }

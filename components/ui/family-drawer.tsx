@@ -3,7 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
-  Settings02Icon,
+  NoteAddIcon,
   SpeakerIcon,
   TextFontIcon,
   ViewOffSlashIcon,
@@ -18,6 +18,8 @@ interface FamilyDrawerProps {
   onTypingEffectsEnabledChange: (enabled: boolean) => void;
   showWordCount: boolean;
   onShowWordCountChange: (enabled: boolean) => void;
+  notebookLinesEnabled: boolean;
+  onNotebookLinesEnabledChange: (enabled: boolean) => void;
 }
 
 export function FamilyDrawer({
@@ -27,6 +29,8 @@ export function FamilyDrawer({
   onTypingEffectsEnabledChange,
   showWordCount,
   onShowWordCountChange,
+  notebookLinesEnabled,
+  onNotebookLinesEnabledChange,
 }: FamilyDrawerProps) {
   return (
     <aside
@@ -52,6 +56,28 @@ export function FamilyDrawer({
       <div className="mt-8 flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+            Notebook Lines
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={notebookLinesEnabled}
+            onClick={() => onNotebookLinesEnabledChange(!notebookLinesEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${notebookLinesEnabled
+              ? "bg-zinc-900 dark:bg-zinc-100"
+              : "bg-zinc-300 dark:bg-zinc-700"
+              }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${notebookLinesEnabled ? "translate-x-5" : "translate-x-0.5"
+                }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
             <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
             Word Count
           </div>
@@ -71,6 +97,7 @@ export function FamilyDrawer({
             />
           </button>
         </div>
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
             <HugeiconsIcon icon={SpeakerIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
