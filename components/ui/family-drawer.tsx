@@ -6,7 +6,8 @@ import {
   NoteAddIcon,
   SpeakerIcon,
   TextFontIcon,
-  ViewOffSlashIcon,
+  TextCheckIcon,
+  TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
@@ -22,6 +23,8 @@ interface FamilyDrawerProps {
   onNotebookLinesEnabledChange: (enabled: boolean) => void;
   spellCheckEnabled: boolean;
   onSpellCheckEnabledChange: (enabled: boolean) => void;
+  fontSize: number;
+  onFontSizeChange: (size: number) => void;
 }
 
 export function FamilyDrawer({
@@ -35,6 +38,8 @@ export function FamilyDrawer({
   onNotebookLinesEnabledChange,
   spellCheckEnabled,
   onSpellCheckEnabledChange,
+  fontSize,
+  onFontSizeChange,
 }: FamilyDrawerProps) {
   return (
     <aside
@@ -83,6 +88,32 @@ export function FamilyDrawer({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
             <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+            Font Size
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onFontSizeChange(Math.max(12, fontSize - 1))}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-zinc-600 transition-colors hover:bg-black/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10"
+            >
+              -
+            </button>
+            <span className="w-5 text-center text-xs font-medium text-zinc-700 dark:text-zinc-200">
+              {fontSize}
+            </span>
+            <button
+              type="button"
+              onClick={() => onFontSizeChange(Math.min(32, fontSize + 1))}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-zinc-600 transition-colors hover:bg-black/10 dark:bg-white/5 dark:text-zinc-400 dark:hover:bg-white/10"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            <HugeiconsIcon icon={TextNumberSignIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
             Word Count
           </div>
           <button
@@ -104,7 +135,7 @@ export function FamilyDrawer({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-            <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+            <HugeiconsIcon icon={TextCheckIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
             Spell Check
           </div>
           <button

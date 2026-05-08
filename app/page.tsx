@@ -40,6 +40,7 @@ const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
 const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
+const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -117,6 +118,19 @@ function getInitialSpellCheckEnabled() {
   return true;
 }
 
+function getInitialFontSize() {
+  if (typeof window === "undefined") {
+    return 18;
+  }
+
+  const storedValue = window.localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+  if (storedValue) {
+    const parsed = parseInt(storedValue, 10);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return 18;
+}
+
 function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return false;
@@ -146,6 +160,7 @@ export default function Home() {
   const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
   const [spellCheckEnabled, setSpellCheckEnabled] = useState(getInitialSpellCheckEnabled);
+  const [fontSize, setFontSize] = useState(getInitialFontSize);
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -187,6 +202,10 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(SPELL_CHECK_STORAGE_KEY, String(spellCheckEnabled));
   }, [spellCheckEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
+  }, [fontSize]);
 
   useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
@@ -443,7 +462,8 @@ export default function Home() {
               onKeyDown={handleTextareaKeyDown}
               placeholder="Type here"
               spellCheck={spellCheckEnabled}
-              className={`h-full w-full resize-none px-8 py-8 pb-24 text-lg leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 md:text-xl lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
+              style={{ fontSize: `${fontSize}px` }}
+              className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
                 }`}
             />
             {!focusMode ? (
@@ -691,6 +711,8 @@ export default function Home() {
         onNotebookLinesEnabledChange={setNotebookLinesEnabled}
         spellCheckEnabled={spellCheckEnabled}
         onSpellCheckEnabledChange={setSpellCheckEnabled}
+        fontSize={fontSize}
+        onFontSizeChange={setFontSize}
       />
     </div>
   );
