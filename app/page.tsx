@@ -39,6 +39,7 @@ interface NotesState {
 const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
 const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
+const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -105,6 +106,17 @@ function getInitialNotebookLinesEnabled() {
   return false;
 }
 
+function getInitialSpellCheckEnabled() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  const storedValue = window.localStorage.getItem(SPELL_CHECK_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return true;
+}
+
 function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return false;
@@ -133,6 +145,7 @@ export default function Home() {
   );
   const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
+  const [spellCheckEnabled, setSpellCheckEnabled] = useState(getInitialSpellCheckEnabled);
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -170,6 +183,10 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem(NOTEBOOK_LINES_STORAGE_KEY, String(notebookLinesEnabled));
   }, [notebookLinesEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem(SPELL_CHECK_STORAGE_KEY, String(spellCheckEnabled));
+  }, [spellCheckEnabled]);
 
   useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
@@ -425,6 +442,7 @@ export default function Home() {
               onChange={(event) => updateActiveNote({ body: event.target.value })}
               onKeyDown={handleTextareaKeyDown}
               placeholder="Type here"
+              spellCheck={spellCheckEnabled}
               className={`h-full w-full resize-none px-8 py-8 pb-24 text-lg leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 md:text-xl lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
                 }`}
             />
@@ -671,6 +689,8 @@ export default function Home() {
         onShowWordCountChange={setShowWordCount}
         notebookLinesEnabled={notebookLinesEnabled}
         onNotebookLinesEnabledChange={setNotebookLinesEnabled}
+        spellCheckEnabled={spellCheckEnabled}
+        onSpellCheckEnabledChange={setSpellCheckEnabled}
       />
     </div>
   );
