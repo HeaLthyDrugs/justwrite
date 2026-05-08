@@ -34,7 +34,6 @@ export function FamilyDrawer({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">
-          <HugeiconsIcon icon={Settings02Icon} size={14} strokeWidth={1.8} />
           Settings
         </div>
         <IconButton
