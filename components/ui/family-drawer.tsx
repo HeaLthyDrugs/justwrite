@@ -4,6 +4,7 @@ import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
+  Clock01Icon,
   NoteAddIcon,
   SpeakerIcon,
   TextFontIcon,
@@ -20,6 +21,8 @@ interface FamilyDrawerProps {
   onTypingEffectsEnabledChange: (enabled: boolean) => void;
   showWordCount: boolean;
   onShowWordCountChange: (enabled: boolean) => void;
+  showSavedTimestamp: boolean;
+  onShowSavedTimestampChange: (enabled: boolean) => void;
   notebookLinesEnabled: boolean;
   onNotebookLinesEnabledChange: (enabled: boolean) => void;
   spellCheckEnabled: boolean;
@@ -35,6 +38,8 @@ export function FamilyDrawer({
   onTypingEffectsEnabledChange,
   showWordCount,
   onShowWordCountChange,
+  showSavedTimestamp,
+  onShowSavedTimestampChange,
   notebookLinesEnabled,
   onNotebookLinesEnabledChange,
   spellCheckEnabled,
@@ -141,6 +146,28 @@ export function FamilyDrawer({
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${showWordCount ? "translate-x-5" : "translate-x-0.5"
+                }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            <HugeiconsIcon icon={Clock01Icon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+            Saved Timestamp
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showSavedTimestamp}
+            onClick={() => onShowSavedTimestampChange(!showSavedTimestamp)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${showSavedTimestamp
+              ? "bg-zinc-900 dark:bg-zinc-100"
+              : "bg-zinc-300 dark:bg-zinc-700"
+              }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${showSavedTimestamp ? "translate-x-5" : "translate-x-0.5"
                 }`}
             />
           </button>

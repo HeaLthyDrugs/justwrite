@@ -17,6 +17,7 @@ import {
   SpeakerIcon,
   Settings02Icon,
   Sun01Icon,
+  Clock01Icon,
   TextCheckIcon,
   TextFontIcon,
   TextNumberSignIcon,
@@ -50,6 +51,7 @@ interface NotesState {
 
 const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
 const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
+const SHOW_SAVED_TIMESTAMP_STORAGE_KEY = "justwrite.show-saved-timestamp.enabled";
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
@@ -133,6 +135,20 @@ function getInitialNotebookLinesEnabled() {
   return false;
 }
 
+function getInitialShowSavedTimestamp() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  if (!hasPreferenceConsent()) {
+    return true;
+  }
+
+  const storedValue = window.localStorage.getItem(SHOW_SAVED_TIMESTAMP_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return true;
+}
+
 function getInitialSpellCheckEnabled() {
   if (typeof window === "undefined") {
     return true;
@@ -214,6 +230,7 @@ export default function Home() {
     getInitialTypingEffectsEnabled
   );
   const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
+  const [showSavedTimestamp, setShowSavedTimestamp] = useState(getInitialShowSavedTimestamp);
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
   const [spellCheckEnabled, setSpellCheckEnabled] = useState(getInitialSpellCheckEnabled);
   const [fontSize, setFontSize] = useState(getInitialFontSize);
@@ -284,6 +301,11 @@ export default function Home() {
       setShowWordCount(wordCountSaved === "true");
     }
 
+    const savedTimestampPref = window.localStorage.getItem(SHOW_SAVED_TIMESTAMP_STORAGE_KEY);
+    if (savedTimestampPref === "true" || savedTimestampPref === "false") {
+      setShowSavedTimestamp(savedTimestampPref === "true");
+    }
+
     const linesSaved = window.localStorage.getItem(NOTEBOOK_LINES_STORAGE_KEY);
     if (linesSaved === "true" || linesSaved === "false") {
       setNotebookLinesEnabled(linesSaved === "true");
@@ -322,6 +344,15 @@ export default function Home() {
       localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
     }
   }, [showWordCount, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(
+        SHOW_SAVED_TIMESTAMP_STORAGE_KEY,
+        String(showSavedTimestamp)
+      );
+    }
+  }, [showSavedTimestamp, hasPreferencesConsent]);
 
   useEffect(() => {
     if (hasPreferencesConsent) {
@@ -573,6 +604,18 @@ export default function Home() {
     });
   };
 
+  const handleShowSavedTimestampChange = (enabled: boolean) => {
+    setShowSavedTimestamp(enabled);
+    pushToast({
+      type: "info",
+      icon: Clock01Icon,
+      title: enabled ? "Saved timestamp shown" : "Saved timestamp hidden",
+      description: enabled
+        ? "Footer now shows last saved time."
+        : "Footer saved time is hidden.",
+    });
+  };
+
   const handleSpellCheckChange = (enabled: boolean) => {
     setSpellCheckEnabled(enabled);
     pushToast({
@@ -809,14 +852,16 @@ export default function Home() {
               className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
                 }`}
             />
-            {!focusMode ? (
+            {!focusMode && (showWordCount || showSavedTimestamp || !isOnline) ? (
               <div className="pointer-events-none absolute bottom-4 left-6 flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
                 {!isOnline ? (
                   <span className="rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.06em] text-amber-700 dark:text-amber-300">
                     OFFLINE
                   </span>
                 ) : null}
-                {showWordCount ? `${wordCount} words - ` : ""}Saved {formatNoteDateTime(activeNote.updatedAt)}
+                {showWordCount ? `${wordCount} words` : ""}
+                {showWordCount && showSavedTimestamp ? " - " : ""}
+                {showSavedTimestamp ? `Saved ${formatNoteDateTime(activeNote.updatedAt)}` : ""}
               </div>
             ) : null}
           </section>
@@ -1059,6 +1104,8 @@ export default function Home() {
         onTypingEffectsEnabledChange={handleTypingEffectsChange}
         showWordCount={showWordCount}
         onShowWordCountChange={handleWordCountChange}
+        showSavedTimestamp={showSavedTimestamp}
+        onShowSavedTimestampChange={handleShowSavedTimestampChange}
         notebookLinesEnabled={notebookLinesEnabled}
         onNotebookLinesEnabledChange={handleNotebookLinesChange}
         spellCheckEnabled={spellCheckEnabled}
