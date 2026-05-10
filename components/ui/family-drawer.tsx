@@ -42,6 +42,11 @@ export function FamilyDrawer({
   fontSize,
   onFontSizeChange,
 }: FamilyDrawerProps) {
+  const quickPages = [
+    { href: "/changelog", label: "Changelog" },
+    { href: "/about", label: "About" },
+  ];
+
   const legalLinks = [
     { href: "/privacy-policy", label: "Privacy Policy" },
     { href: "/terms-of-service", label: "Terms of Service" },
@@ -186,6 +191,23 @@ export function FamilyDrawer({
         </div>
 
         <div className="mt-1 border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
+            Pages
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {quickPages.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-xs font-medium text-zinc-600/65 transition-colors hover:text-zinc-800/80 dark:text-zinc-300/60 dark:hover:text-zinc-100/80"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-black/5 pt-4 dark:border-white/10">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
             Legal
           </div>

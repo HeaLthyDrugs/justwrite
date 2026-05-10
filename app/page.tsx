@@ -644,7 +644,7 @@ export default function Home() {
               value={body}
               onChange={(event) => updateActiveNote({ body: event.target.value })}
               onKeyDown={handleTextareaKeyDown}
-              placeholder="Type here (Markdown supported: **bold**, *italic*, [link](url))"
+              placeholder="Start. Flow. Finish."
               spellCheck={spellCheckEnabled}
               style={{ fontSize: `${fontSize}px` }}
               className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
