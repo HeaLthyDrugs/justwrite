@@ -4,9 +4,6 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
-  ArrowDown01Icon,
-  ArrowDown02Icon,
-  ArrowDown03Icon,
   CenterFocusIcon,
   ChevronDown,
   FileExportIcon,
@@ -22,6 +19,10 @@ import { IconButton } from "@/components/ui/icon-button";
 import { Logo } from "@/components/ui/logo";
 import { NotesDrawer } from "@/components/notes-drawer";
 import { FamilyDrawer } from "@/components/ui/family-drawer";
+import {
+  CustomToastViewport,
+  type ToastMessage,
+} from "@/components/ui/custom-toast";
 import {
   createEmptyNote,
   formatNoteDateTime,
@@ -213,6 +214,7 @@ export default function Home() {
     hasPreferenceConsent
   );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -477,34 +479,89 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
+  const pushToast = (toast: Omit<ToastMessage, "id">) => {
+    const id = crypto.randomUUID();
+    setToasts((previous) => [...previous, { id, ...toast }]);
+    window.setTimeout(() => {
+      setToasts((previous) => previous.filter((item) => item.id !== id));
+    }, 2600);
+  };
+
+  const dismissToast = (id: string) => {
+    setToasts((previous) => previous.filter((item) => item.id !== id));
+  };
+
   const exportItems = [
     {
       id: "txt",
       label: "Plain Text (.txt)",
-      icon: ArrowDown01Icon,
-      onClick: () => downloadFile(body, "note.txt", "text/plain;charset=utf-8"),
+      iconSrc: "/logo/formats/txt.svg",
+      onClick: () => {
+        try {
+          downloadFile(body, "note.txt", "text/plain;charset=utf-8");
+          pushToast({
+            type: "success",
+            title: "TXT exported",
+            description: "Your note was downloaded as plain text.",
+          });
+        } catch {
+          pushToast({
+            type: "error",
+            title: "Export failed",
+            description: "Could not export TXT right now.",
+          });
+        }
+      },
     },
     {
       id: "md",
       label: "Markdown (.md)",
-      icon: ArrowDown02Icon,
-      onClick: () => downloadFile(body, "note.md", "text/markdown;charset=utf-8"),
+      iconSrc: "/logo/formats/md.svg",
+      onClick: () => {
+        try {
+          downloadFile(body, "note.md", "text/markdown;charset=utf-8");
+          pushToast({
+            type: "success",
+            title: "Markdown exported",
+            description: "Your note was downloaded as .md.",
+          });
+        } catch {
+          pushToast({
+            type: "error",
+            title: "Export failed",
+            description: "Could not export Markdown right now.",
+          });
+        }
+      },
     },
     {
       id: "json",
       label: "JSON (.json)",
-      icon: ArrowDown03Icon,
+      iconSrc: "/logo/formats/json.svg",
       onClick: () => {
-        const payload = {
-          id: activeNote.id,
-          body: activeNote.body,
-          updatedAt: activeNote.updatedAt,
-        };
-        downloadFile(
-          JSON.stringify(payload, null, 2),
-          "note.json",
-          "application/json;charset=utf-8"
-        );
+        try {
+          const payload = {
+            id: activeNote.id,
+            body: activeNote.body,
+            updatedAt: activeNote.updatedAt,
+          };
+          downloadFile(
+            JSON.stringify(payload, null, 2),
+            "note.json",
+            "application/json;charset=utf-8"
+          );
+          pushToast({
+            type: "success",
+            title: "JSON exported",
+            description: "Your note metadata and content were exported.",
+          });
+        } catch {
+          pushToast({
+            type: "error",
+            title: "Export failed",
+            description: "Could not export JSON right now.",
+          });
+        }
       },
     },
   ];
@@ -708,7 +765,7 @@ export default function Home() {
                     <DropdownMenuPrimitive.Content
                       side="top"
                       sideOffset={8}
-                      align="end"
+                      align="start"
                       className="z-50 min-w-[170px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
                     >
                       {exportItems.map((item) => (
@@ -717,7 +774,11 @@ export default function Home() {
                           onClick={item.onClick}
                           className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
                         >
-                          <HugeiconsIcon icon={item.icon} size={14} strokeWidth={1.6} />
+                          <img
+                            src={item.iconSrc}
+                            alt={`${item.id} format`}
+                            className="h-4 w-4 shrink-0"
+                          />
                           {item.label}
                         </DropdownMenuPrimitive.Item>
                       ))}
@@ -815,7 +876,11 @@ export default function Home() {
                     onClick={item.onClick}
                     className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
                   >
-                    <HugeiconsIcon icon={item.icon} size={14} strokeWidth={1.6} />
+                    <img
+                      src={item.iconSrc}
+                      alt={`${item.id} format`}
+                      className="h-4 w-4 shrink-0"
+                    />
                     {item.label}
                   </DropdownMenuPrimitive.Item>
                 ))}
@@ -903,6 +968,7 @@ export default function Home() {
         fontSize={fontSize}
         onFontSizeChange={setFontSize}
       />
+      <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>
   );
 }
