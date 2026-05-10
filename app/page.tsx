@@ -150,6 +150,7 @@ function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
 }
 
 export default function Home() {
+  const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -180,6 +181,21 @@ export default function Home() {
     if (!trimmed) return 0;
     return trimmed.split(/\s+/).length;
   }, [body]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -467,7 +483,12 @@ export default function Home() {
                 }`}
             />
             {!focusMode ? (
-              <div className="pointer-events-none absolute bottom-4 left-6 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
+              <div className="pointer-events-none absolute bottom-4 left-6 flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
+                {!isOnline ? (
+                  <span className="rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.06em] text-amber-700 dark:text-amber-300">
+                    OFFLINE
+                  </span>
+                ) : null}
                 {showWordCount ? `${wordCount} words - ` : ""}Saved {formatNoteDateTime(activeNote.updatedAt)}
               </div>
             ) : null}
@@ -576,7 +597,6 @@ export default function Home() {
                     strokeWidth={1.6}
                   />
                 </IconButton>
-
                 <IconButton
                   label={focusMode ? "Exit focus" : "Focus mode"}
                   onClick={toggleFocus}
@@ -585,6 +605,7 @@ export default function Home() {
                 >
                   <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
                 </IconButton>
+
               </div>
             </div>
           ) : null}

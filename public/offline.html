@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Justwrite | Offline</title>
+    <meta name="theme-color" content="#ffffff" />
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(circle at top, #f4f4f5, #e4e4e7 45%, #d4d4d8);
+        color: #18181b;
+      }
+      .card {
+        width: min(92vw, 520px);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.12);
+        padding: 28px;
+        backdrop-filter: blur(8px);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 1.2rem;
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+        color: #3f3f46;
+      }
+      a {
+        display: inline-block;
+        margin-top: 16px;
+        color: #18181b;
+        font-weight: 600;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: radial-gradient(circle at top, #1f1f23, #111113 45%, #09090b);
+          color: #f4f4f5;
+        }
+        .card {
+          background: rgba(24, 24, 27, 0.72);
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 20px 48px rgba(0, 0, 0, 0.38);
+        }
+        p {
+          color: #d4d4d8;
+        }
+        a {
+          color: #fafafa;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>You are offline, but Justwrite still works</h1>
+      <p>
+        Keep writing and editing your local notes. When your connection returns, the app
+        will continue normally.
+      </p>
+      <a href="/">Return to Justwrite</a>
+    </main>
+  </body>
+</html>
