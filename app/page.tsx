@@ -6,13 +6,20 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
   CenterFocusIcon,
   ChevronDown,
+  Delete02Icon,
   FileExportIcon,
   MoonIcon,
   NoteAddIcon,
+  Pin02Icon,
+  PinOffIcon,
   PanelRightCloseIcon,
   PanelRightOpenIcon,
+  SpeakerIcon,
   Settings02Icon,
   Sun01Icon,
+  TextCheckIcon,
+  TextFontIcon,
+  TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
@@ -377,13 +384,19 @@ export default function Home() {
       : "opacity-0 pointer-events-none translate-x-[420px]";
 
   const toggleFocus = () => {
-    setFocusMode((prev) => {
-      const next = !prev;
-      if (next) {
-        setDrawerOpen(false);
-        setSettingsOpen(false);
-      }
-      return next;
+    const next = !focusMode;
+    setFocusMode(next);
+    if (next) {
+      setDrawerOpen(false);
+      setSettingsOpen(false);
+    }
+    pushToast({
+      type: "info",
+      icon: CenterFocusIcon,
+      title: next ? "Focus mode enabled" : "Focus mode disabled",
+      description: next
+        ? "Distraction-free writing is now on."
+        : "Toolbars and drawers are back.",
     });
   };
 
@@ -427,9 +440,16 @@ export default function Home() {
       activeNoteId: note.id,
     }));
     setDrawerOpen(true);
+    pushToast({
+      type: "success",
+      icon: NoteAddIcon,
+      title: "New note created",
+      description: "You can start writing right away.",
+    });
   };
 
   const handleDeleteNote = (noteId: string) => {
+    const noteToDelete = notes.find((note) => note.id === noteId);
     setNotesState((previousState) => {
       const remainingNotes = previousState.notes.filter((note) => note.id !== noteId);
       if (remainingNotes.length === 0) {
@@ -452,9 +472,21 @@ export default function Home() {
         notes: remainingNotes,
       };
     });
+    pushToast({
+      type: "info",
+      icon: Delete02Icon,
+      title: "Note deleted",
+      description: noteToDelete
+        ? noteToDelete.body.trim()
+          ? "The selected note was removed."
+          : "An untitled note was removed."
+        : "The selected note was removed.",
+    });
   };
 
   const handleTogglePinned = (noteId: string) => {
+    const noteToToggle = notes.find((note) => note.id === noteId);
+    const willBePinned = !(noteToToggle?.isPinned ?? false);
     setNotesState((previousState) => ({
       ...previousState,
       notes: previousState.notes.map((note) =>
@@ -467,6 +499,14 @@ export default function Home() {
           : note
       ),
     }));
+    pushToast({
+      type: "info",
+      icon: willBePinned ? Pin02Icon : PinOffIcon,
+      title: willBePinned ? "Note pinned" : "Note unpinned",
+      description: willBePinned
+        ? "Pinned notes stay at the top."
+        : "The note moved back to regular list.",
+    });
   };
 
   const downloadFile = (content: string, filename: string, type: string) => {
@@ -489,6 +529,68 @@ export default function Home() {
 
   const dismissToast = (id: string) => {
     setToasts((previous) => previous.filter((item) => item.id !== id));
+  };
+
+  const handleThemeToggle = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    pushToast({
+      type: "info",
+      icon: next === "dark" ? MoonIcon : Sun01Icon,
+      title: next === "dark" ? "Dark theme enabled" : "Light theme enabled",
+      description:
+        next === "dark" ? "Switched to dark appearance." : "Switched to light appearance.",
+    });
+  };
+
+  const handleTypingEffectsChange = (enabled: boolean) => {
+    setTypingEffectsEnabled(enabled);
+    pushToast({
+      type: "info",
+      icon: SpeakerIcon,
+      title: enabled ? "Typing sound on" : "Typing sound off",
+      description: enabled ? "Audio feedback enabled." : "Audio feedback disabled.",
+    });
+  };
+
+  const handleWordCountChange = (enabled: boolean) => {
+    setShowWordCount(enabled);
+    pushToast({
+      type: "info",
+      icon: TextNumberSignIcon,
+      title: enabled ? "Word count shown" : "Word count hidden",
+      description: enabled ? "Footer now shows total words." : "Footer word count is hidden.",
+    });
+  };
+
+  const handleNotebookLinesChange = (enabled: boolean) => {
+    setNotebookLinesEnabled(enabled);
+    pushToast({
+      type: "info",
+      icon: NoteAddIcon,
+      title: enabled ? "Notebook lines on" : "Notebook lines off",
+      description: enabled ? "Writing area now has guide lines." : "Writing area is now clean.",
+    });
+  };
+
+  const handleSpellCheckChange = (enabled: boolean) => {
+    setSpellCheckEnabled(enabled);
+    pushToast({
+      type: "info",
+      icon: TextCheckIcon,
+      title: enabled ? "Spell check on" : "Spell check off",
+      description: enabled ? "Typos will be highlighted." : "Spell checking disabled.",
+    });
+  };
+
+  const handleFontSizeChange = (size: number) => {
+    setFontSize(size);
+    pushToast({
+      type: "info",
+      icon: TextFontIcon,
+      title: "Font size updated",
+      description: `Font size set to ${size}px.`,
+    });
   };
 
   const exportItems = [
@@ -801,9 +903,7 @@ export default function Home() {
                   label={
                     theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
                   }
-                  onClick={() =>
-                    setTheme((current) => (current === "dark" ? "light" : "dark"))
-                  }
+                  onClick={handleThemeToggle}
                   pressed={theme === "dark"}
                   className="h-8 w-8 border-none"
                 >
@@ -901,9 +1001,7 @@ export default function Home() {
             label={
               theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
             }
-            onClick={() =>
-              setTheme((current) => (current === "dark" ? "light" : "dark"))
-            }
+            onClick={handleThemeToggle}
             pressed={theme === "dark"}
             className="h-8 w-8 border-none"
           >
@@ -958,15 +1056,15 @@ export default function Home() {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         typingEffectsEnabled={typingEffectsEnabled}
-        onTypingEffectsEnabledChange={setTypingEffectsEnabled}
+        onTypingEffectsEnabledChange={handleTypingEffectsChange}
         showWordCount={showWordCount}
-        onShowWordCountChange={setShowWordCount}
+        onShowWordCountChange={handleWordCountChange}
         notebookLinesEnabled={notebookLinesEnabled}
-        onNotebookLinesEnabledChange={setNotebookLinesEnabled}
+        onNotebookLinesEnabledChange={handleNotebookLinesChange}
         spellCheckEnabled={spellCheckEnabled}
-        onSpellCheckEnabledChange={setSpellCheckEnabled}
+        onSpellCheckEnabledChange={handleSpellCheckChange}
         fontSize={fontSize}
-        onFontSizeChange={setFontSize}
+        onFontSizeChange={handleFontSizeChange}
       />
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>
