@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Cancel01Icon,
@@ -41,6 +42,13 @@ export function FamilyDrawer({
   fontSize,
   onFontSizeChange,
 }: FamilyDrawerProps) {
+  const legalLinks = [
+    { href: "/privacy-policy", label: "Privacy Policy" },
+    { href: "/terms-of-service", label: "Terms of Service" },
+    { href: "/cookie-policy", label: "Cookie Policy" },
+    { href: "/disclaimer", label: "Disclaimer" },
+  ];
+
   return (
     <aside
       aria-hidden={!isOpen}
@@ -175,6 +183,23 @@ export function FamilyDrawer({
                 }`}
             />
           </button>
+        </div>
+
+        <div className="mt-1 border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
+            Legal
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-xs font-medium text-zinc-600/65 transition-colors hover:text-zinc-800/80 dark:text-zinc-300/60 dark:hover:text-zinc-100/80"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </aside>

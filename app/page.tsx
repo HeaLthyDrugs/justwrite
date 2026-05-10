@@ -30,6 +30,10 @@ import {
   NOTES_STORAGE_VERSION,
   saveNotesSnapshot,
 } from "@/lib/notes-storage";
+import {
+  CONSENT_CHANGED_EVENT,
+  hasPreferenceConsent,
+} from "@/lib/consent";
 
 interface NotesState {
   notes: Note[];
@@ -45,6 +49,11 @@ const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
     return "light";
+  }
+  if (!hasPreferenceConsent()) {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   }
 
   const savedTheme = window.localStorage.getItem("app-theme");
@@ -78,6 +87,9 @@ function getInitialTypingEffectsEnabled() {
   if (typeof window === "undefined") {
     return true;
   }
+  if (!hasPreferenceConsent()) {
+    return true;
+  }
 
   const storedValue = window.localStorage.getItem(TYPING_EFFECTS_STORAGE_KEY);
   if (storedValue === "true") return true;
@@ -87,6 +99,9 @@ function getInitialTypingEffectsEnabled() {
 
 function getInitialShowWordCount() {
   if (typeof window === "undefined") {
+    return true;
+  }
+  if (!hasPreferenceConsent()) {
     return true;
   }
 
@@ -100,6 +115,9 @@ function getInitialNotebookLinesEnabled() {
   if (typeof window === "undefined") {
     return false;
   }
+  if (!hasPreferenceConsent()) {
+    return false;
+  }
 
   const storedValue = window.localStorage.getItem(NOTEBOOK_LINES_STORAGE_KEY);
   if (storedValue === "true") return true;
@@ -111,6 +129,9 @@ function getInitialSpellCheckEnabled() {
   if (typeof window === "undefined") {
     return true;
   }
+  if (!hasPreferenceConsent()) {
+    return true;
+  }
 
   const storedValue = window.localStorage.getItem(SPELL_CHECK_STORAGE_KEY);
   if (storedValue === "true") return true;
@@ -120,6 +141,9 @@ function getInitialSpellCheckEnabled() {
 
 function getInitialFontSize() {
   if (typeof window === "undefined") {
+    return 18;
+  }
+  if (!hasPreferenceConsent()) {
     return 18;
   }
 
@@ -149,6 +173,29 @@ function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   );
 }
 
+function wrapSelection(
+  textarea: HTMLTextAreaElement,
+  before: string,
+  after: string,
+  fallbackText: string
+) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.slice(start, end);
+  const content = selected || fallbackText;
+  const nextValue =
+    textarea.value.slice(0, start) +
+    before +
+    content +
+    after +
+    textarea.value.slice(end);
+
+  const nextSelectionStart = start + before.length;
+  const nextSelectionEnd = nextSelectionStart + content.length;
+
+  return { nextValue, nextSelectionStart, nextSelectionEnd };
+}
+
 export default function Home() {
   const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
@@ -162,6 +209,9 @@ export default function Home() {
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
   const [spellCheckEnabled, setSpellCheckEnabled] = useState(getInitialSpellCheckEnabled);
   const [fontSize, setFontSize] = useState(getInitialFontSize);
+  const [hasPreferencesConsent, setHasPreferencesConsent] = useState(
+    hasPreferenceConsent
+  );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -198,30 +248,89 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const syncConsent = () => setHasPreferencesConsent(hasPreferenceConsent());
+    window.addEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+    return () => {
+      window.removeEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasPreferencesConsent || typeof window === "undefined") {
+      return;
+    }
+
+    const savedTheme = window.localStorage.getItem("app-theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setTheme(savedTheme);
+    }
+
+    const typingSaved = window.localStorage.getItem(TYPING_EFFECTS_STORAGE_KEY);
+    if (typingSaved === "true" || typingSaved === "false") {
+      setTypingEffectsEnabled(typingSaved === "true");
+    }
+
+    const wordCountSaved = window.localStorage.getItem(SHOW_WORD_COUNT_STORAGE_KEY);
+    if (wordCountSaved === "true" || wordCountSaved === "false") {
+      setShowWordCount(wordCountSaved === "true");
+    }
+
+    const linesSaved = window.localStorage.getItem(NOTEBOOK_LINES_STORAGE_KEY);
+    if (linesSaved === "true" || linesSaved === "false") {
+      setNotebookLinesEnabled(linesSaved === "true");
+    }
+
+    const spellSaved = window.localStorage.getItem(SPELL_CHECK_STORAGE_KEY);
+    if (spellSaved === "true" || spellSaved === "false") {
+      setSpellCheckEnabled(spellSaved === "true");
+    }
+
+    const sizeSaved = window.localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    if (sizeSaved) {
+      const parsed = parseInt(sizeSaved, 10);
+      if (!isNaN(parsed)) {
+        setFontSize(parsed);
+      }
+    }
+  }, [hasPreferencesConsent]);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("app-theme", theme);
-  }, [theme]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem("app-theme", theme);
+    }
+  }, [theme, hasPreferencesConsent]);
 
   useEffect(() => {
-    localStorage.setItem(TYPING_EFFECTS_STORAGE_KEY, String(typingEffectsEnabled));
-  }, [typingEffectsEnabled]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem(TYPING_EFFECTS_STORAGE_KEY, String(typingEffectsEnabled));
+    }
+  }, [typingEffectsEnabled, hasPreferencesConsent]);
 
   useEffect(() => {
-    localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
-  }, [showWordCount]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
+    }
+  }, [showWordCount, hasPreferencesConsent]);
 
   useEffect(() => {
-    localStorage.setItem(NOTEBOOK_LINES_STORAGE_KEY, String(notebookLinesEnabled));
-  }, [notebookLinesEnabled]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem(NOTEBOOK_LINES_STORAGE_KEY, String(notebookLinesEnabled));
+    }
+  }, [notebookLinesEnabled, hasPreferencesConsent]);
 
   useEffect(() => {
-    localStorage.setItem(SPELL_CHECK_STORAGE_KEY, String(spellCheckEnabled));
-  }, [spellCheckEnabled]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem(SPELL_CHECK_STORAGE_KEY, String(spellCheckEnabled));
+    }
+  }, [spellCheckEnabled, hasPreferencesConsent]);
 
   useEffect(() => {
-    localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
-  }, [fontSize]);
+    if (hasPreferencesConsent) {
+      localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
+    }
+  }, [fontSize, hasPreferencesConsent]);
 
   useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
@@ -419,6 +528,65 @@ export default function Home() {
   };
 
   const handleTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    const textarea = event.currentTarget;
+
+    if ((event.metaKey || event.ctrlKey) && !event.altKey) {
+      const key = event.key.toLowerCase();
+
+      if (key === "b") {
+        event.preventDefault();
+        const result = wrapSelection(textarea, "**", "**", "bold text");
+        updateActiveNote({ body: result.nextValue });
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(
+            result.nextSelectionStart,
+            result.nextSelectionEnd
+          );
+        });
+        return;
+      }
+
+      if (key === "i") {
+        event.preventDefault();
+        const result = wrapSelection(textarea, "*", "*", "italic text");
+        updateActiveNote({ body: result.nextValue });
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(
+            result.nextSelectionStart,
+            result.nextSelectionEnd
+          );
+        });
+        return;
+      }
+
+      if (key === "k") {
+        event.preventDefault();
+        const result = wrapSelection(textarea, "[", "](https://)", "link text");
+        updateActiveNote({ body: result.nextValue });
+        requestAnimationFrame(() => {
+          textarea.setSelectionRange(
+            result.nextSelectionStart,
+            result.nextSelectionEnd
+          );
+        });
+        return;
+      }
+    }
+
+    if (event.key === "Tab" && !event.shiftKey) {
+      event.preventDefault();
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const nextValue =
+        textarea.value.slice(0, start) + "  " + textarea.value.slice(end);
+      updateActiveNote({ body: nextValue });
+      requestAnimationFrame(() => {
+        const caret = start + 2;
+        textarea.setSelectionRange(caret, caret);
+      });
+      return;
+    }
+
     if (!typingEffectsEnabled || !shouldPlayTypingFeedback(event)) {
       return;
     }
@@ -476,7 +644,7 @@ export default function Home() {
               value={body}
               onChange={(event) => updateActiveNote({ body: event.target.value })}
               onKeyDown={handleTextareaKeyDown}
-              placeholder="Type here"
+              placeholder="Type here (Markdown supported: **bold**, *italic*, [link](url))"
               spellCheck={spellCheckEnabled}
               style={{ fontSize: `${fontSize}px` }}
               className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""

@@ -1,6 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import {
+  CONSENT_CHANGED_EVENT,
+  hasPreferenceConsent,
+} from "@/lib/consent";
 
 type FontType = "sans" | "mono" | "pixel";
 
@@ -20,6 +24,9 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
     if (typeof window === "undefined") {
       return "sans";
     }
+    if (!hasPreferenceConsent()) {
+      return "sans";
+    }
 
     const savedFont = window.localStorage.getItem("app-font");
     return isValidFont(savedFont) ? savedFont : "sans";
@@ -27,8 +34,27 @@ export function FontProvider({ children }: { children: React.ReactNode }) {
 
   const setFont = (newFont: FontType) => {
     setFontState(newFont);
-    localStorage.setItem("app-font", newFont);
+    if (hasPreferenceConsent()) {
+      localStorage.setItem("app-font", newFont);
+    }
   };
+
+  useEffect(() => {
+    const syncFont = () => {
+      if (!hasPreferenceConsent()) {
+        return;
+      }
+      const savedFont = window.localStorage.getItem("app-font");
+      if (isValidFont(savedFont)) {
+        setFontState(savedFont);
+      }
+    };
+
+    window.addEventListener(CONSENT_CHANGED_EVENT, syncFont);
+    return () => {
+      window.removeEventListener(CONSENT_CHANGED_EVENT, syncFont);
+    };
+  }, []);
 
   // Sync state to DOM
   useEffect(() => {
