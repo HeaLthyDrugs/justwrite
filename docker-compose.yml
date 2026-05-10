@@ -1,0 +1,9 @@
+services:
+  justwrite:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: justwrite
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

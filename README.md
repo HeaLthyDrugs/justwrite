@@ -1,31 +1,44 @@
 # JustWrite
 
-A minimalist, distraction-free writing experience.
+Minimal, distraction-free writing app built with Next.js.
 
-## Getting Started
-
-First, run the development server:
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App: `http://localhost:3000`
 
-## Tech Stack
+## Docker Setup
 
-- **Framework**: [Next.js](https://nextjs.org)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com)
-- **Fonts**: [Geist](https://vercel.com/font)
+```bash
+# build image
+docker build -t justwrite .
 
-## Features
+# run container
+docker run --name justwrite -p 3000:3000 justwrite
+```
 
-- Clean, focused interface
-- Dark mode support
-- Mobile responsive
+Open `http://localhost:3000`
+
+With Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+## Features (Changelog Style)
+
+### May 10, 2026 - Launch Build
+
+- Local-first notes with autosave and offline-aware status.
+- Multi-note workflow: create, pin/unpin, delete, and updated timestamps.
+- Focus Mode for distraction-free writing.
+- Markdown shortcuts: `Ctrl/Cmd+B`, `Ctrl/Cmd+I`, `Ctrl/Cmd+K`, and `Tab` indent.
+- Export to TXT, Markdown, and JSON.
+- Settings: notebook lines, font size, word count, spell check, typing sound.
+- Theme toggle (light/dark) and font switching (sans, mono, pixel).
+- Legal pages: Privacy Policy, Terms of Service, Cookie Policy, Disclaimer.
+- Cookie/local-storage consent: essential storage always on, optional preferences by consent.
