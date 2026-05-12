@@ -55,6 +55,7 @@ const SHOW_SAVED_TIMESTAMP_STORAGE_KEY = "justwrite.show-saved-timestamp.enabled
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
+const FOCUS_MODE_STORAGE_KEY = "justwrite.focus-mode.enabled";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -179,6 +180,20 @@ function getInitialFontSize() {
   return 18;
 }
 
+function getInitialFocusMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  if (!hasPreferenceConsent()) {
+    return false;
+  }
+
+  const storedValue = window.localStorage.getItem(FOCUS_MODE_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return false;
+}
+
 function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return false;
@@ -222,7 +237,7 @@ function wrapSelection(
 
 export default function Home() {
   const [isOnline, setIsOnline] = useState(true);
-  const [focusMode, setFocusMode] = useState(false);
+  const [focusMode, setFocusMode] = useState(getInitialFocusMode);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
@@ -323,6 +338,11 @@ export default function Home() {
         setFontSize(parsed);
       }
     }
+
+    const focusModeSaved = window.localStorage.getItem(FOCUS_MODE_STORAGE_KEY);
+    if (focusModeSaved === "true" || focusModeSaved === "false") {
+      setFocusMode(focusModeSaved === "true");
+    }
   }, [hasPreferencesConsent]);
 
   useEffect(() => {
@@ -371,6 +391,12 @@ export default function Home() {
       localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(fontSize));
     }
   }, [fontSize, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(FOCUS_MODE_STORAGE_KEY, String(focusMode));
+    }
+  }, [focusMode, hasPreferencesConsent]);
 
   useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
