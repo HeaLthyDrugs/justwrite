@@ -12,7 +12,7 @@ export const siteConfig = {
   description:
     "Justwrite is a local-first notes app for fast, private writing. No login required, automatic saving, and a distraction-free editor.",
   url: normalizeSiteUrl(configuredSiteUrl || FALLBACK_SITE_URL),
-  ogImage: "/favicon/android-chrome-512x512.png",
+  ogImage: "/og.png",
 } as const;
 
 export const defaultKeywords = [
