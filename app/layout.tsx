@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: siteConfig.ogImage,
+        url: toAbsoluteUrl(siteConfig.ogImage),
         width: 512,
         height: 512,
         alt: "Justwrite app icon",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Justwrite | Your Private Local Notes",
     description: siteConfig.description,
-    images: [siteConfig.ogImage],
+    images: [toAbsoluteUrl(siteConfig.ogImage)],
   },
   icons: {
     icon: [

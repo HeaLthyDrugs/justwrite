@@ -1,17 +1,38 @@
-export const FALLBACK_SITE_URL = "https://justwrite.app";
+export const FALLBACK_SITE_URL = "https://justwrite.sbs";
 
 function normalizeSiteUrl(url: string) {
-  return url.endsWith("/") ? url.slice(0, -1) : url;
+  const trimmed = url.trim();
+  if (!trimmed) return FALLBACK_SITE_URL;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  return withProtocol.endsWith("/")
+    ? withProtocol.slice(0, -1)
+    : withProtocol;
 }
 
-const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+function resolveSiteUrl() {
+  const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configuredSiteUrl) return normalizeSiteUrl(configuredSiteUrl);
+
+  const vercelProductionUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercelProductionUrl) return normalizeSiteUrl(vercelProductionUrl);
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return normalizeSiteUrl(vercelUrl);
+
+  return FALLBACK_SITE_URL;
+}
 
 export const siteConfig = {
   name: "Justwrite",
   shortName: "Justwrite",
   description:
     "Justwrite is a local-first notes app for fast, private writing. No login required, automatic saving, and a distraction-free editor.",
-  url: normalizeSiteUrl(configuredSiteUrl || FALLBACK_SITE_URL),
+  url: resolveSiteUrl(),
   ogImage: "/og.png",
 } as const;
 
