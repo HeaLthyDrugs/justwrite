@@ -1,0 +1,68 @@
+---
+title: JustWrite - Minimal Distraction-Free Writing App
+description: A local-first writing application that enables distraction-free note-taking with offline support, multi-note workflow, and export capabilities — all without accounts or cloud dependency.
+image: https://assets.mnsh.online/work/justwrite/light-mode-home.png
+status: Completed
+liveUrl: https://justwrite.app
+repoUrl: https://github.com/anomalyco/justwrite
+gallery:
+  - type: image
+    url: https://assets.mnsh.online/work/justwrite/light-mode-home.png
+  - type: image
+    url: https://assets.mnsh.online/work/justwrite/dark-mode-home.png
+  - type: image
+    url: https://assets.mnsh.online/work/justwrite/notes-drawer.png
+  - type: image
+    url: https://assets.mnsh.online/work/justwrite/settings-drawer.png
+  - type: image
+    url: https://assets.mnsh.online/work/justwrite/notebook-lines.png
+---
+
+## Purpose
+
+JustWrite is a minimal, distraction-free writing application designed for writers, developers, and anyone who needs a clean environment to focus on their content. Whether you're drafting a blog post, sketching out code documentation, or just need to quickly save a note, JustWrite provides a seamless experience. The app runs entirely in the browser with no account required, no cloud storage, and full offline capability — giving users complete control over their data.
+
+## Problem
+
+Users face a common problem: most note-taking apps require accounts, force cloud storage, or need constant internet connection. This creates dependency on third-party services, raises privacy concerns, and breaks workflow when offline. For developers who need to jot down quick thoughts or writers seeking a private space, the friction of "logging in" often kills the creative flow. JustWrite exists to solve this by keeping everything local — the user's notes never leave their device.
+
+## Solution
+
+Built a local-first writing app that works offline and requires no account.
+
+- Notes stored in browser localStorage with autosave
+- Full offline support with offline-aware status indicator
+- Multi-note workflow: create, pin, delete, and switch between notes
+- Focus Mode hides all UI for distraction-free writing
+- Markdown shortcuts: Ctrl/Cmd+B (bold), Ctrl/Cmd+I (italic), Ctrl/Cmd+K (link)
+- Export to TXT, Markdown, and JSON formats
+- Customizable settings: notebook lines, font size, word count, spell check, typing sound effects
+- Theme toggle (light/dark) with system preference detection
+- Font switching: sans, mono, and pixel fonts
+
+## Process
+
+Built in phases over a short timeline focusing on core functionality first.
+
+- Phase 1: Core text editor with autosave and localStorage persistence
+- Phase 2: Multi-note management with create, pin, and delete operations
+- Phase 3: Focus Mode and export functionality
+- Phase 4: Settings panel with all customization options
+- Phase 5: Offline support and PWA capabilities
+
+## Tech Stack
+
+- Next.js 16 — React framework for server-side rendering and routing
+- React 19 — UI library with hooks for state management
+- TypeScript — Type-safe development
+- Tailwind CSS 4 — Utility-first styling
+- Radix UI — Accessible component primitives
+- Framer Motion — Animation library
+- Hugeicons — Icon system
+- Heroui — UI component library
+- LocalStorage API — Browser-based data persistence
+- Service Worker — Offline capability and PWA support
+
+## Impact
+
+JustWrite provides users with a reliable tool that works completely offline and maintains privacy. From developers documenting logic to writers crafting stories, notes are stored locally with no account required — the user has full ownership and control. The Focus Mode and minimalist interface help maintain concentration during writing sessions. Export capabilities ensure users can move their content elsewhere anytime. The app serves as a dependable, privacy-focused environment that prioritizes the user's workflow over features.
