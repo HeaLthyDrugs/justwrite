@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
@@ -259,6 +259,10 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const closeDrawers = useCallback(() => {
+    setDrawerOpen(false);
+    setSettingsOpen(false);
+  }, []);
 
   const notes = notesState.notes;
   const activeNoteId = notesState.activeNoteId;
@@ -671,6 +675,31 @@ export default function Home() {
     });
   };
 
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!drawerOpen && !settingsOpen) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      if (!target) {
+        return;
+      }
+
+      if (
+        target.closest("[data-drawer-root]") ||
+        target.closest("[data-drawer-toggle]")
+      ) {
+        return;
+      }
+
+      closeDrawers();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [closeDrawers, drawerOpen, settingsOpen]);
+
   const handleExport = (format: ExportFormat) => {
     try {
       if (format === "txt") {
@@ -940,8 +969,16 @@ export default function Home() {
             <textarea
               ref={textareaRef}
               value={body}
-              onChange={(event) => updateActiveNote({ body: event.target.value })}
-              onKeyDown={handleTextareaKeyDown}
+              onChange={(event) => {
+                closeDrawers();
+                updateActiveNote({ body: event.target.value });
+              }}
+              onFocus={closeDrawers}
+              onPointerDown={closeDrawers}
+              onKeyDown={(event) => {
+                closeDrawers();
+                handleTextareaKeyDown(event);
+              }}
               placeholder="Start. Flow. Finish."
               spellCheck={spellCheckEnabled}
               style={{ fontSize: `${fontSize}px` }}
@@ -1031,14 +1068,16 @@ export default function Home() {
 
                 <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
 
-                <IconButton
-                  label={settingsOpen ? "Close settings" : "Open settings"}
-                  onClick={() => setSettingsOpen((prev) => !prev)}
-                  pressed={settingsOpen}
-                  className="h-8 w-8 border-none"
-                >
-                  <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
-                </IconButton>
+                <div data-drawer-toggle>
+                  <IconButton
+                    label={settingsOpen ? "Close settings" : "Open settings"}
+                    onClick={() => setSettingsOpen((prev) => !prev)}
+                    pressed={settingsOpen}
+                    className="h-8 w-8 border-none"
+                  >
+                    <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
+                  </IconButton>
+                </div>
 
                 <IconButton
                   label={
@@ -1055,18 +1094,20 @@ export default function Home() {
                   />
                 </IconButton>
 
-                <IconButton
-                  label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-                  onClick={() => setDrawerOpen((prev) => !prev)}
-                  pressed={drawerOpen}
-                  className="h-8 w-8 border-none"
-                >
-                  <HugeiconsIcon
-                    icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
-                    size={16}
-                    strokeWidth={1.6}
-                  />
-                </IconButton>
+                <div data-drawer-toggle>
+                  <IconButton
+                    label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
+                    onClick={() => setDrawerOpen((prev) => !prev)}
+                    pressed={drawerOpen}
+                    className="h-8 w-8 border-none"
+                  >
+                    <HugeiconsIcon
+                      icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
+                      size={16}
+                      strokeWidth={1.6}
+                    />
+                  </IconButton>
+                </div>
                 <IconButton
                   label={focusMode ? "Exit focus" : "Focus mode"}
                   onClick={toggleFocus}
@@ -1129,14 +1170,16 @@ export default function Home() {
             </DropdownMenuPrimitive.Portal>
           </DropdownMenuPrimitive.Root>
 
-          <IconButton
-            label={settingsOpen ? "Close settings" : "Open settings"}
-            onClick={() => setSettingsOpen((prev) => !prev)}
-            pressed={settingsOpen}
-            className="h-8 w-8 border-none"
-          >
-            <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
-          </IconButton>
+          <div data-drawer-toggle>
+            <IconButton
+              label={settingsOpen ? "Close settings" : "Open settings"}
+              onClick={() => setSettingsOpen((prev) => !prev)}
+              pressed={settingsOpen}
+              className="h-8 w-8 border-none"
+            >
+              <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
+            </IconButton>
+          </div>
 
           <IconButton
             label={
@@ -1153,18 +1196,20 @@ export default function Home() {
             />
           </IconButton>
 
-          <IconButton
-            label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-            onClick={() => setDrawerOpen((prev) => !prev)}
-            pressed={drawerOpen}
-            className="h-8 w-8 border-none"
-          >
-            <HugeiconsIcon
-              icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
-              size={16}
-              strokeWidth={1.6}
-            />
-          </IconButton>
+          <div data-drawer-toggle>
+            <IconButton
+              label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
+              onClick={() => setDrawerOpen((prev) => !prev)}
+              pressed={drawerOpen}
+              className="h-8 w-8 border-none"
+            >
+              <HugeiconsIcon
+                icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
+                size={16}
+                strokeWidth={1.6}
+              />
+            </IconButton>
+          </div>
 
           <IconButton
             label={focusMode ? "Exit focus" : "Focus mode"}

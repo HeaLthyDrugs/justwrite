@@ -256,6 +256,7 @@ export function NotesDrawer({
   return (
     <aside
       aria-hidden={!isOpen}
+      data-drawer-root="notes"
       className={`fixed right-6 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white/10 p-5 shadow-[0_24px_60px_rgba(15,15,15,0.12)] backdrop-blur-[40px] transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-zinc-900/30 ${className}`}
     >
       <div className="flex shrink-0 items-center justify-between">
