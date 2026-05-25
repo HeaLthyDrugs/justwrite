@@ -185,11 +185,30 @@ body {
 .notebook-lines {
   --line-h: rgba(0, 0, 0, 0.1);
   --line-v: rgba(239, 68, 68, 0.4);
+  --notebook-rule-thickness: 1px;
+  --notebook-line-height: calc(var(--editor-line-height, 1.8) * 1em);
+  --notebook-rule-offset: calc(var(--notebook-line-height) - var(--notebook-rule-thickness));
+  --notebook-margin-left: 24px;
   background-image: 
-    linear-gradient(90deg, transparent 24px, var(--line-v) 24px, var(--line-v) 25px, transparent 25px),
-    repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
+    linear-gradient(
+      90deg,
+      transparent var(--notebook-margin-left),
+      var(--line-v) var(--notebook-margin-left),
+      var(--line-v) calc(var(--notebook-margin-left) + 1px),
+      transparent calc(var(--notebook-margin-left) + 1px)
+    ),
+    linear-gradient(
+      180deg,
+      transparent var(--notebook-rule-offset),
+      var(--line-h) var(--notebook-rule-offset),
+      var(--line-h) var(--notebook-line-height)
+    );
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 100% var(--notebook-line-height);
   background-attachment: local;
-  background-position: 0 0, 0 calc(32px + 1.25em);
+  background-position: 0 0, 0 0;
+  background-origin: border-box, content-box;
+  background-clip: border-box, padding-box;
 }
 
 .dark .notebook-lines {
@@ -197,20 +216,20 @@ body {
   --line-v: rgba(239, 68, 68, 0.4);
 }
 
+@supports (height: 1lh) {
+  .notebook-lines {
+    --notebook-line-height: 1lh;
+  }
+}
+
 @media (min-width: 768px) {
   .notebook-lines {
-    background-image: 
-      linear-gradient(90deg, transparent 32px, var(--line-v) 32px, var(--line-v) 33px, transparent 33px),
-      repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
-    background-position: 0 0, 0 calc(40px + 1.25em);
+    --notebook-margin-left: 32px;
   }
 }
 
 @media (min-width: 1024px) {
   .notebook-lines {
-    background-image: 
-      linear-gradient(90deg, transparent 48px, var(--line-v) 48px, var(--line-v) 49px, transparent 49px),
-      repeating-linear-gradient(180deg, transparent, transparent calc(1.8em - 1px), var(--line-h) calc(1.8em - 1px), var(--line-h) 1.8em);
-    background-position: 0 0, 0 calc(48px + 1.25em);
+    --notebook-margin-left: 48px;
   }
 }

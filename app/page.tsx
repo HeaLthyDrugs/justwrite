@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
@@ -943,6 +951,11 @@ export default function Home() {
     triggerHapticEffect();
   };
 
+  const textareaStyle: CSSProperties & { "--editor-line-height": number } = {
+    fontSize: `${fontSize}px`,
+    "--editor-line-height": 1.8,
+  };
+
   return (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
       <div
@@ -998,8 +1011,8 @@ export default function Home() {
               }}
               placeholder="Start. Flow. Finish."
               spellCheck={spellCheckEnabled}
-              style={{ fontSize: `${fontSize}px` }}
-              className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[1.8] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
+              style={textareaStyle}
+              className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
                 }`}
             />
             {!focusMode && (showWordCount || showSavedTimestamp || !isOnline) ? (
