@@ -13,7 +13,6 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { IconButton } from "@/components/ui/icon-button";
-import { Kbd } from "@/components/ui/kbd";
 
 interface FamilyDrawerProps {
   isOpen: boolean;
@@ -48,24 +47,10 @@ export function FamilyDrawer({
   fontSize,
   onFontSizeChange,
 }: FamilyDrawerProps) {
-  const shortcutRows = [
-    { keys: ["Ctrl/Cmd", "S"], action: "Save now" },
-    { keys: ["Ctrl/Cmd", "Shift", "N"], action: "Create new note" },
-    { keys: ["Ctrl/Cmd", "Shift", "[", "]"], action: "Previous / next note" },
-    { keys: ["Ctrl/Cmd", "Shift", "L"], action: "Toggle notes drawer" },
-    { keys: ["Ctrl/Cmd", "Shift", "S"], action: "Toggle settings drawer" },
-    { keys: ["Ctrl/Cmd", "Shift", "F"], action: "Toggle focus mode" },
-    { keys: ["Ctrl/Cmd", "Shift", "T"], action: "Toggle light/dark theme" },
-    { keys: ["Ctrl/Cmd", "Shift", "M"], action: "Cycle app font" },
-    { keys: ["Ctrl/Cmd", "Shift", "P"], action: "Pin or unpin active note" },
-    { keys: ["Ctrl/Cmd", "Shift", "Backspace"], action: "Delete active note" },
-    { keys: ["Ctrl/Cmd", "Shift", "1", "2", "3"], action: "Export TXT / MD / JSON" },
-    { keys: ["Ctrl/Cmd", "Shift", "?"], action: "Show shortcut help toast" },
-  ];
-
   const quickPages = [
     { href: "/changelog", label: "Changelog" },
     { href: "/about", label: "About" },
+    { href: "/shortcuts", label: "Shortcuts" },
   ];
 
   const legalLinks = [
@@ -283,56 +268,6 @@ export function FamilyDrawer({
                 }`}
             />
           </button>
-          </div>
-
-          <div className="border-t border-black/5 pt-4 dark:border-white/10">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
-            Keyboard
-          </div>
-          <div className="overflow-hidden rounded-xl border border-black/5 bg-white/35 dark:border-white/10 dark:bg-white/[0.03]">
-            <table className="w-full border-collapse text-[11px]">
-              <thead>
-                <tr className="border-b border-black/5 bg-black/[0.03] dark:border-white/10 dark:bg-white/[0.04]">
-                  <th className="px-2.5 py-1.5 text-left font-semibold uppercase tracking-[0.08em] text-zinc-600 dark:text-zinc-300">
-                    Shortcut
-                  </th>
-                  <th className="px-2.5 py-1.5 text-left font-semibold uppercase tracking-[0.08em] text-zinc-600 dark:text-zinc-300">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {shortcutRows.map((item, index) => (
-                  <tr
-                    key={`${item.action}-${index}`}
-                    className="border-b border-black/5 last:border-b-0 dark:border-white/10"
-                  >
-                    <td className="px-2.5 py-1.5 align-top">
-                      <div className="inline-flex flex-wrap items-center gap-1">
-                        {item.keys.map((part, keyIndex) => (
-                          <span key={`${part}-${keyIndex}`} className="inline-flex items-center gap-1">
-                            {keyIndex > 0 ? (
-                              part === "]" ? (
-                                <span className="text-zinc-400">/</span>
-                              ) : part === "2" || part === "3" ? (
-                                <span className="text-zinc-400">/</span>
-                              ) : (
-                                <span className="text-zinc-400">+</span>
-                              )
-                            ) : null}
-                            <Kbd>{part}</Kbd>
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-2.5 py-1.5 text-zinc-600 dark:text-zinc-300">
-                      {item.action}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
           </div>
 
           <div className="mt-1 border-t border-black/5 pt-4 dark:border-white/10">

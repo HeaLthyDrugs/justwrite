@@ -1,14 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { CONSENT_STORAGE_KEY, readConsentState, setConsentState } from "@/lib/consent";
+import { useEffect, useState } from "react";
+import {
+  CONSENT_CHANGED_EVENT,
+  CONSENT_STORAGE_KEY,
+  readConsentState,
+  setConsentState,
+} from "@/lib/consent";
 
 export function CookieConsentBanner() {
-  const [consentState, setLocalConsentState] = useState(readConsentState);
-  const visible = useMemo(() => consentState === "unset", [consentState]);
+  const [consentState, setLocalConsentState] = useState<
+    ReturnType<typeof readConsentState> | null
+  >(null);
 
-  if (!visible) {
+  useEffect(() => {
+    const syncConsent = () => {
+      setLocalConsentState(readConsentState());
+    };
+
+    syncConsent();
+    window.addEventListener("storage", syncConsent);
+    window.addEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+
+    return () => {
+      window.removeEventListener("storage", syncConsent);
+      window.removeEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+    };
+  }, []);
+
+  if (consentState !== "unset") {
     return null;
   }
 

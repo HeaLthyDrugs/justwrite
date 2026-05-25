@@ -34,7 +34,6 @@ import {
 import {
   createEmptyNote,
   formatNoteDateTime,
-  getNoteDisplayTitle,
   type Note,
   loadNotesSnapshot,
   NOTES_STORAGE_VERSION,
@@ -44,7 +43,6 @@ import {
   CONSENT_CHANGED_EVENT,
   hasPreferenceConsent,
 } from "@/lib/consent";
-import { useFont } from "@/components/font-context";
 
 interface NotesState {
   notes: Note[];
@@ -58,8 +56,6 @@ const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
 const FOCUS_MODE_STORAGE_KEY = "justwrite.focus-mode.enabled";
-const SHORTCUT_HINT_TEXT =
-  "New Ctrl/Cmd+Shift+N, Notes Ctrl/Cmd+Shift+L, Settings Ctrl/Cmd+Shift+S, Focus Ctrl/Cmd+Shift+F, Theme Ctrl/Cmd+Shift+T, Next note Ctrl/Cmd+Shift+], Previous note Ctrl/Cmd+Shift+[.";
 
 type ExportFormat = "txt" | "md" | "json";
 
@@ -242,7 +238,6 @@ function wrapSelection(
 }
 
 export default function Home() {
-  const { font, setFont } = useFont();
   const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -274,24 +269,6 @@ export default function Home() {
   );
 
   const body = activeNote.body;
-
-  const sortedNotes = useMemo(
-    () =>
-      [...notes].sort((left, right) => {
-        if (left.isPinned !== right.isPinned) {
-          return left.isPinned ? -1 : 1;
-        }
-        return (
-          new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
-        );
-      }),
-    [notes]
-  );
-
-  const activeSortedNoteIndex = useMemo(
-    () => sortedNotes.findIndex((note) => note.id === activeNote.id),
-    [sortedNotes, activeNote.id]
-  );
 
   const wordCount = useMemo(() => {
     const trimmed = body.trim();
@@ -694,85 +671,6 @@ export default function Home() {
     });
   };
 
-  const cycleActiveFont = () => {
-    const orderedFonts: Array<"sans" | "mono" | "pixel"> = ["sans", "mono", "pixel"];
-    const currentIndex = orderedFonts.indexOf(font);
-    const nextFont = orderedFonts[(currentIndex + 1) % orderedFonts.length];
-    setFont(nextFont);
-    pushToast({
-      type: "info",
-      icon: TextFontIcon,
-      title: "Font changed",
-      description: `Font switched to ${nextFont}.`,
-    });
-  };
-
-  const toggleNotesDrawerWithFocus = () => {
-    if (focusMode) {
-      setFocusMode(false);
-      setSettingsOpen(false);
-      setDrawerOpen(true);
-      focusEditor();
-      return;
-    }
-    setDrawerOpen((previous) => !previous);
-  };
-
-  const toggleSettingsWithFocus = () => {
-    if (focusMode) {
-      setFocusMode(false);
-      setDrawerOpen(false);
-      setSettingsOpen(true);
-      focusEditor();
-      return;
-    }
-    setSettingsOpen((previous) => !previous);
-  };
-
-  const switchActiveNote = (direction: -1 | 1) => {
-    if (sortedNotes.length < 2) {
-      return;
-    }
-    const startingIndex = activeSortedNoteIndex >= 0 ? activeSortedNoteIndex : 0;
-    const nextIndex =
-      (startingIndex + direction + sortedNotes.length) % sortedNotes.length;
-    const nextNote = sortedNotes[nextIndex];
-    if (!nextNote) {
-      return;
-    }
-    setNotesState((previousState) => ({
-      ...previousState,
-      activeNoteId: nextNote.id,
-    }));
-    focusEditor();
-    pushToast({
-      type: "info",
-      title: "Note switched",
-      description: getNoteDisplayTitle(nextNote, 36),
-    });
-  };
-
-  const handleDeleteActiveNote = () => {
-    if (!activeNote) {
-      return;
-    }
-    handleDeleteNote(activeNote.id);
-    focusEditor();
-  };
-
-  const handleManualSave = () => {
-    saveNotesSnapshot({
-      version: NOTES_STORAGE_VERSION,
-      notes: notesState.notes,
-      activeNoteId: notesState.activeNoteId,
-    });
-    pushToast({
-      type: "success",
-      title: "Saved",
-      description: "Your note is saved locally.",
-    });
-  };
-
   const handleExport = (format: ExportFormat) => {
     try {
       if (format === "txt") {
@@ -821,129 +719,70 @@ export default function Home() {
 
   useEffect(() => {
     const handleGlobalShortcut = (event: globalThis.KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey) {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;
       }
 
-      const key = event.key.toLowerCase();
-      if (!event.shiftKey) {
-        if (key === "s") {
-          event.preventDefault();
-          handleManualSave();
-        }
+      if (event.repeat) {
         return;
       }
 
-      if (event.repeat && key !== "[" && key !== "]") {
-        return;
-      }
-
-      if (key === "n") {
+      if (event.code === "Digit1" || event.code === "Numpad1") {
         event.preventDefault();
+        event.stopPropagation();
         handleCreateNote();
         focusEditor();
         return;
       }
 
-      if (key === "l") {
+      if (event.code === "Digit2" || event.code === "Numpad2") {
         event.preventDefault();
-        toggleNotesDrawerWithFocus();
+        event.stopPropagation();
+        handleThemeToggle();
         return;
       }
 
-      if (key === "s") {
+      if (event.code === "Digit3" || event.code === "Numpad3") {
         event.preventDefault();
-        toggleSettingsWithFocus();
-        return;
-      }
-
-      if (key === "f") {
-        event.preventDefault();
+        event.stopPropagation();
         toggleFocus();
         focusEditor();
         return;
       }
 
-      if (key === "t") {
+      if (event.code === "Digit4" || event.code === "Numpad4") {
         event.preventDefault();
-        handleThemeToggle();
+        event.stopPropagation();
+        handleFontSizeChange(Math.min(32, fontSize + 1));
         return;
       }
 
-      if (key === "[") {
+      if (event.code === "Digit5" || event.code === "Numpad5") {
         event.preventDefault();
-        switchActiveNote(-1);
+        event.stopPropagation();
+        handleTypingEffectsChange(!typingEffectsEnabled);
         return;
       }
 
-      if (key === "]") {
+      if (event.code === "Digit6" || event.code === "Numpad6") {
         event.preventDefault();
-        switchActiveNote(1);
-        return;
-      }
-
-      if (key === "p") {
-        event.preventDefault();
-        handleTogglePinned(activeNote.id);
-        return;
-      }
-
-      if (key === "backspace") {
-        event.preventDefault();
-        handleDeleteActiveNote();
-        return;
-      }
-
-      if (key === "1") {
-        event.preventDefault();
-        handleExport("txt");
-        return;
-      }
-
-      if (key === "2") {
-        event.preventDefault();
-        handleExport("md");
-        return;
-      }
-
-      if (key === "3") {
-        event.preventDefault();
-        handleExport("json");
-        return;
-      }
-
-      if (key === "/" || key === "?") {
-        event.preventDefault();
-        pushToast({
-          type: "info",
-          title: "Keyboard shortcuts",
-          description: SHORTCUT_HINT_TEXT,
-        });
-        return;
-      }
-
-      if (key === "m") {
-        event.preventDefault();
-        cycleActiveFont();
+        event.stopPropagation();
+        handleNotebookLinesChange(!notebookLinesEnabled);
       }
     };
 
-    window.addEventListener("keydown", handleGlobalShortcut);
-    return () => window.removeEventListener("keydown", handleGlobalShortcut);
+    document.addEventListener("keydown", handleGlobalShortcut, true);
+    return () => document.removeEventListener("keydown", handleGlobalShortcut, true);
   }, [
-    activeNote.id,
-    cycleActiveFont,
     handleCreateNote,
-    handleDeleteActiveNote,
-    handleExport,
-    handleManualSave,
+    handleFontSizeChange,
+    handleNotebookLinesChange,
     handleThemeToggle,
-    handleTogglePinned,
-    pushToast,
-    switchActiveNote,
+    handleTypingEffectsChange,
+    fontSize,
+    notebookLinesEnabled,
     toggleFocus,
-    toggleNotesDrawerWithFocus,
-    toggleSettingsWithFocus,
+    typingEffectsEnabled,
   ]);
 
   const exportItems = [

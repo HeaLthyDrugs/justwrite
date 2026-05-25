@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const changelogEntries = [
   {
     date: "May 10, 2026",
@@ -39,6 +41,15 @@ export default function ChangelogPage() {
               </ul>
             </section>
           ))}
+        </div>
+
+        <div className="mt-6">
+          <Link
+            href="/"
+            className="text-sm font-medium text-zinc-600 underline underline-offset-4 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+          >
+            Back to Editor
+          </Link>
         </div>
       </div>
     </main>
