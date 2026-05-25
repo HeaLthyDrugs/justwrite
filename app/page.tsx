@@ -43,6 +43,10 @@ import {
   CONSENT_CHANGED_EVENT,
   hasPreferenceConsent,
 } from "@/lib/consent";
+import {
+  THEME_SHORTCUT_TOGGLED_EVENT,
+  type AppTheme,
+} from "@/lib/theme-shortcut";
 
 interface NotesState {
   notes: Note[];
@@ -747,6 +751,27 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const handleThemeShortcutToggle = (
+      event: Event
+    ) => {
+      const nextTheme = (event as CustomEvent<AppTheme>).detail;
+      if (nextTheme === "light" || nextTheme === "dark") {
+        setTheme(nextTheme);
+      }
+    };
+
+    window.addEventListener(
+      THEME_SHORTCUT_TOGGLED_EVENT,
+      handleThemeShortcutToggle as EventListener
+    );
+    return () =>
+      window.removeEventListener(
+        THEME_SHORTCUT_TOGGLED_EVENT,
+        handleThemeShortcutToggle as EventListener
+      );
+  }, []);
+
+  useEffect(() => {
     const handleGlobalShortcut = (event: globalThis.KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;
@@ -761,13 +786,6 @@ export default function Home() {
         event.stopPropagation();
         handleCreateNote();
         focusEditor();
-        return;
-      }
-
-      if (event.code === "Digit2" || event.code === "Numpad2") {
-        event.preventDefault();
-        event.stopPropagation();
-        handleThemeToggle();
         return;
       }
 
@@ -806,7 +824,6 @@ export default function Home() {
     handleCreateNote,
     handleFontSizeChange,
     handleNotebookLinesChange,
-    handleThemeToggle,
     handleTypingEffectsChange,
     fontSize,
     notebookLinesEnabled,

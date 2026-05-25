@@ -4,6 +4,7 @@ import "./globals.css";
 import { FontProvider } from "@/components/font-context";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { GlobalThemeShortcut } from "@/components/global-theme-shortcut";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { defaultKeywords, siteConfig, toAbsoluteUrl } from "@/lib/seo";
@@ -85,6 +86,7 @@ export default function RootLayout({
         <TooltipProvider>
           <FontProvider>
             <ServiceWorkerRegister />
+            <GlobalThemeShortcut />
             {children}
             <CookieConsentBanner />
           </FontProvider>
