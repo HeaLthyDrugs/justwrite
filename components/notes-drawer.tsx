@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Delete02Icon,
@@ -178,11 +178,63 @@ export function NotesDrawer({
   const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<string | null>(
     null
   );
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const [showTopEdgeBlur, setShowTopEdgeBlur] = useState(false);
+  const [showBottomEdgeBlur, setShowBottomEdgeBlur] = useState(false);
+  const topEdgeMask =
+    "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.82) 36%, rgba(0,0,0,0.38) 74%, rgba(0,0,0,0) 100%)";
+  const bottomEdgeMask =
+    "linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.82) 36%, rgba(0,0,0,0.38) 74%, rgba(0,0,0,0) 100%)";
 
   const visiblePendingDeleteNoteId =
     pendingDeleteNoteId && notes.some((note) => note.id === pendingDeleteNoteId)
       ? pendingDeleteNoteId
       : null;
+
+  const updateEdgeBlurVisibility = useCallback(() => {
+    const container = scrollContainerRef.current;
+    const edgeTolerance = 6;
+    const fadeHeight = 76;
+
+    if (!container) {
+      setShowTopEdgeBlur(false);
+      setShowBottomEdgeBlur(false);
+      return;
+    }
+
+    const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+    const hasOverflow = maxScrollTop > 1;
+
+    if (!hasOverflow) {
+      setShowTopEdgeBlur(false);
+      setShowBottomEdgeBlur(false);
+      return;
+    }
+
+    const atTop = container.scrollTop <= edgeTolerance;
+    const remainingScroll = Math.max(0, maxScrollTop - container.scrollTop);
+    const atBottom = remainingScroll <= Math.max(edgeTolerance, fadeHeight * 0.7);
+
+    setShowTopEdgeBlur(!atTop);
+    setShowBottomEdgeBlur(!atBottom);
+  }, []);
+
+  useEffect(() => {
+    const animationFrame = window.requestAnimationFrame(updateEdgeBlurVisibility);
+    const handleResize = () => updateEdgeBlurVisibility();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [
+    isOpen,
+    notes.length,
+    visiblePendingDeleteNoteId,
+    updateEdgeBlurVisibility,
+  ]);
 
   const sortedNotes = useMemo(
     () =>
@@ -204,9 +256,9 @@ export function NotesDrawer({
   return (
     <aside
       aria-hidden={!isOpen}
-      className={`fixed right-6 top-1/2 z-30 w-[320px] -translate-y-1/2 rounded-[28px] border border-black/5 bg-white/10 p-5 shadow-[0_24px_60px_rgba(15,15,15,0.12)] backdrop-blur-[40px] transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-zinc-900/30 ${className}`}
+      className={`fixed right-6 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white/10 p-5 shadow-[0_24px_60px_rgba(15,15,15,0.12)] backdrop-blur-[40px] transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-zinc-900/30 ${className}`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">
           Notes
           <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] tracking-normal text-zinc-500 dark:bg-white/10 dark:text-zinc-300">
@@ -231,43 +283,101 @@ export function NotesDrawer({
         </div>
       </div>
 
-      <div className="mt-6 space-y-5">
-        {pinnedNotes.length > 0 ? (
-          <NotesSection
-            title="Pinned"
-            notes={pinnedNotes}
-            activeNoteId={activeNoteId}
-            pendingDeleteNoteId={visiblePendingDeleteNoteId}
-            onSelectNote={onSelectNote}
-            onTogglePin={onTogglePin}
-            onRequestDelete={setPendingDeleteNoteId}
-            onCancelDelete={() => setPendingDeleteNoteId(null)}
-            onConfirmDelete={(noteId) => {
-              setPendingDeleteNoteId(null);
-              onDeleteNote(noteId);
-            }}
-          />
+      <div className="relative mt-6 min-h-0 flex-1 overflow-hidden -mx-5 px-5 isolate">
+        <div
+          ref={scrollContainerRef}
+          onScroll={updateEdgeBlurVisibility}
+          className="h-full space-y-5 overflow-y-auto pr-1 pt-2 pb-0"
+        >
+          {pinnedNotes.length > 0 ? (
+            <NotesSection
+              title="Pinned"
+              notes={pinnedNotes}
+              activeNoteId={activeNoteId}
+              pendingDeleteNoteId={visiblePendingDeleteNoteId}
+              onSelectNote={onSelectNote}
+              onTogglePin={onTogglePin}
+              onRequestDelete={setPendingDeleteNoteId}
+              onCancelDelete={() => setPendingDeleteNoteId(null)}
+              onConfirmDelete={(noteId) => {
+                setPendingDeleteNoteId(null);
+                onDeleteNote(noteId);
+              }}
+            />
+          ) : null}
+          {unpinnedNotes.length > 0 ? (
+            <NotesSection
+              title="All Notes"
+              notes={unpinnedNotes}
+              activeNoteId={activeNoteId}
+              pendingDeleteNoteId={visiblePendingDeleteNoteId}
+              onSelectNote={onSelectNote}
+              onTogglePin={onTogglePin}
+              onRequestDelete={setPendingDeleteNoteId}
+              onCancelDelete={() => setPendingDeleteNoteId(null)}
+              onConfirmDelete={(noteId) => {
+                setPendingDeleteNoteId(null);
+                onDeleteNote(noteId);
+              }}
+            />
+          ) : null}
+          {notes.length === 0 ? (
+            <div className="rounded-2xl border border-black/5 bg-white/40 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+              No notes yet. Create one to get started.
+            </div>
+          ) : null}
+        </div>
+        {showTopEdgeBlur ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-[76px] backdrop-blur-[12px]"
+              style={{ WebkitMaskImage: topEdgeMask, maskImage: topEdgeMask }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-[76px] dark:hidden"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 10%, rgba(255,255,255,0.45) 90%, rgba(255,255,255,0) 100%), linear-gradient(to bottom, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 100%)",
+                WebkitMaskImage: topEdgeMask,
+                maskImage: topEdgeMask,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 hidden h-[76px] dark:block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(9,9,11,0) 0%, rgba(9,9,11,0.32) 10%, rgba(9,9,11,0.32) 90%, rgba(9,9,11,0) 100%), linear-gradient(to bottom, rgba(9,9,11,0.58) 0%, rgba(9,9,11,0.32) 52%, rgba(9,9,11,0) 100%)",
+                WebkitMaskImage: topEdgeMask,
+                maskImage: topEdgeMask,
+              }}
+            />
+          </>
         ) : null}
-        {unpinnedNotes.length > 0 ? (
-          <NotesSection
-            title="All Notes"
-            notes={unpinnedNotes}
-            activeNoteId={activeNoteId}
-            pendingDeleteNoteId={visiblePendingDeleteNoteId}
-            onSelectNote={onSelectNote}
-            onTogglePin={onTogglePin}
-            onRequestDelete={setPendingDeleteNoteId}
-            onCancelDelete={() => setPendingDeleteNoteId(null)}
-            onConfirmDelete={(noteId) => {
-              setPendingDeleteNoteId(null);
-              onDeleteNote(noteId);
-            }}
-          />
-        ) : null}
-        {notes.length === 0 ? (
-          <div className="rounded-2xl border border-black/5 bg-white/40 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
-            No notes yet. Create one to get started.
-          </div>
+        {showBottomEdgeBlur ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[76px] backdrop-blur-[12px]"
+              style={{ WebkitMaskImage: bottomEdgeMask, maskImage: bottomEdgeMask }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[76px] dark:hidden"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.45) 10%, rgba(255,255,255,0.45) 90%, rgba(255,255,255,0) 100%), linear-gradient(to top, rgba(255,255,255,0.82) 0%, rgba(255,255,255,0.5) 52%, rgba(255,255,255,0) 100%)",
+                WebkitMaskImage: bottomEdgeMask,
+                maskImage: bottomEdgeMask,
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-[76px] dark:block"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(9,9,11,0) 0%, rgba(9,9,11,0.32) 10%, rgba(9,9,11,0.32) 90%, rgba(9,9,11,0) 100%), linear-gradient(to top, rgba(9,9,11,0.58) 0%, rgba(9,9,11,0.32) 52%, rgba(9,9,11,0) 100%)",
+                WebkitMaskImage: bottomEdgeMask,
+                maskImage: bottomEdgeMask,
+              }}
+            />
+          </>
         ) : null}
       </div>
     </aside>

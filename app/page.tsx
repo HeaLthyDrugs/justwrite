@@ -34,6 +34,7 @@ import {
 import {
   createEmptyNote,
   formatNoteDateTime,
+  getNoteDisplayTitle,
   type Note,
   loadNotesSnapshot,
   NOTES_STORAGE_VERSION,
@@ -43,6 +44,7 @@ import {
   CONSENT_CHANGED_EVENT,
   hasPreferenceConsent,
 } from "@/lib/consent";
+import { useFont } from "@/components/font-context";
 
 interface NotesState {
   notes: Note[];
@@ -56,6 +58,10 @@ const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
 const FOCUS_MODE_STORAGE_KEY = "justwrite.focus-mode.enabled";
+const SHORTCUT_HINT_TEXT =
+  "New Ctrl/Cmd+Shift+N, Notes Ctrl/Cmd+Shift+L, Settings Ctrl/Cmd+Shift+S, Focus Ctrl/Cmd+Shift+F, Theme Ctrl/Cmd+Shift+T, Next note Ctrl/Cmd+Shift+], Previous note Ctrl/Cmd+Shift+[.";
+
+type ExportFormat = "txt" | "md" | "json";
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -236,6 +242,7 @@ function wrapSelection(
 }
 
 export default function Home() {
+  const { font, setFont } = useFont();
   const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -254,6 +261,7 @@ export default function Home() {
   );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -266,6 +274,24 @@ export default function Home() {
   );
 
   const body = activeNote.body;
+
+  const sortedNotes = useMemo(
+    () =>
+      [...notes].sort((left, right) => {
+        if (left.isPinned !== right.isPinned) {
+          return left.isPinned ? -1 : 1;
+        }
+        return (
+          new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+        );
+      }),
+    [notes]
+  );
+
+  const activeSortedNoteIndex = useMemo(
+    () => sortedNotes.findIndex((note) => note.id === activeNote.id),
+    [sortedNotes, activeNote.id]
+  );
 
   const wordCount = useMemo(() => {
     const trimmed = body.trim();
@@ -662,78 +688,282 @@ export default function Home() {
     });
   };
 
+  const focusEditor = () => {
+    window.requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+    });
+  };
+
+  const cycleActiveFont = () => {
+    const orderedFonts: Array<"sans" | "mono" | "pixel"> = ["sans", "mono", "pixel"];
+    const currentIndex = orderedFonts.indexOf(font);
+    const nextFont = orderedFonts[(currentIndex + 1) % orderedFonts.length];
+    setFont(nextFont);
+    pushToast({
+      type: "info",
+      icon: TextFontIcon,
+      title: "Font changed",
+      description: `Font switched to ${nextFont}.`,
+    });
+  };
+
+  const toggleNotesDrawerWithFocus = () => {
+    if (focusMode) {
+      setFocusMode(false);
+      setSettingsOpen(false);
+      setDrawerOpen(true);
+      focusEditor();
+      return;
+    }
+    setDrawerOpen((previous) => !previous);
+  };
+
+  const toggleSettingsWithFocus = () => {
+    if (focusMode) {
+      setFocusMode(false);
+      setDrawerOpen(false);
+      setSettingsOpen(true);
+      focusEditor();
+      return;
+    }
+    setSettingsOpen((previous) => !previous);
+  };
+
+  const switchActiveNote = (direction: -1 | 1) => {
+    if (sortedNotes.length < 2) {
+      return;
+    }
+    const startingIndex = activeSortedNoteIndex >= 0 ? activeSortedNoteIndex : 0;
+    const nextIndex =
+      (startingIndex + direction + sortedNotes.length) % sortedNotes.length;
+    const nextNote = sortedNotes[nextIndex];
+    if (!nextNote) {
+      return;
+    }
+    setNotesState((previousState) => ({
+      ...previousState,
+      activeNoteId: nextNote.id,
+    }));
+    focusEditor();
+    pushToast({
+      type: "info",
+      title: "Note switched",
+      description: getNoteDisplayTitle(nextNote, 36),
+    });
+  };
+
+  const handleDeleteActiveNote = () => {
+    if (!activeNote) {
+      return;
+    }
+    handleDeleteNote(activeNote.id);
+    focusEditor();
+  };
+
+  const handleManualSave = () => {
+    saveNotesSnapshot({
+      version: NOTES_STORAGE_VERSION,
+      notes: notesState.notes,
+      activeNoteId: notesState.activeNoteId,
+    });
+    pushToast({
+      type: "success",
+      title: "Saved",
+      description: "Your note is saved locally.",
+    });
+  };
+
+  const handleExport = (format: ExportFormat) => {
+    try {
+      if (format === "txt") {
+        downloadFile(body, "note.txt", "text/plain;charset=utf-8");
+        pushToast({
+          type: "success",
+          title: "TXT exported",
+          description: "Your note was downloaded as plain text.",
+        });
+        return;
+      }
+
+      if (format === "md") {
+        downloadFile(body, "note.md", "text/markdown;charset=utf-8");
+        pushToast({
+          type: "success",
+          title: "Markdown exported",
+          description: "Your note was downloaded as .md.",
+        });
+        return;
+      }
+
+      const payload = {
+        id: activeNote.id,
+        body: activeNote.body,
+        updatedAt: activeNote.updatedAt,
+      };
+      downloadFile(
+        JSON.stringify(payload, null, 2),
+        "note.json",
+        "application/json;charset=utf-8"
+      );
+      pushToast({
+        type: "success",
+        title: "JSON exported",
+        description: "Your note metadata and content were exported.",
+      });
+    } catch {
+      pushToast({
+        type: "error",
+        title: "Export failed",
+        description: `Could not export ${format.toUpperCase()} right now.`,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalShortcut = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (!event.shiftKey) {
+        if (key === "s") {
+          event.preventDefault();
+          handleManualSave();
+        }
+        return;
+      }
+
+      if (event.repeat && key !== "[" && key !== "]") {
+        return;
+      }
+
+      if (key === "n") {
+        event.preventDefault();
+        handleCreateNote();
+        focusEditor();
+        return;
+      }
+
+      if (key === "l") {
+        event.preventDefault();
+        toggleNotesDrawerWithFocus();
+        return;
+      }
+
+      if (key === "s") {
+        event.preventDefault();
+        toggleSettingsWithFocus();
+        return;
+      }
+
+      if (key === "f") {
+        event.preventDefault();
+        toggleFocus();
+        focusEditor();
+        return;
+      }
+
+      if (key === "t") {
+        event.preventDefault();
+        handleThemeToggle();
+        return;
+      }
+
+      if (key === "[") {
+        event.preventDefault();
+        switchActiveNote(-1);
+        return;
+      }
+
+      if (key === "]") {
+        event.preventDefault();
+        switchActiveNote(1);
+        return;
+      }
+
+      if (key === "p") {
+        event.preventDefault();
+        handleTogglePinned(activeNote.id);
+        return;
+      }
+
+      if (key === "backspace") {
+        event.preventDefault();
+        handleDeleteActiveNote();
+        return;
+      }
+
+      if (key === "1") {
+        event.preventDefault();
+        handleExport("txt");
+        return;
+      }
+
+      if (key === "2") {
+        event.preventDefault();
+        handleExport("md");
+        return;
+      }
+
+      if (key === "3") {
+        event.preventDefault();
+        handleExport("json");
+        return;
+      }
+
+      if (key === "/" || key === "?") {
+        event.preventDefault();
+        pushToast({
+          type: "info",
+          title: "Keyboard shortcuts",
+          description: SHORTCUT_HINT_TEXT,
+        });
+        return;
+      }
+
+      if (key === "m") {
+        event.preventDefault();
+        cycleActiveFont();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalShortcut);
+    return () => window.removeEventListener("keydown", handleGlobalShortcut);
+  }, [
+    activeNote.id,
+    cycleActiveFont,
+    handleCreateNote,
+    handleDeleteActiveNote,
+    handleExport,
+    handleManualSave,
+    handleThemeToggle,
+    handleTogglePinned,
+    pushToast,
+    switchActiveNote,
+    toggleFocus,
+    toggleNotesDrawerWithFocus,
+    toggleSettingsWithFocus,
+  ]);
+
   const exportItems = [
     {
       id: "txt",
       label: "Plain Text (.txt)",
       iconSrc: "/logo/formats/txt.svg",
-      onClick: () => {
-        try {
-          downloadFile(body, "note.txt", "text/plain;charset=utf-8");
-          pushToast({
-            type: "success",
-            title: "TXT exported",
-            description: "Your note was downloaded as plain text.",
-          });
-        } catch {
-          pushToast({
-            type: "error",
-            title: "Export failed",
-            description: "Could not export TXT right now.",
-          });
-        }
-      },
+      onClick: () => handleExport("txt"),
     },
     {
       id: "md",
       label: "Markdown (.md)",
       iconSrc: "/logo/formats/md.svg",
-      onClick: () => {
-        try {
-          downloadFile(body, "note.md", "text/markdown;charset=utf-8");
-          pushToast({
-            type: "success",
-            title: "Markdown exported",
-            description: "Your note was downloaded as .md.",
-          });
-        } catch {
-          pushToast({
-            type: "error",
-            title: "Export failed",
-            description: "Could not export Markdown right now.",
-          });
-        }
-      },
+      onClick: () => handleExport("md"),
     },
     {
       id: "json",
       label: "JSON (.json)",
       iconSrc: "/logo/formats/json.svg",
-      onClick: () => {
-        try {
-          const payload = {
-            id: activeNote.id,
-            body: activeNote.body,
-            updatedAt: activeNote.updatedAt,
-          };
-          downloadFile(
-            JSON.stringify(payload, null, 2),
-            "note.json",
-            "application/json;charset=utf-8"
-          );
-          pushToast({
-            type: "success",
-            title: "JSON exported",
-            description: "Your note metadata and content were exported.",
-          });
-        } catch {
-          pushToast({
-            type: "error",
-            title: "Export failed",
-            description: "Could not export JSON right now.",
-          });
-        }
-      },
+      onClick: () => handleExport("json"),
     },
   ];
 
@@ -869,6 +1099,7 @@ export default function Home() {
 
           <section className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
             <textarea
+              ref={textareaRef}
               value={body}
               onChange={(event) => updateActiveNote({ body: event.target.value })}
               onKeyDown={handleTextareaKeyDown}
