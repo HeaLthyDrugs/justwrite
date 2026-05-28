@@ -56,7 +56,7 @@ function NotesSection({
 
   return (
     <section>
-      <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-700 dark:text-zinc-200">
         {title}
       </div>
       <div className="mt-3 flex flex-col gap-2">
@@ -69,8 +69,8 @@ function NotesSection({
               key={note.id}
               className={`group flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition-colors ${
                 isActive
-                  ? "border-zinc-900/10 bg-black/10 dark:border-white/15 dark:bg-white/10"
-                  : "border-black/5 bg-white/40 dark:border-white/5 dark:bg-white/5"
+                  ? "border-zinc-900/20 bg-black/12 dark:border-white/25 dark:bg-white/16"
+                  : "border-black/15 bg-white/88 dark:border-white/20 dark:bg-black/55"
               }`}
             >
               <div className="flex w-full items-center justify-between">
@@ -82,14 +82,14 @@ function NotesSection({
                   }}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/5 text-zinc-600 dark:bg-white/5 dark:text-zinc-200">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/8 text-zinc-700 dark:bg-white/10 dark:text-zinc-100">
                     <HugeiconsIcon icon={NoteIcon} size={16} strokeWidth={1.6} />
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">
                       {getNoteDisplayTitle(note, 42)}
                     </div>
-                    <div className="truncate text-xs text-zinc-500">
+                    <div className="truncate text-xs text-zinc-700 dark:text-zinc-200">
                       Updated {formatNoteDateTime(note.updatedAt)}
                     </div>
                   </div>
@@ -97,7 +97,7 @@ function NotesSection({
                 <div className="ml-2 flex items-center gap-1">
                   <IconButton
                     label={note.isPinned ? "Unpin note" : "Pin note"}
-                    className={`h-8 w-8 border-none bg-black/5 dark:bg-white/5 ${
+                    className={`h-8 w-8 border-none bg-black/10 dark:bg-white/12 ${
                       isActive || isConfirmingDelete
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
@@ -115,7 +115,7 @@ function NotesSection({
                   </IconButton>
                   <IconButton
                     label={isConfirmingDelete ? "Cancel delete" : "Delete note"}
-                    className={`h-8 w-8 border-none bg-black/5 dark:bg-white/5 ${
+                    className={`h-8 w-8 border-none bg-black/10 dark:bg-white/12 ${
                       isActive || isConfirmingDelete
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
@@ -205,26 +205,26 @@ export function NotesDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="notes"
-      className={`fixed right-6 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white/16 p-5 shadow-[0_24px_60px_rgba(15,15,15,0.12)] backdrop-blur-[40px] transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-zinc-900/38 ${className}`}
+      className={`fixed right-6 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/20 bg-white/95 p-5 shadow-[0_28px_70px_rgba(8,8,8,0.28)] backdrop-blur-[20px] transition-all duration-500 ease-in-out dark:border-white/25 dark:bg-black/86 ${className}`}
     >
       <div className="flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Notes
-          <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] tracking-normal text-zinc-500 dark:bg-white/10 dark:text-zinc-300">
+          <span className="rounded-full bg-black/12 px-2 py-0.5 text-[10px] tracking-normal text-zinc-800 dark:bg-white/20 dark:text-zinc-50">
             {notes.length}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <IconButton
             label="New note"
-            className="h-8 w-8 border-none bg-white/40 dark:bg-white/5"
+            className="h-8 w-8 border-none bg-white/90 dark:bg-black/58"
             onClick={onCreateNote}
           >
             <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
           </IconButton>
           <IconButton
             label="Close drawer"
-            className="h-8 w-8 border-none bg-white/40 dark:bg-white/5"
+            className="h-8 w-8 border-none bg-white/90 dark:bg-black/58"
             onClick={onClose}
           >
             <HugeiconsIcon icon={PanelRightCloseIcon} size={16} strokeWidth={1.6} />
@@ -269,7 +269,7 @@ export function NotesDrawer({
             />
           ) : null}
           {notes.length === 0 ? (
-            <div className="rounded-2xl border border-black/5 bg-white/40 px-4 py-3 text-sm text-zinc-600 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300">
+            <div className="rounded-2xl border border-black/15 bg-white/90 px-4 py-3 text-sm text-zinc-800 dark:border-white/20 dark:bg-black/55 dark:text-zinc-100">
               No notes yet. Create one to get started.
             </div>
           ) : null}

@@ -1,12 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
   Cancel01Icon,
-  ChevronDown,
   Clock01Icon,
   NoteAddIcon,
   SiriIcon,
@@ -16,18 +15,12 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { IconButton } from "@/components/ui/icon-button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import type {
   AmbientAudioId,
   AmbientBackgroundId,
   AmbientOptionId,
 } from "@/lib/ambient-scenes";
+import { AMBIENT_BACKGROUNDS } from "@/lib/ambient-scenes";
 
 interface FamilyDrawerProps {
   isOpen: boolean;
@@ -109,58 +102,55 @@ export function FamilyDrawer({
     ambientBackgroundOptions.find(
       (background) => background.id === ambientBackgroundId
     ) ?? ambientBackgroundOptions[0];
-  const ambientSceneThemes: Record<
-    AmbientOptionId,
-    { chip: string; iconRing: string; iconFg: string }
-  > = {
-    rain: {
-      chip: "from-sky-100 to-blue-100 dark:from-sky-900/45 dark:to-blue-900/45",
-      iconRing: "ring-sky-300/70 dark:ring-sky-700/70",
-      iconFg: "text-sky-700 dark:text-sky-300",
-    },
-    cafe: {
-      chip: "from-amber-100 to-orange-100 dark:from-amber-900/45 dark:to-orange-900/45",
-      iconRing: "ring-amber-300/70 dark:ring-amber-700/70",
-      iconFg: "text-amber-700 dark:text-amber-300",
-    },
-    library: {
-      chip: "from-emerald-100 to-green-100 dark:from-emerald-900/45 dark:to-green-900/45",
-      iconRing: "ring-emerald-300/70 dark:ring-emerald-700/70",
-      iconFg: "text-emerald-700 dark:text-emerald-300",
-    },
-    night: {
-      chip: "from-indigo-100 to-violet-100 dark:from-indigo-900/45 dark:to-violet-900/45",
-      iconRing: "ring-indigo-300/70 dark:ring-indigo-700/70",
-      iconFg: "text-indigo-700 dark:text-indigo-300",
-    },
-    forest: {
-      chip: "from-lime-100 to-emerald-100 dark:from-lime-900/45 dark:to-emerald-900/45",
-      iconRing: "ring-lime-300/70 dark:ring-lime-700/70",
-      iconFg: "text-lime-700 dark:text-lime-300",
-    },
-    "lofi-room": {
-      chip: "from-fuchsia-100 to-pink-100 dark:from-fuchsia-900/45 dark:to-pink-900/45",
-      iconRing: "ring-fuchsia-300/70 dark:ring-fuchsia-700/70",
-      iconFg: "text-fuchsia-700 dark:text-fuchsia-300",
-    },
+  const [activeAmbientPicker, setActiveAmbientPicker] = useState<
+    "background" | "audio" | null
+  >(null);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveAmbientPicker(null);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  const getAmbientPreviewSource = (id: AmbientOptionId) => {
+    const background = AMBIENT_BACKGROUNDS[id].background;
+    if (background.type === "video") {
+      return background.poster ?? "/backgrounds/1.jpg";
+    }
+    return background.source;
   };
 
+  const resolvedActiveAmbientPicker =
+    isOpen && ambientEnabled ? activeAmbientPicker : null;
+  const ambientPickerOptions =
+    resolvedActiveAmbientPicker === "audio" ? ambientAudioOptions : ambientBackgroundOptions;
+  const isAudioPicker = resolvedActiveAmbientPicker === "audio";
+  const activeAmbientValue = isAudioPicker ? ambientAudioId : ambientBackgroundId;
+
   return (
+    <>
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="settings"
-      className={`fixed left-6 top-1/2 z-30 flex h-[82vh] w-[300px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/5 bg-white/16 p-5 shadow-[0_24px_60px_rgba(15,15,15,0.12)] backdrop-blur-[40px] transition-all duration-500 ease-in-out dark:border-white/10 dark:bg-zinc-900/38 ${isOpen
+      className={`fixed left-6 top-1/2 z-30 flex h-[82vh] w-[300px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/10 bg-white/80 p-5 shadow-[0_24px_60px_rgba(8,8,8,0.24)] backdrop-blur-[52px] transition-all duration-500 ease-in-out dark:border-white/20 dark:bg-black/70 ${isOpen
         ? "opacity-100 translate-x-0"
         : "pointer-events-none opacity-0 -translate-x-[340px]"
         }`}
     >
       <div className="flex shrink-0 items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-600 dark:text-zinc-300">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Settings
         </div>
         <IconButton
           label="Close settings"
-          className="h-8 w-8 border-none bg-white/40 dark:bg-white/5"
+          className="h-8 w-8 border-none bg-white/75 dark:bg-black/45"
           onClick={onClose}
         >
           <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.6} />
@@ -312,9 +302,9 @@ export function FamilyDrawer({
               <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
                 <HugeiconsIcon
                   icon={SiriIcon}
-                  size={20}
-                  strokeWidth={1.8}
-                  className="text-zinc-700 dark:text-zinc-200"
+                  size={16}
+                  strokeWidth={1.6}
+                  className="text-zinc-500 dark:text-zinc-400"
                 />
                 Ambient Mode
               </div>
@@ -322,7 +312,12 @@ export function FamilyDrawer({
                 type="button"
                 role="switch"
                 aria-checked={ambientEnabled}
-                onClick={() => onAmbientEnabledChange(!ambientEnabled)}
+                onClick={() => {
+                  if (ambientEnabled) {
+                    setActiveAmbientPicker(null);
+                  }
+                  onAmbientEnabledChange(!ambientEnabled);
+                }}
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${ambientEnabled
                   ? "bg-zinc-900 dark:bg-zinc-100"
                   : "bg-zinc-300 dark:bg-zinc-700"
@@ -346,143 +341,79 @@ export function FamilyDrawer({
                 >
                   Background Scene
                 </label>
-                <DropdownMenuPrimitive.Root>
-                  <DropdownMenuPrimitive.Trigger asChild>
-                    <button
-                      id="ambient-background-trigger"
-                      type="button"
-                      className="flex w-full items-center justify-between rounded-2xl border border-black/10 bg-white/80 px-3 py-2.5 text-xs font-medium text-zinc-700 shadow-[0_8px_20px_rgba(0,0,0,0.08)] outline-none transition-all hover:border-black/20 hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/15 dark:bg-zinc-900/55 dark:text-zinc-200 dark:hover:border-white/30 dark:hover:bg-zinc-900/70 dark:focus-visible:ring-zinc-600"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <span
-                          className={`inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br ${ambientSceneThemes[selectedAmbientBackground.id].chip} ring-1 ${ambientSceneThemes[selectedAmbientBackground.id].iconRing}`}
-                        >
-                          <Image
-                            src={selectedAmbientBackground.iconPath}
-                            alt=""
-                            aria-hidden="true"
-                            width={18}
-                            height={18}
-                            className={`h-[18px] w-[18px] ${ambientSceneThemes[selectedAmbientBackground.id].iconFg}`}
-                          />
-                        </span>
-                        <span>{selectedAmbientBackground.label}</span>
-                      </span>
-                      <HugeiconsIcon
-                        icon={ChevronDown}
-                        size={14}
-                        strokeWidth={1.8}
-                        className="text-zinc-400"
+                <button
+                  id="ambient-background-trigger"
+                  type="button"
+                  disabled={!ambientEnabled}
+                  onClick={() =>
+                    setActiveAmbientPicker((current) =>
+                      current === "background" ? null : "background"
+                    )
+                  }
+                  className="group flex w-full items-center justify-between rounded-2xl border border-black/12 bg-white/92 p-2 text-left outline-none transition-all hover:border-black/24 hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/20 dark:bg-black/58 dark:hover:border-white/35 dark:hover:bg-black/68 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
+                      <Image
+                        src={getAmbientPreviewSource(selectedAmbientBackground.id)}
+                        alt=""
+                        aria-hidden="true"
+                        fill
+                        sizes="78px"
+                        className="object-cover object-center"
                       />
-                    </button>
-                  </DropdownMenuPrimitive.Trigger>
-                  <DropdownMenuPrimitive.Portal>
-                    <DropdownMenuPrimitive.Content
-                      data-ambient-dropdown-content
-                      data-drawer-root="settings"
-                      side="bottom"
-                      align="start"
-                      sideOffset={8}
-                      className="z-50 w-[248px] overflow-hidden rounded-3xl border border-black/10 bg-white/94 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.2)] backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/92"
-                    >
-                      <div className="space-y-2">
-                        {ambientBackgroundOptions.map((background) => (
-                          <DropdownMenuPrimitive.Item
-                            key={background.id}
-                            onSelect={(event) => {
-                              event.preventDefault();
-                              onAmbientBackgroundChange(background.id);
-                            }}
-                            className={`flex cursor-pointer items-center gap-2.5 rounded-2xl px-2.5 py-2.5 text-xs font-medium outline-none transition-colors ${background.id === ambientBackgroundId ? "bg-black/8 text-zinc-900 dark:bg-white/12 dark:text-zinc-50" : "text-zinc-600 hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-zinc-50"}`}
-                          >
-                            <span
-                              className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${ambientSceneThemes[background.id].chip} ring-1 ${ambientSceneThemes[background.id].iconRing}`}
-                            >
-                              <Image
-                                src={background.iconPath}
-                                alt=""
-                                aria-hidden="true"
-                                width={18}
-                                height={18}
-                                className={`h-[18px] w-[18px] ${ambientSceneThemes[background.id].iconFg}`}
-                              />
-                            </span>
-                            <span>{background.label}</span>
-                          </DropdownMenuPrimitive.Item>
-                        ))}
-                      </div>
-                    </DropdownMenuPrimitive.Content>
-                  </DropdownMenuPrimitive.Portal>
-                </DropdownMenuPrimitive.Root>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                        {selectedAmbientBackground.label}
+                      </span>
+                      <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                        Choose scene
+                      </span>
+                    </span>
+                  </span>
+                </button>
               </div>
 
               <div className="space-y-1.5">
                 <label
-                  htmlFor="ambient-audio-select"
+                  htmlFor="ambient-audio-trigger"
                   className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400"
                 >
                   Ambient Audio
                 </label>
-                <Select
-                  value={ambientAudioId}
+                <button
+                  id="ambient-audio-trigger"
+                  type="button"
                   disabled={!ambientEnabled}
-                  onValueChange={(value) =>
-                    onAmbientAudioChange(value as AmbientAudioId)
+                  onClick={() =>
+                    setActiveAmbientPicker((current) =>
+                      current === "audio" ? null : "audio"
+                    )
                   }
+                  className="group flex w-full items-center justify-between rounded-2xl border border-black/12 bg-white/92 p-2 text-left outline-none transition-all hover:border-black/24 hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/20 dark:bg-black/58 dark:hover:border-white/35 dark:hover:bg-black/68 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <SelectTrigger
-                    id="ambient-audio-select"
-                    className="h-auto w-full justify-between rounded-2xl border-black/10 bg-white/80 px-3 py-2.5 text-xs font-medium text-zinc-700 shadow-[0_8px_20px_rgba(0,0,0,0.08)] hover:border-black/20 hover:bg-white focus-visible:ring-zinc-300 dark:border-white/15 dark:bg-zinc-900/55 dark:text-zinc-200 dark:hover:border-white/30 dark:hover:bg-zinc-900/70 dark:focus-visible:ring-zinc-600 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <span
-                        className={`inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br ${ambientSceneThemes[selectedAmbientAudio.id].chip} ring-1 ${ambientSceneThemes[selectedAmbientAudio.id].iconRing}`}
-                      >
-                        <Image
-                          src={selectedAmbientAudio.iconPath}
-                          alt=""
-                          aria-hidden="true"
-                          width={18}
-                          height={18}
-                          className={`h-[18px] w-[18px] ${ambientSceneThemes[selectedAmbientAudio.id].iconFg}`}
-                        />
-                      </span>
-                      <span>{selectedAmbientAudio.label}</span>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
+                      <Image
+                        src={getAmbientPreviewSource(selectedAmbientAudio.id)}
+                        alt=""
+                        aria-hidden="true"
+                        fill
+                        sizes="78px"
+                        className="object-cover object-center"
+                      />
                     </span>
-                  </SelectTrigger>
-                  <SelectContent
-                    data-ambient-dropdown-content
-                    data-drawer-root="settings"
-                    align="start"
-                    className="w-[248px] overflow-hidden rounded-3xl border-black/10 bg-white/94 p-2 shadow-[0_18px_50px_rgba(0,0,0,0.2)] backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/92"
-                  >
-                    <SelectGroup className="space-y-2 p-0">
-                      {ambientAudioOptions.map((audio) => (
-                        <SelectItem
-                          key={audio.id}
-                          value={audio.id}
-                          className="cursor-pointer rounded-2xl px-2.5 py-2.5 text-xs font-medium text-zinc-600 hover:bg-black/5 hover:text-zinc-900 focus:bg-black/8 focus:text-zinc-900 dark:text-zinc-300 dark:hover:bg-white/10 dark:hover:text-zinc-50 dark:focus:bg-white/12 dark:focus:text-zinc-50"
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <span
-                              className={`inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${ambientSceneThemes[audio.id].chip} ring-1 ${ambientSceneThemes[audio.id].iconRing}`}
-                            >
-                              <Image
-                                src={audio.iconPath}
-                                alt=""
-                                aria-hidden="true"
-                                width={18}
-                                height={18}
-                                className={`h-[18px] w-[18px] ${ambientSceneThemes[audio.id].iconFg}`}
-                              />
-                            </span>
-                            <span>{audio.label}</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+                        {selectedAmbientAudio.label}
+                      </span>
+                      <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
+                        Choose audio
+                      </span>
+                    </span>
+                  </span>
+                </button>
               </div>
 
               <div className="space-y-1.5">
@@ -549,7 +480,7 @@ export function FamilyDrawer({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-xs font-medium text-zinc-600/65 transition-colors hover:text-zinc-800/80 dark:text-zinc-300/60 dark:hover:text-zinc-100/80"
+                className="text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
               >
                 {item.label}
               </Link>
@@ -566,7 +497,7 @@ export function FamilyDrawer({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-xs font-medium text-zinc-600/65 transition-colors hover:text-zinc-800/80 dark:text-zinc-300/60 dark:hover:text-zinc-100/80"
+                className="text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
               >
                 {item.label}
               </Link>
@@ -576,5 +507,50 @@ export function FamilyDrawer({
         </div>
       </div>
     </aside>
+    <div
+      aria-hidden={!resolvedActiveAmbientPicker}
+      data-ambient-dropdown-content
+      data-drawer-root="settings"
+      className={`fixed inset-x-3 bottom-20 z-40 max-h-[54vh] transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+14px)] md:top-1/2 md:max-h-none md:w-[340px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
+        ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
+        : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
+        }`}
+    >
+      <div className="h-full overflow-y-auto overflow-x-hidden rounded-[28px] border border-black/12 bg-white/92 p-2.5 shadow-[0_22px_60px_rgba(8,8,8,0.28)] backdrop-blur-2xl dark:border-white/20 dark:bg-black/78 md:h-auto md:overflow-visible">
+        <div className="grid grid-cols-2 gap-2">
+          {ambientPickerOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => {
+                if (isAudioPicker) {
+                  onAmbientAudioChange(option.id as AmbientAudioId);
+                } else {
+                  onAmbientBackgroundChange(option.id as AmbientBackgroundId);
+                }
+                setActiveAmbientPicker(null);
+              }}
+              className={`group relative aspect-[4/3] overflow-hidden rounded-[18px] text-left transition-all ${option.id === activeAmbientValue
+                ? "ring-2 ring-zinc-900/55 dark:ring-zinc-100/55"
+                : "ring-1 ring-black/8 hover:ring-black/16 dark:ring-white/10 dark:hover:ring-white/20"
+                }`}
+            >
+              <Image
+                src={getAmbientPreviewSource(option.id)}
+                alt={option.label}
+                fill
+                sizes="160px"
+                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
+              <p className="absolute bottom-2 left-2 text-[11px] font-medium text-white/95">
+                {option.label}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+    </>
   );
 }
