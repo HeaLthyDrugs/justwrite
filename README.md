@@ -39,6 +39,9 @@ docker compose up --build
 - Markdown shortcuts: `Ctrl/Cmd+B`, `Ctrl/Cmd+I`, `Ctrl/Cmd+K`, and `Tab` indent.
 - Export to TXT, Markdown, and JSON.
 - Settings: notebook lines, font size, word count, spell check, typing sound.
+- Ambient Mode: rain, cafe, library, night, forest, and lo-fi room loops with volume control.
+- Scene-aware visuals: rain uses a video backdrop and each scene switches the app background.
 - Theme toggle (light/dark) and font switching (sans, mono, pixel).
 - Legal pages: Privacy Policy, Terms of Service, Cookie Policy, Disclaimer.
 - Cookie/local-storage consent: essential storage always on, optional preferences by consent.
+- Ambient audio sources and license details are tracked in `ASSETS_LICENSE.md`.

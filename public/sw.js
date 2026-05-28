@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justwrite-v2";
+const CACHE_VERSION = "justwrite-v4";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
@@ -16,6 +16,20 @@ const PRECACHE_URLS = [
   "/logo/justwrite-logo-dark.svg",
   "/sounds/keystorkes.mp3",
   "/sounds/spacebar.mp3",
+  "/sounds/ambient/rain.mp3",
+  "/sounds/ambient/cafe.mp3",
+  "/sounds/ambient/library.mp3",
+  "/sounds/ambient/night.mp3",
+  "/sounds/ambient/forest.mp3",
+  "/sounds/ambient/lofi-room.mp3",
+  "/videos/ambient/rain.mp4",
+  "/icons/ambient/mode.svg",
+  "/icons/ambient/rain.svg",
+  "/icons/ambient/cafe.svg",
+  "/icons/ambient/library.svg",
+  "/icons/ambient/night.svg",
+  "/icons/ambient/forest.svg",
+  "/icons/ambient/lofi-room.svg",
   "/backgrounds/1.jpg",
   "/backgrounds/2.jpg",
   "/backgrounds/3.jpg",
@@ -53,7 +67,9 @@ function isStaticAsset(url) {
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/favicon/") ||
     url.pathname.startsWith("/logo/") ||
+    url.pathname.startsWith("/icons/") ||
     url.pathname.startsWith("/sounds/") ||
+    url.pathname.startsWith("/videos/") ||
     url.pathname.startsWith("/backgrounds/") ||
     url.pathname === "/manifest.json"
   );

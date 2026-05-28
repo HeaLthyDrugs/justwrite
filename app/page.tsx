@@ -24,6 +24,7 @@ import {
   PanelRightOpenIcon,
   SpeakerIcon,
   Settings02Icon,
+  SiriIcon,
   Sun01Icon,
   Clock01Icon,
   TextCheckIcon,
@@ -52,6 +53,19 @@ import {
   hasPreferenceConsent,
 } from "@/lib/consent";
 import {
+  AMBIENT_AUDIO_ORDER,
+  AMBIENT_AUDIOS,
+  AMBIENT_BACKGROUND_ORDER,
+  AMBIENT_BACKGROUNDS,
+  DEFAULT_AMBIENT_AUDIO_ID,
+  DEFAULT_AMBIENT_BACKGROUND_ID,
+  DEFAULT_AMBIENT_VOLUME,
+  isAmbientAudioId,
+  isAmbientBackgroundId,
+  type AmbientAudioId,
+  type AmbientBackgroundId,
+} from "@/lib/ambient-scenes";
+import {
   THEME_SHORTCUT_TOGGLED_EVENT,
   type AppTheme,
 } from "@/lib/theme-shortcut";
@@ -68,6 +82,12 @@ const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
 const SPELL_CHECK_STORAGE_KEY = "justwrite.spell-check.enabled";
 const FONT_SIZE_STORAGE_KEY = "justwrite.font-size";
 const FOCUS_MODE_STORAGE_KEY = "justwrite.focus-mode.enabled";
+const AMBIENT_ENABLED_STORAGE_KEY = "justwrite.ambient.enabled";
+const AMBIENT_AUDIO_STORAGE_KEY = "justwrite.ambient.audio";
+const AMBIENT_BACKGROUND_STORAGE_KEY = "justwrite.ambient.background";
+const AMBIENT_LEGACY_SCENE_STORAGE_KEY = "justwrite.ambient.scene";
+const AMBIENT_VOLUME_STORAGE_KEY = "justwrite.ambient.volume";
+const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
 
 type ExportFormat = "txt" | "md" | "json";
 
@@ -208,6 +228,102 @@ function getInitialFocusMode() {
   return false;
 }
 
+function getInitialAmbientEnabled() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  if (!hasPreferenceConsent()) {
+    return false;
+  }
+
+  const storedValue = window.localStorage.getItem(AMBIENT_ENABLED_STORAGE_KEY);
+  if (storedValue === "true") return true;
+  if (storedValue === "false") return false;
+  return false;
+}
+
+function getInitialAmbientAudio(): AmbientAudioId {
+  if (typeof window === "undefined") {
+    return DEFAULT_AMBIENT_AUDIO_ID;
+  }
+  if (!hasPreferenceConsent()) {
+    return DEFAULT_AMBIENT_AUDIO_ID;
+  }
+
+  const storedValue = window.localStorage.getItem(AMBIENT_AUDIO_STORAGE_KEY);
+  if (storedValue && isAmbientAudioId(storedValue)) {
+    return storedValue;
+  }
+
+  const legacySceneValue = window.localStorage.getItem(
+    AMBIENT_LEGACY_SCENE_STORAGE_KEY
+  );
+  if (legacySceneValue && isAmbientAudioId(legacySceneValue)) {
+    return legacySceneValue;
+  }
+
+  return DEFAULT_AMBIENT_AUDIO_ID;
+}
+
+function getInitialAmbientBackground(): AmbientBackgroundId {
+  if (typeof window === "undefined") {
+    return DEFAULT_AMBIENT_BACKGROUND_ID;
+  }
+  if (!hasPreferenceConsent()) {
+    return DEFAULT_AMBIENT_BACKGROUND_ID;
+  }
+
+  const storedValue = window.localStorage.getItem(AMBIENT_BACKGROUND_STORAGE_KEY);
+  if (storedValue && isAmbientBackgroundId(storedValue)) {
+    return storedValue;
+  }
+
+  const legacySceneValue = window.localStorage.getItem(
+    AMBIENT_LEGACY_SCENE_STORAGE_KEY
+  );
+  if (legacySceneValue && isAmbientBackgroundId(legacySceneValue)) {
+    return legacySceneValue;
+  }
+
+  return DEFAULT_AMBIENT_BACKGROUND_ID;
+}
+
+function getInitialAmbientVolume() {
+  if (typeof window === "undefined") {
+    return DEFAULT_AMBIENT_VOLUME;
+  }
+  if (!hasPreferenceConsent()) {
+    return DEFAULT_AMBIENT_VOLUME;
+  }
+
+  const storedValue = window.localStorage.getItem(AMBIENT_VOLUME_STORAGE_KEY);
+  if (storedValue) {
+    const parsed = parseInt(storedValue, 10);
+    if (!isNaN(parsed)) {
+      return Math.min(100, Math.max(0, parsed));
+    }
+  }
+  return DEFAULT_AMBIENT_VOLUME;
+}
+
+function getInitialAmbientBackdropDim() {
+  if (typeof window === "undefined") {
+    return 55;
+  }
+  if (!hasPreferenceConsent()) {
+    return 55;
+  }
+
+  const storedValue = window.localStorage.getItem(AMBIENT_BACKDROP_DIM_STORAGE_KEY);
+  if (storedValue) {
+    const parsed = parseInt(storedValue, 10);
+    if (!isNaN(parsed)) {
+      return Math.min(90, Math.max(0, parsed));
+    }
+  }
+  return 55;
+}
+
 function shouldPlayTypingFeedback(event: KeyboardEvent<HTMLTextAreaElement>) {
   if (event.ctrlKey || event.metaKey || event.altKey) {
     return false;
@@ -263,6 +379,17 @@ export default function Home() {
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
   const [spellCheckEnabled, setSpellCheckEnabled] = useState(getInitialSpellCheckEnabled);
   const [fontSize, setFontSize] = useState(getInitialFontSize);
+  const [ambientEnabled, setAmbientEnabled] = useState(getInitialAmbientEnabled);
+  const [ambientAudio, setAmbientAudio] = useState<AmbientAudioId>(
+    getInitialAmbientAudio
+  );
+  const [ambientBackground, setAmbientBackground] = useState<AmbientBackgroundId>(
+    getInitialAmbientBackground
+  );
+  const [ambientVolume, setAmbientVolume] = useState(getInitialAmbientVolume);
+  const [ambientBackdropDim, setAmbientBackdropDim] = useState(
+    getInitialAmbientBackdropDim
+  );
   const [hasPreferencesConsent, setHasPreferencesConsent] = useState(
     hasPreferenceConsent
   );
@@ -271,6 +398,8 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+  const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const closeDrawers = useCallback(() => {
     setDrawerOpen(false);
     setSettingsOpen(false);
@@ -291,6 +420,28 @@ export default function Home() {
     if (!trimmed) return 0;
     return trimmed.split(/\s+/).length;
   }, [body]);
+
+  const ambientAudioOptions = useMemo(
+    () =>
+      AMBIENT_AUDIO_ORDER.map((audioId) => ({
+        id: audioId,
+        label: AMBIENT_AUDIOS[audioId].label,
+        iconPath: AMBIENT_AUDIOS[audioId].iconPath,
+      })),
+    []
+  );
+
+  const ambientBackgroundOptions = useMemo(
+    () =>
+      AMBIENT_BACKGROUND_ORDER.map((backgroundId) => ({
+        id: backgroundId,
+        label: AMBIENT_BACKGROUNDS[backgroundId].label,
+        iconPath: AMBIENT_BACKGROUNDS[backgroundId].iconPath,
+      })),
+    []
+  );
+
+  const selectedAmbientBackground = AMBIENT_BACKGROUNDS[ambientBackground];
 
   useEffect(() => {
     setIsOnline(navigator.onLine);
@@ -362,6 +513,59 @@ export default function Home() {
     if (focusModeSaved === "true" || focusModeSaved === "false") {
       setFocusMode(focusModeSaved === "true");
     }
+
+    const ambientEnabledSaved = window.localStorage.getItem(
+      AMBIENT_ENABLED_STORAGE_KEY
+    );
+    if (ambientEnabledSaved === "true" || ambientEnabledSaved === "false") {
+      setAmbientEnabled(ambientEnabledSaved === "true");
+    }
+
+    const ambientAudioSaved = window.localStorage.getItem(AMBIENT_AUDIO_STORAGE_KEY);
+    if (ambientAudioSaved && isAmbientAudioId(ambientAudioSaved)) {
+      setAmbientAudio(ambientAudioSaved);
+    } else {
+      const legacySceneSaved = window.localStorage.getItem(
+        AMBIENT_LEGACY_SCENE_STORAGE_KEY
+      );
+      if (legacySceneSaved && isAmbientAudioId(legacySceneSaved)) {
+        setAmbientAudio(legacySceneSaved);
+      }
+    }
+
+    const ambientBackgroundSaved = window.localStorage.getItem(
+      AMBIENT_BACKGROUND_STORAGE_KEY
+    );
+    if (ambientBackgroundSaved && isAmbientBackgroundId(ambientBackgroundSaved)) {
+      setAmbientBackground(ambientBackgroundSaved);
+    } else {
+      const legacySceneSaved = window.localStorage.getItem(
+        AMBIENT_LEGACY_SCENE_STORAGE_KEY
+      );
+      if (legacySceneSaved && isAmbientBackgroundId(legacySceneSaved)) {
+        setAmbientBackground(legacySceneSaved);
+      }
+    }
+
+    const ambientVolumeSaved = window.localStorage.getItem(
+      AMBIENT_VOLUME_STORAGE_KEY
+    );
+    if (ambientVolumeSaved) {
+      const parsed = parseInt(ambientVolumeSaved, 10);
+      if (!isNaN(parsed)) {
+        setAmbientVolume(Math.min(100, Math.max(0, parsed)));
+      }
+    }
+
+    const ambientBackdropDimSaved = window.localStorage.getItem(
+      AMBIENT_BACKDROP_DIM_STORAGE_KEY
+    );
+    if (ambientBackdropDimSaved) {
+      const parsed = parseInt(ambientBackdropDimSaved, 10);
+      if (!isNaN(parsed)) {
+        setAmbientBackdropDim(Math.min(90, Math.max(0, parsed)));
+      }
+    }
   }, [hasPreferencesConsent]);
 
   useEffect(() => {
@@ -418,6 +622,39 @@ export default function Home() {
   }, [focusMode, hasPreferencesConsent]);
 
   useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(AMBIENT_ENABLED_STORAGE_KEY, String(ambientEnabled));
+    }
+  }, [ambientEnabled, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(AMBIENT_AUDIO_STORAGE_KEY, ambientAudio);
+    }
+  }, [ambientAudio, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(AMBIENT_BACKGROUND_STORAGE_KEY, ambientBackground);
+    }
+  }, [ambientBackground, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(AMBIENT_VOLUME_STORAGE_KEY, String(ambientVolume));
+    }
+  }, [ambientVolume, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
+      localStorage.setItem(
+        AMBIENT_BACKDROP_DIM_STORAGE_KEY,
+        String(ambientBackdropDim)
+      );
+    }
+  }, [ambientBackdropDim, hasPreferencesConsent]);
+
+  useEffect(() => {
     const keyAudio = new Audio("/sounds/keystorkes.mp3");
     keyAudio.preload = "auto";
     keyAudio.volume = 0.24;
@@ -426,14 +663,91 @@ export default function Home() {
     spaceAudio.preload = "auto";
     spaceAudio.volume = 0.24;
 
+    const ambientAudio = new Audio(AMBIENT_AUDIOS[DEFAULT_AMBIENT_AUDIO_ID].assetPath);
+    ambientAudio.preload = "auto";
+    ambientAudio.loop = true;
+    ambientAudio.volume = DEFAULT_AMBIENT_VOLUME / 100;
+
     keyAudioRef.current = keyAudio;
     spaceAudioRef.current = spaceAudio;
+    ambientAudioRef.current = ambientAudio;
 
     return () => {
+      ambientAudio.pause();
       keyAudioRef.current = null;
       spaceAudioRef.current = null;
+      ambientAudioRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    const ambientPlayer = ambientAudioRef.current;
+    if (!ambientPlayer || typeof window === "undefined") {
+      return;
+    }
+
+    const nextSource = AMBIENT_AUDIOS[ambientAudio].assetPath;
+    const resolvedSource = new URL(nextSource, window.location.origin).href;
+
+    if (ambientPlayer.src !== resolvedSource) {
+      ambientPlayer.pause();
+      ambientPlayer.src = nextSource;
+      ambientPlayer.load();
+    }
+
+    if (ambientEnabled) {
+      void ambientPlayer.play().catch(() => {
+        // Ignore playback errors (for example browser autoplay restrictions).
+      });
+    }
+  }, [ambientAudio, ambientEnabled]);
+
+  useEffect(() => {
+    const ambientAudio = ambientAudioRef.current;
+    if (!ambientAudio) {
+      return;
+    }
+
+    ambientAudio.volume = ambientVolume / 100;
+  }, [ambientVolume]);
+
+  useEffect(() => {
+    const ambientAudio = ambientAudioRef.current;
+    if (!ambientAudio) {
+      return;
+    }
+
+    if (!ambientEnabled) {
+      ambientAudio.pause();
+      ambientAudio.currentTime = 0;
+      return;
+    }
+
+    void ambientAudio.play().catch(() => {
+      // Ignore playback errors (for example browser autoplay restrictions).
+    });
+  }, [ambientEnabled]);
+
+  useEffect(() => {
+    const video = ambientVideoRef.current;
+    if (!video || selectedAmbientBackground.background.type !== "video") {
+      return;
+    }
+
+    if (!ambientEnabled) {
+      video.pause();
+      video.currentTime = 0;
+      return;
+    }
+
+    void video.play().catch(() => {
+      // Ignore playback errors (for example browser autoplay restrictions).
+    });
+  }, [
+    ambientEnabled,
+    selectedAmbientBackground.background.source,
+    selectedAmbientBackground.background.type,
+  ]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -629,6 +943,50 @@ export default function Home() {
     });
   };
 
+  const handleAmbientEnabledChange = (enabled: boolean) => {
+    setAmbientEnabled(enabled);
+    pushToast({
+      type: "info",
+      icon: SpeakerIcon,
+      title: enabled ? "Ambient mode on" : "Ambient mode off",
+      description: enabled
+        ? `${AMBIENT_AUDIOS[ambientAudio].label} audio is now playing.`
+        : "Ambient playback is paused.",
+    });
+  };
+
+  const handleAmbientAudioChange = (audioId: AmbientAudioId) => {
+    setAmbientAudio(audioId);
+    if (!ambientEnabled) {
+      return;
+    }
+
+    pushToast({
+      type: "info",
+      icon: SpeakerIcon,
+      title: "Ambient audio changed",
+      description: `${AMBIENT_AUDIOS[audioId].label} audio is now active.`,
+    });
+  };
+
+  const handleAmbientBackgroundChange = (backgroundId: AmbientBackgroundId) => {
+    setAmbientBackground(backgroundId);
+    pushToast({
+      type: "info",
+      icon: SiriIcon,
+      title: "Background scene changed",
+      description: `${AMBIENT_BACKGROUNDS[backgroundId].label} background is now active.`,
+    });
+  };
+
+  const handleAmbientVolumeChange = (volume: number) => {
+    setAmbientVolume(Math.min(100, Math.max(0, volume)));
+  };
+
+  const handleAmbientBackdropDimChange = (value: number) => {
+    setAmbientBackdropDim(Math.min(90, Math.max(0, value)));
+  };
+
   const handleWordCountChange = (enabled: boolean) => {
     setShowWordCount(enabled);
     pushToast({
@@ -700,7 +1058,8 @@ export default function Home() {
 
       if (
         target.closest("[data-drawer-root]") ||
-        target.closest("[data-drawer-toggle]")
+        target.closest("[data-drawer-toggle]") ||
+        target.closest("[data-ambient-dropdown-content]")
       ) {
         return;
       }
@@ -823,6 +1182,13 @@ export default function Home() {
         event.preventDefault();
         event.stopPropagation();
         handleNotebookLinesChange(!notebookLinesEnabled);
+        return;
+      }
+
+      if (event.code === "Digit7" || event.code === "Numpad7") {
+        event.preventDefault();
+        event.stopPropagation();
+        handleAmbientEnabledChange(!ambientEnabled);
       }
     };
 
@@ -831,8 +1197,10 @@ export default function Home() {
   }, [
     handleCreateNote,
     handleFontSizeChange,
+    handleAmbientEnabledChange,
     handleNotebookLinesChange,
     handleTypingEffectsChange,
+    ambientEnabled,
     fontSize,
     notebookLinesEnabled,
     toggleFocus,
@@ -958,6 +1326,46 @@ export default function Home() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-100/30 via-transparent to-zinc-900/12 dark:from-zinc-900/30 dark:to-black/24" />
+        <div
+          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${ambientEnabled ? "opacity-100" : "opacity-0"
+            }`}
+        >
+          {selectedAmbientBackground.background.type === "video" ? (
+            <video
+              key={selectedAmbientBackground.background.source}
+              ref={ambientVideoRef}
+              autoPlay={ambientEnabled}
+              muted
+              loop
+              playsInline
+              poster={selectedAmbientBackground.background.poster}
+              className="h-full w-full object-cover"
+            >
+              <source src={selectedAmbientBackground.background.source} type="video/mp4" />
+            </video>
+          ) : (
+            <div
+              aria-hidden="true"
+              className="h-full w-full bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${selectedAmbientBackground.background.source})` }}
+            />
+          )}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundColor: `rgba(255,255,255,${ambientBackdropDim / 100})`,
+            }}
+          />
+          <div
+            className="absolute inset-0 dark:block hidden"
+            style={{
+              backgroundColor: `rgba(0,0,0,${ambientBackdropDim / 100})`,
+            }}
+          />
+        </div>
+      </div>
       <div
         className={`relative flex h-full w-full max-w-[1000px] flex-col ${focusMode ? "pb-0" : "pb-16 md:pb-0"
           }`}
@@ -1030,20 +1438,7 @@ export default function Home() {
           </section>
 
           {!focusMode ? (
-            <div className={`mt-3 hidden items-center justify-between gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
-              <div className="flex items-center gap-3 px-2 group cursor-default transition-all duration-300 hover:opacity-90">
-                <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-100 to-zinc-200 shadow-[0_2px_10px_rgba(0,0,0,0.05)] ring-1 ring-black/5 dark:from-zinc-800 dark:to-zinc-900 dark:ring-white/10">
-                  <Logo className="h-5 w-5 transition-transform duration-500 group-hover:scale-110" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
-                    Just write
-                  </span>
-                  <span className="text-[10px] font-medium text-zinc-500 dark:text-zinc-400 leading-none mt-1">
-                    Private local notes
-                  </span>
-                </div>
-              </div>
+            <div className={`mt-3 hidden items-center justify-center gap-4 transition-all duration-300 md:flex ${chromeClass}`}>
               <div className="flex items-center gap-2 rounded-full border border-black/5 bg-white/80 p-1 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
                 <IconButton
                   label="New note"
@@ -1273,6 +1668,18 @@ export default function Home() {
         onClose={() => setSettingsOpen(false)}
         typingEffectsEnabled={typingEffectsEnabled}
         onTypingEffectsEnabledChange={handleTypingEffectsChange}
+        ambientEnabled={ambientEnabled}
+        onAmbientEnabledChange={handleAmbientEnabledChange}
+        ambientAudioId={ambientAudio}
+        ambientAudioOptions={ambientAudioOptions}
+        onAmbientAudioChange={handleAmbientAudioChange}
+        ambientBackgroundId={ambientBackground}
+        ambientBackgroundOptions={ambientBackgroundOptions}
+        onAmbientBackgroundChange={handleAmbientBackgroundChange}
+        ambientVolume={ambientVolume}
+        onAmbientVolumeChange={handleAmbientVolumeChange}
+        ambientBackdropDim={ambientBackdropDim}
+        onAmbientBackdropDimChange={handleAmbientBackdropDimChange}
         showWordCount={showWordCount}
         onShowWordCountChange={handleWordCountChange}
         showSavedTimestamp={showSavedTimestamp}
