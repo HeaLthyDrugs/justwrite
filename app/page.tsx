@@ -10,7 +10,6 @@ import {
   type KeyboardEvent,
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import {
   CenterFocusIcon,
   ChevronDown,
@@ -33,8 +32,15 @@ import {
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
+import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
 import { NotesDrawer } from "@/components/notes-drawer";
 import { FamilyDrawer } from "@/components/ui/family-drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   CustomToastViewport,
   type ToastMessage,
@@ -1435,42 +1441,45 @@ export default function Home() {
 
                 <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
 
-                <DropdownMenuPrimitive.Root>
-                  <DropdownMenuPrimitive.Trigger asChild>
-                    <button
-                      aria-label="Export"
-                      className="flex h-9 max-w-[120px] items-center gap-1.5 rounded-full border border-black/5 bg-transparent px-2.5 py-2 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 dark:border-white/10 dark:bg-zinc-800/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
-                      type="button"
-                    >
+                <DropdownMenu>
+                  <ButtonGroup className="h-9 overflow-hidden rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out dark:border-white/10 dark:bg-zinc-800/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)]">
+                    <span className="flex h-9 max-w-[120px] items-center gap-1.5 px-2.5 py-2 transition-colors hover:bg-black/5 dark:hover:bg-white/10">
                       <HugeiconsIcon icon={FileExportIcon} size={14} strokeWidth={1.6} />
                       <span className="truncate text-xs font-medium">Export</span>
-                      <HugeiconsIcon icon={ChevronDown} size={12} strokeWidth={1.6} className="rotate-180 text-zinc-400" />
-                    </button>
-                  </DropdownMenuPrimitive.Trigger>
-                  <DropdownMenuPrimitive.Portal>
-                    <DropdownMenuPrimitive.Content
-                      side="top"
-                      sideOffset={8}
-                      align="start"
-                      className="z-50 min-w-[170px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
-                    >
-                      {exportItems.map((item) => (
-                        <DropdownMenuPrimitive.Item
-                          key={item.id}
-                          onClick={item.onClick}
-                          className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
-                        >
-                          <img
-                            src={item.iconSrc}
-                            alt={`${item.id} format`}
-                            className="h-4 w-4 shrink-0"
-                          />
-                          {item.label}
-                        </DropdownMenuPrimitive.Item>
-                      ))}
-                    </DropdownMenuPrimitive.Content>
-                  </DropdownMenuPrimitive.Portal>
-                </DropdownMenuPrimitive.Root>
+                    </span>
+                    <ButtonGroupSeparator className="bg-black/10 dark:bg-white/10" />
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        aria-label="Open export menu"
+                        type="button"
+                        className="flex h-9 w-8 items-center justify-center rounded-none text-zinc-400 outline-none transition-colors hover:bg-black/5 dark:hover:bg-white/10"
+                      >
+                        <HugeiconsIcon icon={ChevronDown} size={12} strokeWidth={1.6} className="rotate-180" />
+                      </button>
+                    </DropdownMenuTrigger>
+                  </ButtonGroup>
+                  <DropdownMenuContent
+                    side="top"
+                    sideOffset={8}
+                    align="end"
+                    className="min-w-[170px] rounded-2xl border border-black/5 bg-white/90 p-0.5 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/90"
+                  >
+                    {exportItems.map((item) => (
+                      <DropdownMenuItem
+                        key={item.id}
+                        onClick={item.onClick}
+                        className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                      >
+                        <img
+                          src={item.iconSrc}
+                          alt={`${item.id} format`}
+                          className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
+                        />
+                        {item.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <div className="mx-0.5 h-4 w-px bg-black/10 dark:bg-white/10" />
 
@@ -1541,8 +1550,8 @@ export default function Home() {
 
           <FontSwitcher menuSide="top" compact showTooltip={false} />
 
-          <DropdownMenuPrimitive.Root>
-            <DropdownMenuPrimitive.Trigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
                 aria-label="Export"
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
@@ -1550,31 +1559,29 @@ export default function Home() {
               >
                 <HugeiconsIcon icon={FileExportIcon} size={16} strokeWidth={1.6} />
               </button>
-            </DropdownMenuPrimitive.Trigger>
-            <DropdownMenuPrimitive.Portal>
-              <DropdownMenuPrimitive.Content
-                side="top"
-                sideOffset={8}
-                align="center"
-                className="z-50 min-w-[170px] overflow-hidden rounded-2xl border border-black/5 bg-white/90 shadow-lg backdrop-blur-xl animate-in fade-in-0 zoom-in-95 dark:border-white/15 dark:bg-zinc-900/90"
-              >
-                {exportItems.map((item) => (
-                  <DropdownMenuPrimitive.Item
-                    key={`mobile-${item.id}`}
-                    onClick={item.onClick}
-                    className="m-1 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
-                  >
-                    <img
-                      src={item.iconSrc}
-                      alt={`${item.id} format`}
-                      className="h-4 w-4 shrink-0"
-                    />
-                    {item.label}
-                  </DropdownMenuPrimitive.Item>
-                ))}
-              </DropdownMenuPrimitive.Content>
-            </DropdownMenuPrimitive.Portal>
-          </DropdownMenuPrimitive.Root>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              sideOffset={8}
+              align="center"
+              className="min-w-[170px] rounded-2xl border border-black/5 bg-white/90 p-0.5 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/90"
+            >
+              {exportItems.map((item) => (
+                <DropdownMenuItem
+                  key={`mobile-${item.id}`}
+                  onClick={item.onClick}
+                  className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+                >
+                  <img
+                    src={item.iconSrc}
+                    alt={`${item.id} format`}
+                    className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
+                  />
+                  {item.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <div data-drawer-toggle>
             <IconButton
