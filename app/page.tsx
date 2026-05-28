@@ -93,6 +93,7 @@ const AMBIENT_BACKGROUND_STORAGE_KEY = "justwrite.ambient.background";
 const AMBIENT_LEGACY_SCENE_STORAGE_KEY = "justwrite.ambient.scene";
 const AMBIENT_VOLUME_STORAGE_KEY = "justwrite.ambient.volume";
 const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
+const EDGE_HOVER_TRIGGER_PX = 20;
 
 type ExportFormat = "txt" | "md" | "json";
 
@@ -373,8 +374,10 @@ function wrapSelection(
 export default function Home() {
   const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notesDrawerManualOpen, setNotesDrawerManualOpen] = useState(false);
+  const [settingsDrawerManualOpen, setSettingsDrawerManualOpen] = useState(false);
+  const [notesDrawerHoverOpen, setNotesDrawerHoverOpen] = useState(false);
+  const [settingsDrawerHoverOpen, setSettingsDrawerHoverOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
   const [typingEffectsEnabled, setTypingEffectsEnabled] = useState(
     getInitialTypingEffectsEnabled
@@ -405,9 +408,13 @@ export default function Home() {
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
+  const drawerOpen = notesDrawerManualOpen || notesDrawerHoverOpen;
+  const settingsOpen = settingsDrawerManualOpen || settingsDrawerHoverOpen;
   const closeDrawers = useCallback(() => {
-    setDrawerOpen(false);
-    setSettingsOpen(false);
+    setNotesDrawerManualOpen(false);
+    setSettingsDrawerManualOpen(false);
+    setNotesDrawerHoverOpen(false);
+    setSettingsDrawerHoverOpen(false);
   }, []);
 
   const notes = notesState.notes;
@@ -782,8 +789,7 @@ export default function Home() {
     const next = !focusMode;
     setFocusMode(next);
     if (next) {
-      setDrawerOpen(false);
-      setSettingsOpen(false);
+      closeDrawers();
     }
     pushToast({
       type: "info",
@@ -834,7 +840,8 @@ export default function Home() {
       notes: [note, ...previousState.notes],
       activeNoteId: note.id,
     }));
-    setDrawerOpen(true);
+    setNotesDrawerManualOpen(true);
+    setNotesDrawerHoverOpen(false);
     pushToast({
       type: "success",
       icon: NoteAddIcon,
@@ -1049,6 +1056,77 @@ export default function Home() {
       textareaRef.current?.focus();
     });
   };
+
+  const handleToggleNotesDrawer = () => {
+    if (drawerOpen) {
+      setNotesDrawerManualOpen(false);
+      setNotesDrawerHoverOpen(false);
+      return;
+    }
+
+    setNotesDrawerManualOpen(true);
+    setNotesDrawerHoverOpen(false);
+  };
+
+  const handleToggleSettingsDrawer = () => {
+    if (settingsOpen) {
+      setSettingsDrawerManualOpen(false);
+      setSettingsDrawerHoverOpen(false);
+      return;
+    }
+
+    setSettingsDrawerManualOpen(true);
+    setSettingsDrawerHoverOpen(false);
+  };
+
+  const closeNotesDrawer = () => {
+    setNotesDrawerManualOpen(false);
+    setNotesDrawerHoverOpen(false);
+  };
+
+  const closeSettingsDrawer = () => {
+    setSettingsDrawerManualOpen(false);
+    setSettingsDrawerHoverOpen(false);
+  };
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (focusMode) {
+        return;
+      }
+
+      if (event.pointerType && event.pointerType !== "mouse") {
+        return;
+      }
+
+      const target = event.target;
+      const targetElement = target instanceof Element ? target : null;
+      const isOverNotesDrawer = Boolean(
+        targetElement?.closest('[data-drawer-root="notes"]')
+      );
+      const isOverSettingsDrawer = Boolean(
+        targetElement?.closest('[data-drawer-root="settings"]') ||
+          targetElement?.closest("[data-ambient-dropdown-content]")
+      );
+
+      const isNearLeftEdge = event.clientX <= EDGE_HOVER_TRIGGER_PX;
+      const isNearRightEdge =
+        event.clientX >= window.innerWidth - EDGE_HOVER_TRIGGER_PX;
+
+      const nextSettingsHoverOpen = isNearLeftEdge || isOverSettingsDrawer;
+      const nextNotesHoverOpen = isNearRightEdge || isOverNotesDrawer;
+
+      setSettingsDrawerHoverOpen((previous) =>
+        previous === nextSettingsHoverOpen ? previous : nextSettingsHoverOpen
+      );
+      setNotesDrawerHoverOpen((previous) =>
+        previous === nextNotesHoverOpen ? previous : nextNotesHoverOpen
+      );
+    };
+
+    document.addEventListener("pointermove", handlePointerMove);
+    return () => document.removeEventListener("pointermove", handlePointerMove);
+  }, [focusMode]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -1486,7 +1564,7 @@ export default function Home() {
                 <div data-drawer-toggle>
                   <IconButton
                     label={settingsOpen ? "Close settings" : "Open settings"}
-                    onClick={() => setSettingsOpen((prev) => !prev)}
+                    onClick={handleToggleSettingsDrawer}
                     pressed={settingsOpen}
                     className="h-8 w-8 border-none"
                   >
@@ -1512,7 +1590,7 @@ export default function Home() {
                 <div data-drawer-toggle>
                   <IconButton
                     label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-                    onClick={() => setDrawerOpen((prev) => !prev)}
+                    onClick={handleToggleNotesDrawer}
                     pressed={drawerOpen}
                     className="h-8 w-8 border-none"
                   >
@@ -1586,7 +1664,7 @@ export default function Home() {
           <div data-drawer-toggle>
             <IconButton
               label={settingsOpen ? "Close settings" : "Open settings"}
-              onClick={() => setSettingsOpen((prev) => !prev)}
+              onClick={handleToggleSettingsDrawer}
               pressed={settingsOpen}
               className="h-8 w-8 border-none"
             >
@@ -1612,7 +1690,7 @@ export default function Home() {
           <div data-drawer-toggle>
             <IconButton
               label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-              onClick={() => setDrawerOpen((prev) => !prev)}
+              onClick={handleToggleNotesDrawer}
               pressed={drawerOpen}
               className="h-8 w-8 border-none"
             >
@@ -1637,7 +1715,7 @@ export default function Home() {
 
       <NotesDrawer
         isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={closeNotesDrawer}
         notes={notes}
         activeNoteId={activeNoteId}
         onSelectNote={(noteId) =>
@@ -1653,7 +1731,7 @@ export default function Home() {
       />
       <FamilyDrawer
         isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={closeSettingsDrawer}
         typingEffectsEnabled={typingEffectsEnabled}
         onTypingEffectsEnabledChange={handleTypingEffectsChange}
         ambientEnabled={ambientEnabled}
