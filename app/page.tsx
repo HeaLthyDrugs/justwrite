@@ -41,6 +41,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group";
+import {
   CustomToastViewport,
   type ToastMessage,
 } from "@/components/ui/custom-toast";
@@ -1308,6 +1312,74 @@ export default function Home() {
     },
   ];
 
+  const renderExportMenu = (compact = false) => (
+    <DropdownMenu>
+      <ButtonGroup
+        className={`overflow-hidden rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out dark:border-white/10 dark:bg-zinc-800/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] ${
+          compact ? "h-8" : "h-9"
+        }`}
+      >
+        <span
+          className={`flex items-center transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
+            compact
+              ? "h-8 w-8 justify-center"
+              : "h-9 gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-3"
+          }`}
+        >
+          <HugeiconsIcon
+            icon={FileExportIcon}
+            size={compact ? 15 : 14}
+            strokeWidth={1.6}
+            className="shrink-0 sm:size-4"
+          />
+          {!compact ? (
+            <span className="truncate text-[10px] font-medium sm:text-xs">
+              Export
+            </span>
+          ) : null}
+        </span>
+        <ButtonGroupSeparator className="bg-black/10 dark:bg-white/10" />
+        <DropdownMenuTrigger asChild>
+          <button
+            aria-label="Open export menu"
+            type="button"
+            className={`flex items-center justify-center rounded-none text-zinc-400 outline-none transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
+              compact ? "h-8 w-8" : "h-9 w-8 sm:w-8.5"
+            }`}
+          >
+            <HugeiconsIcon
+              icon={ChevronDown}
+              size={12}
+              strokeWidth={1.6}
+              className="shrink-0 rotate-180 sm:size-3.5"
+            />
+          </button>
+        </DropdownMenuTrigger>
+      </ButtonGroup>
+      <DropdownMenuContent
+        side="top"
+        sideOffset={8}
+        align="end"
+        className="min-w-[170px] rounded-2xl border border-black/5 bg-white/90 p-0.5 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/90"
+      >
+        {exportItems.map((item) => (
+          <DropdownMenuItem
+            key={item.id}
+            onClick={item.onClick}
+            className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+          >
+            <img
+              src={item.iconSrc}
+              alt={`${item.id} format`}
+              className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
+            />
+            {item.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const playAudioEffect = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
 
@@ -1560,40 +1632,7 @@ export default function Home() {
 
                 <div className="flex items-center gap-2">
                   <FontSwitcher menuSide="top" />
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        aria-label="Open export menu"
-                        type="button"
-                        className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/5 bg-transparent px-3 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] outline-none transition-colors hover:bg-black/5 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
-                      >
-                        <HugeiconsIcon icon={FileExportIcon} size={14} strokeWidth={1.6} />
-                        <span className="text-xs font-medium">Export</span>
-                        <HugeiconsIcon icon={ChevronDown} size={12} strokeWidth={1.6} className="rotate-180 text-zinc-400" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      side="top"
-                      sideOffset={8}
-                      align="end"
-                      className="min-w-[170px] rounded-2xl border border-black/5 bg-white/90 p-0.5 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/90"
-                    >
-                      {exportItems.map((item) => (
-                        <DropdownMenuItem
-                          key={item.id}
-                          onClick={item.onClick}
-                          className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
-                        >
-                          <img
-                            src={item.iconSrc}
-                            alt={`${item.id} format`}
-                            className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
-                          />
-                          {item.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {renderExportMenu()}
                 </div>
               </div>
             </div>
@@ -1665,39 +1704,7 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <FontSwitcher menuSide="top" compact showTooltip={false} />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-label="Export"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-black/5 bg-transparent px-2.5 text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10"
-                  type="button"
-                >
-                  <HugeiconsIcon icon={FileExportIcon} size={15} strokeWidth={1.6} />
-                  <HugeiconsIcon icon={ChevronDown} size={12} strokeWidth={1.6} className="rotate-180 text-zinc-400" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                sideOffset={8}
-                align="end"
-                className="min-w-[170px] rounded-2xl border border-black/5 bg-white/90 p-0.5 shadow-lg backdrop-blur-xl dark:border-white/15 dark:bg-zinc-900/90"
-              >
-                {exportItems.map((item) => (
-                  <DropdownMenuItem
-                    key={`mobile-${item.id}`}
-                    onClick={item.onClick}
-                    className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
-                  >
-                    <img
-                      src={item.iconSrc}
-                      alt={`${item.id} format`}
-                      className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
-                    />
-                    {item.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {renderExportMenu(true)}
           </div>
         </div>
       ) : null}

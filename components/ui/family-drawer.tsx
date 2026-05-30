@@ -155,6 +155,9 @@ export function FamilyDrawer({
     resolvedActiveAmbientPicker === "audio" ? ambientAudioOptions : ambientBackgroundOptions;
   const isAudioPicker = resolvedActiveAmbientPicker === "audio";
   const activeAmbientValue = isAudioPicker ? ambientAudioId : ambientBackgroundId;
+  const comingSoonLabel = isAudioPicker
+    ? "More audios will be added"
+    : "More scenes will be added";
 
   return (
     <>
@@ -526,12 +529,12 @@ export function FamilyDrawer({
       aria-hidden={!resolvedActiveAmbientPicker}
       data-ambient-dropdown-content
       data-drawer-root="settings"
-      className={`fixed inset-x-3 bottom-20 z-40 max-h-[54vh] transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+14px)] md:top-1/2 md:max-h-none md:w-[340px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
+      className={`fixed inset-x-3 bottom-20 z-40 max-h-[54vh] transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+14px)] md:top-1/2 md:max-h-[72vh] md:w-[340px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
         ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
         : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
         }`}
     >
-      <div className="h-full overflow-y-auto overflow-x-hidden rounded-[28px] border border-black/12 bg-white/92 p-2.5 shadow-[0_22px_60px_rgba(8,8,8,0.28)] backdrop-blur-2xl dark:border-white/20 dark:bg-black/78 md:h-auto md:overflow-visible">
+      <div className="max-h-[54vh] overflow-y-auto overflow-x-hidden rounded-[28px] border border-black/12 bg-white/92 p-2.5 shadow-[0_22px_60px_rgba(8,8,8,0.28)] backdrop-blur-2xl dark:border-white/20 dark:bg-black/78 md:max-h-[72vh]">
         <div className="grid grid-cols-2 gap-2">
           {ambientPickerOptions.map((option) => (
             <button
@@ -571,6 +574,20 @@ export function FamilyDrawer({
                 {option.label}
               </p>
             </button>
+          ))}
+          {Array.from({ length: 2 }, (_, index) => (
+            <div
+              key={`${resolvedActiveAmbientPicker}-coming-soon-${index}`}
+              aria-disabled="true"
+              className="relative aspect-[4/3] overflow-hidden rounded-[18px] bg-zinc-950/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-black/10 dark:ring-white/10"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.46),transparent_34%),radial-gradient(circle_at_78%_18%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),rgba(39,39,42,0.46)_50%,rgba(9,9,11,0.94))] blur-[10px]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/28 to-white/8" />
+              <div className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/12" />
+              <p className="absolute inset-x-3 bottom-3 text-balance text-[11px] font-medium leading-4 text-white/95">
+                {comingSoonLabel}
+              </p>
+            </div>
           ))}
         </div>
       </div>
