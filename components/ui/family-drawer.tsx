@@ -18,9 +18,8 @@ import { IconButton } from "@/components/ui/icon-button";
 import type {
   AmbientAudioId,
   AmbientBackgroundId,
-  AmbientOptionId,
+  AmbientBackgroundConfig,
 } from "@/lib/ambient-scenes";
-import { AMBIENT_BACKGROUNDS } from "@/lib/ambient-scenes";
 
 interface FamilyDrawerProps {
   isOpen: boolean;
@@ -33,11 +32,7 @@ interface FamilyDrawerProps {
   ambientAudioOptions: Array<{ id: AmbientAudioId; label: string; iconPath: string }>;
   onAmbientAudioChange: (audioId: AmbientAudioId) => void;
   ambientBackgroundId: AmbientBackgroundId;
-  ambientBackgroundOptions: Array<{
-    id: AmbientBackgroundId;
-    label: string;
-    iconPath: string;
-  }>;
+  ambientBackgroundOptions: AmbientBackgroundConfig[];
   onAmbientBackgroundChange: (backgroundId: AmbientBackgroundId) => void;
   ambientVolume: number;
   onAmbientVolumeChange: (volume: number) => void;
@@ -119,12 +114,39 @@ export function FamilyDrawer({
     };
   }, []);
 
-  const getAmbientPreviewSource = (id: AmbientOptionId) => {
-    const background = AMBIENT_BACKGROUNDS[id].background;
+  const renderAmbientBackgroundPreview = (
+    backgroundConfig: AmbientBackgroundConfig,
+    label: string
+  ) => {
+    const { background } = backgroundConfig;
     if (background.type === "video") {
-      return background.poster ?? "/backgrounds/1.jpg";
+      return (
+        <video
+          key={background.source}
+          aria-hidden={label ? undefined : true}
+          aria-label={label || undefined}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          poster={background.poster}
+          className="h-full w-full object-cover object-center"
+        >
+          <source key={background.source} src={background.source} type="video/mp4" />
+        </video>
+      );
     }
-    return background.source;
+
+    return (
+      <Image
+        src={background.source}
+        alt={label}
+        fill
+        sizes="160px"
+        className="object-cover object-center"
+      />
+    );
   };
 
   const resolvedActiveAmbientPicker =
@@ -354,14 +376,7 @@ export function FamilyDrawer({
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
-                      <Image
-                        src={getAmbientPreviewSource(selectedAmbientBackground.id)}
-                        alt=""
-                        aria-hidden="true"
-                        fill
-                        sizes="78px"
-                        className="object-cover object-center"
-                      />
+                      {renderAmbientBackgroundPreview(selectedAmbientBackground, "")}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
@@ -396,12 +411,12 @@ export function FamilyDrawer({
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
                       <Image
-                        src={getAmbientPreviewSource(selectedAmbientAudio.id)}
+                        src={selectedAmbientAudio.iconPath}
                         alt=""
                         aria-hidden="true"
                         fill
                         sizes="78px"
-                        className="object-cover object-center"
+                        className="bg-zinc-100 object-contain p-3 dark:bg-zinc-900"
                       />
                     </span>
                     <span className="min-w-0">
@@ -535,13 +550,22 @@ export function FamilyDrawer({
                 : "ring-1 ring-black/8 hover:ring-black/16 dark:ring-white/10 dark:hover:ring-white/20"
                 }`}
             >
-              <Image
-                src={getAmbientPreviewSource(option.id)}
-                alt={option.label}
-                fill
-                sizes="160px"
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-              />
+              <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.03]">
+                {isAudioPicker ? (
+                  <Image
+                    src={option.iconPath}
+                    alt={option.label}
+                    fill
+                    sizes="160px"
+                    className="bg-zinc-100 object-contain p-8 dark:bg-zinc-900"
+                  />
+                ) : (
+                  renderAmbientBackgroundPreview(
+                    option as AmbientBackgroundConfig,
+                    option.label
+                  )
+                )}
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
               <p className="absolute bottom-2 left-2 text-[11px] font-medium text-white/95">
                 {option.label}

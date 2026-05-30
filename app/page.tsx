@@ -444,11 +444,9 @@ export default function Home() {
 
   const ambientBackgroundOptions = useMemo(
     () =>
-      AMBIENT_BACKGROUND_ORDER.map((backgroundId) => ({
-        id: backgroundId,
-        label: AMBIENT_BACKGROUNDS[backgroundId].label,
-        iconPath: AMBIENT_BACKGROUNDS[backgroundId].iconPath,
-      })),
+      AMBIENT_BACKGROUND_ORDER.map(
+        (backgroundId) => AMBIENT_BACKGROUNDS[backgroundId]
+      ),
     []
   );
 

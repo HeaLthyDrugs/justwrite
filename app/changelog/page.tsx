@@ -9,8 +9,8 @@ const changelogEntries = [
       "Ambient controls in Settings: enable/disable, icon-based scene selection, and 0-100 volume.",
       "Ambient preferences persisted with consent-aware local storage.",
       "Keyboard shortcut added: Alt+7 toggles ambient mode.",
-      "Scene-aware app backdrop: rain now plays a full-screen video background, and other scenes switch themed backgrounds.",
-      "Ambient assets now pre-cached for offline playback support.",
+      "Scene-aware app backdrop: ambient backgrounds now use named Cloudflare-hosted video scenes.",
+      "Ambient audio and local UI assets now pre-cached for offline playback support.",
     ],
   },
   {

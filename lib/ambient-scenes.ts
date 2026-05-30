@@ -7,7 +7,11 @@ export type AmbientOptionId =
   | "lofi-room";
 
 export type AmbientAudioId = AmbientOptionId;
-export type AmbientBackgroundId = AmbientOptionId;
+export type AmbientBackgroundId =
+  | "beach-shore"
+  | "butterfly"
+  | "flowers"
+  | "nature-walk";
 
 export interface AmbientAudioConfig {
   id: AmbientAudioId;
@@ -20,12 +24,19 @@ export interface AmbientBackgroundConfig {
   id: AmbientBackgroundId;
   label: string;
   iconPath: string;
+  credit: {
+    name: string;
+    url: string;
+  };
   background: {
     type: "image" | "video";
     source: string;
     poster?: string;
   };
 }
+
+const BACKGROUND_VIDEO_BASE_URL =
+  "https://assets.mnsh.online/work/justwrite/assets/background-videos";
 
 export const AMBIENT_AUDIOS: Record<AmbientAudioId, AmbientAudioConfig> = {
   rain: {
@@ -70,59 +81,56 @@ export const AMBIENT_BACKGROUNDS: Record<
   AmbientBackgroundId,
   AmbientBackgroundConfig
 > = {
-  rain: {
-    id: "rain",
-    label: "Rain",
-    iconPath: "/icons/ambient/rain.svg",
+  "beach-shore": {
+    id: "beach-shore",
+    label: "Beach Shore",
+    iconPath: "/icons/ambient/forest.svg",
+    credit: {
+      name: "Beach Shore",
+      url: `${BACKGROUND_VIDEO_BASE_URL}/beach-shore.mp4`,
+    },
     background: {
       type: "video",
-      source: "/videos/ambient/rain.mp4",
-      poster: "/backgrounds/4.jpg",
+      source: `${BACKGROUND_VIDEO_BASE_URL}/beach-shore.mp4`,
     },
   },
-  cafe: {
-    id: "cafe",
-    label: "Coffee / Cafe",
-    iconPath: "/icons/ambient/cafe.svg",
-    background: {
-      type: "image",
-      source: "/backgrounds/2.jpg",
-    },
-  },
-  library: {
-    id: "library",
-    label: "Library",
-    iconPath: "/icons/ambient/library.svg",
-    background: {
-      type: "image",
-      source: "/backgrounds/1.jpg",
-    },
-  },
-  night: {
-    id: "night",
-    label: "Night",
-    iconPath: "/icons/ambient/night.svg",
-    background: {
-      type: "image",
-      source: "/backgrounds/4.jpg",
-    },
-  },
-  forest: {
-    id: "forest",
-    label: "Forest",
+  butterfly: {
+    id: "butterfly",
+    label: "Butterfly",
     iconPath: "/icons/ambient/forest.svg",
+    credit: {
+      name: "Butterfly",
+      url: `${BACKGROUND_VIDEO_BASE_URL}/butterfly.mp4`,
+    },
     background: {
-      type: "image",
-      source: "/backgrounds/3.jpg",
+      type: "video",
+      source: `${BACKGROUND_VIDEO_BASE_URL}/butterfly.mp4`,
     },
   },
-  "lofi-room": {
-    id: "lofi-room",
-    label: "Lo-fi Room",
-    iconPath: "/icons/ambient/lofi-room.svg",
+  flowers: {
+    id: "flowers",
+    label: "Flowers",
+    iconPath: "/icons/ambient/forest.svg",
+    credit: {
+      name: "Flowers",
+      url: `${BACKGROUND_VIDEO_BASE_URL}/flowers.mp4`,
+    },
     background: {
-      type: "image",
-      source: "/backgrounds/2.jpg",
+      type: "video",
+      source: `${BACKGROUND_VIDEO_BASE_URL}/flowers.mp4`,
+    },
+  },
+  "nature-walk": {
+    id: "nature-walk",
+    label: "Nature Walk",
+    iconPath: "/icons/ambient/forest.svg",
+    credit: {
+      name: "Nature Walk",
+      url: `${BACKGROUND_VIDEO_BASE_URL}/nature-walk.mp4`,
+    },
+    background: {
+      type: "video",
+      source: `${BACKGROUND_VIDEO_BASE_URL}/nature-walk.mp4`,
     },
   },
 };
@@ -137,16 +145,14 @@ export const AMBIENT_AUDIO_ORDER: AmbientAudioId[] = [
 ];
 
 export const AMBIENT_BACKGROUND_ORDER: AmbientBackgroundId[] = [
-  "rain",
-  "cafe",
-  "library",
-  "night",
-  "forest",
-  "lofi-room",
+  "beach-shore",
+  "butterfly",
+  "flowers",
+  "nature-walk",
 ];
 
 export const DEFAULT_AMBIENT_AUDIO_ID: AmbientAudioId = "rain";
-export const DEFAULT_AMBIENT_BACKGROUND_ID: AmbientBackgroundId = "rain";
+export const DEFAULT_AMBIENT_BACKGROUND_ID: AmbientBackgroundId = "nature-walk";
 export const DEFAULT_AMBIENT_VOLUME = 35;
 
 export function isAmbientAudioId(value: string): value is AmbientAudioId {

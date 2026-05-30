@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justwrite-v4";
+const CACHE_VERSION = "justwrite-v5";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
@@ -22,7 +22,6 @@ const PRECACHE_URLS = [
   "/sounds/ambient/night.mp3",
   "/sounds/ambient/forest.mp3",
   "/sounds/ambient/lofi-room.mp3",
-  "/videos/ambient/rain.mp4",
   "/icons/ambient/mode.svg",
   "/icons/ambient/rain.svg",
   "/icons/ambient/cafe.svg",

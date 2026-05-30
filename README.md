@@ -40,7 +40,7 @@ docker compose up --build
 - Export to TXT, Markdown, and JSON.
 - Settings: notebook lines, font size, word count, spell check, typing sound.
 - Ambient Mode: rain, cafe, library, night, forest, and lo-fi room loops with volume control.
-- Scene-aware visuals: rain uses a video backdrop and each scene switches the app background.
+- Scene-aware visuals: Cloudflare-hosted ambient video backdrops switch the app background.
 - Theme toggle (light/dark) and font switching (sans, mono, pixel).
 - Legal pages: Privacy Policy, Terms of Service, Cookie Policy, Disclaimer.
 - Cookie/local-storage consent: essential storage always on, optional preferences by consent.
