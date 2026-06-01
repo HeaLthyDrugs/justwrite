@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { HugeiconsIcon } from "@hugeicons/react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
+  BookOpen02Icon,
   Cancel01Icon,
+  CloudLittleRainIcon,
   Clock01Icon,
+  Coffee02Icon,
+  HeadphonesIcon,
+  Moon02Icon,
   NoteAddIcon,
   SiriIcon,
   SpeakerIcon,
+  Tree01Icon,
   TextFontIcon,
   TextCheckIcon,
   TextNumberSignIcon,
@@ -49,6 +55,52 @@ interface FamilyDrawerProps {
   fontSize: number;
   onFontSizeChange: (size: number) => void;
 }
+
+const AMBIENT_AUDIO_VISUALS: Record<
+  AmbientAudioId,
+  {
+    icon: IconSvgElement;
+    cardGradient: string;
+    iconAccent: string;
+  }
+> = {
+  rain: {
+    icon: CloudLittleRainIcon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(237,246,255,0.98),rgba(221,235,255,0.94)_56%,rgba(209,225,248,0.9))]",
+    iconAccent: "text-sky-400/85 dark:text-sky-300",
+  },
+  cafe: {
+    icon: Coffee02Icon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(255,245,233,0.98),rgba(255,233,209,0.94)_56%,rgba(249,221,190,0.9))]",
+    iconAccent: "text-orange-400/85 dark:text-orange-300",
+  },
+  library: {
+    icon: BookOpen02Icon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(238,252,244,0.98),rgba(221,246,234,0.94)_56%,rgba(204,236,221,0.9))]",
+    iconAccent: "text-emerald-400/85 dark:text-emerald-300",
+  },
+  night: {
+    icon: Moon02Icon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(244,241,255,0.98),rgba(233,228,252,0.94)_56%,rgba(219,212,241,0.9))]",
+    iconAccent: "text-violet-400/85 dark:text-violet-300",
+  },
+  forest: {
+    icon: Tree01Icon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(237,251,247,0.98),rgba(222,245,236,0.94)_56%,rgba(203,233,223,0.9))]",
+    iconAccent: "text-green-400/85 dark:text-green-300",
+  },
+  "lofi-room": {
+    icon: HeadphonesIcon,
+    cardGradient:
+      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(248,240,255,0.98),rgba(239,228,252,0.94)_56%,rgba(226,214,241,0.9))]",
+    iconAccent: "text-fuchsia-400/85 dark:text-fuchsia-300",
+  },
+};
 
 export function FamilyDrawer({
   isOpen,
@@ -93,6 +145,8 @@ export function FamilyDrawer({
   const selectedAmbientAudio =
     ambientAudioOptions.find((audio) => audio.id === ambientAudioId) ??
     ambientAudioOptions[0];
+  const selectedAmbientAudioVisual =
+    AMBIENT_AUDIO_VISUALS[selectedAmbientAudio.id] ?? AMBIENT_AUDIO_VISUALS.rain;
   const selectedAmbientBackground =
     ambientBackgroundOptions.find(
       (background) => background.id === ambientBackgroundId
@@ -359,13 +413,7 @@ export function FamilyDrawer({
             </p>
 
             <div className={`mt-3 space-y-3 ${ambientEnabled ? "" : "opacity-60"}`}>
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ambient-background-trigger"
-                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400"
-                >
-                  Background Scene
-                </label>
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   id="ambient-background-trigger"
                   type="button"
@@ -375,31 +423,23 @@ export function FamilyDrawer({
                       current === "background" ? null : "background"
                     )
                   }
-                  className="group flex w-full items-center justify-between rounded-2xl border border-black/12 bg-white/92 p-2 text-left outline-none transition-all hover:border-black/24 hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/20 dark:bg-black/58 dark:hover:border-white/35 dark:hover:bg-black/68 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  className={`group relative aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "background"
+                    ? "ring-1 ring-zinc-900/55 dark:ring-zinc-100/60"
+                    : "hover:border-black/20 dark:hover:border-white/20"
+                    }`}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
-                      {renderAmbientBackgroundPreview(selectedAmbientBackground, "")}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                        {selectedAmbientBackground.label}
-                      </span>
-                      <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
-                        Choose scene
-                      </span>
-                    </span>
+                  <span className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.04]">
+                    {renderAmbientBackgroundPreview(selectedAmbientBackground, "")}
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/16 to-black/12" />
+                  <span className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/20" />
+                  <span className="absolute left-2 top-2 rounded-full bg-black/42 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/85 backdrop-blur-md">
+                    Scene
+                  </span>
+                  <span className="absolute inset-x-2 bottom-2 truncate text-xs font-semibold text-white">
+                    {selectedAmbientBackground.label}
                   </span>
                 </button>
-              </div>
-
-              <div className="space-y-1.5">
-                <label
-                  htmlFor="ambient-audio-trigger"
-                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400"
-                >
-                  Ambient Audio
-                </label>
                 <button
                   id="ambient-audio-trigger"
                   type="button"
@@ -409,27 +449,29 @@ export function FamilyDrawer({
                       current === "audio" ? null : "audio"
                     )
                   }
-                  className="group flex w-full items-center justify-between rounded-2xl border border-black/12 bg-white/92 p-2 text-left outline-none transition-all hover:border-black/24 hover:bg-white focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/20 dark:bg-black/58 dark:hover:border-white/35 dark:hover:bg-black/68 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70"
+                  className={`group relative aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "audio"
+                    ? "border-white/80 ring-1 ring-white/65 dark:border-white/45 dark:ring-white/45"
+                    : "hover:border-white/80 dark:hover:border-white/35"
+                    }`}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="relative h-12 w-[78px] shrink-0 overflow-hidden rounded-xl border border-black/10 shadow-sm dark:border-white/15">
-                      <Image
-                        src={selectedAmbientAudio.iconPath}
-                        alt=""
-                        aria-hidden="true"
-                        fill
-                        sizes="78px"
-                        className="bg-zinc-100 object-contain p-3 dark:bg-zinc-900"
-                      />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                        {selectedAmbientAudio.label}
-                      </span>
-                      <span className="block text-[10px] font-medium uppercase tracking-[0.08em] text-zinc-500 dark:text-zinc-400">
-                        Choose audio
-                      </span>
-                    </span>
+                  <span
+                    className={`absolute inset-0 ${selectedAmbientAudioVisual.cardGradient}`}
+                  />
+                  <span className="absolute right-3 top-3 z-[2]">
+                    <HugeiconsIcon
+                      icon={selectedAmbientAudioVisual.icon}
+                      size={34}
+                      strokeWidth={1.9}
+                      className={`${selectedAmbientAudioVisual.iconAccent} drop-shadow-[0_2px_3px_rgba(255,255,255,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.42)]`}
+                    />
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-t from-white/22 via-transparent to-transparent dark:from-black/12" />
+                  <span className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/50" />
+                  <span className="absolute left-2 top-2 z-[2] rounded-full bg-white/42 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-600/90 backdrop-blur-sm dark:bg-white/28 dark:text-zinc-700/95">
+                    Audio
+                  </span>
+                  <span className="absolute inset-x-2 bottom-2 z-[2] truncate text-xs font-semibold text-zinc-800/95 dark:text-zinc-700/95">
+                    {selectedAmbientAudio.label}
                   </span>
                 </button>
               </div>
@@ -525,71 +567,117 @@ export function FamilyDrawer({
         </div>
       </div>
     </aside>
+    <button
+      type="button"
+      aria-hidden={!resolvedActiveAmbientPicker}
+      aria-label="Close ambient picker"
+      tabIndex={resolvedActiveAmbientPicker ? 0 : -1}
+      onClick={() => setActiveAmbientPicker(null)}
+      className={`fixed inset-0 z-[29] cursor-default bg-transparent transition-opacity ${resolvedActiveAmbientPicker
+        ? "pointer-events-auto opacity-100"
+        : "pointer-events-none opacity-0"
+        }`}
+    />
     <div
       aria-hidden={!resolvedActiveAmbientPicker}
       data-ambient-dropdown-content
       data-drawer-root="settings"
-      className={`fixed inset-x-3 bottom-20 z-40 max-h-[54vh] transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+14px)] md:top-1/2 md:max-h-[72vh] md:w-[340px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
+      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+10px)] md:top-1/2 md:w-[300px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
         ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
         : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
         }`}
     >
-      <div className="max-h-[54vh] overflow-y-auto overflow-x-hidden rounded-[28px] border border-black/12 bg-white/92 p-2.5 shadow-[0_22px_60px_rgba(8,8,8,0.28)] backdrop-blur-2xl dark:border-white/20 dark:bg-black/78 md:max-h-[72vh]">
-        <div className="grid grid-cols-2 gap-2">
-          {ambientPickerOptions.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => {
-                if (isAudioPicker) {
-                  onAmbientAudioChange(option.id as AmbientAudioId);
-                } else {
-                  onAmbientBackgroundChange(option.id as AmbientBackgroundId);
-                }
-                setActiveAmbientPicker(null);
-              }}
-              className={`group relative aspect-[4/3] overflow-hidden rounded-[18px] text-left transition-all ${option.id === activeAmbientValue
-                ? "ring-2 ring-zinc-900/55 dark:ring-zinc-100/55"
-                : "ring-1 ring-black/8 hover:ring-black/16 dark:ring-white/10 dark:hover:ring-white/20"
-                }`}
-            >
-              <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.03]">
-                {isAudioPicker ? (
-                  <Image
-                    src={option.iconPath}
-                    alt={option.label}
-                    fill
-                    sizes="160px"
-                    className="bg-zinc-100 object-contain p-8 dark:bg-zinc-900"
-                  />
-                ) : (
-                  renderAmbientBackgroundPreview(
-                    option as AmbientBackgroundConfig,
-                    option.label
-                  )
-                )}
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-              <p className="absolute bottom-2 left-2 text-[11px] font-medium text-white/95">
-                {option.label}
-              </p>
-            </button>
-          ))}
-          {Array.from({ length: 2 }, (_, index) => (
-            <div
-              key={`${resolvedActiveAmbientPicker}-coming-soon-${index}`}
-              aria-disabled="true"
-              className="relative aspect-[4/3] overflow-hidden rounded-[18px] bg-zinc-950/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] ring-1 ring-black/10 dark:ring-white/10"
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_24%,rgba(255,255,255,0.46),transparent_34%),radial-gradient(circle_at_78%_18%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.18),rgba(39,39,42,0.46)_50%,rgba(9,9,11,0.94))] blur-[10px]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/28 to-white/8" />
-              <div className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/12" />
-              <p className="absolute inset-x-3 bottom-3 text-balance text-[11px] font-medium leading-4 text-white/95">
-                {comingSoonLabel}
-              </p>
-            </div>
-          ))}
+      <div
+        className={`max-h-[48vh] overflow-y-auto overflow-x-hidden rounded-[26px] border p-2 backdrop-blur-2xl md:max-h-[62vh] ${
+          isAudioPicker
+            ? "border-white/80 bg-[linear-gradient(165deg,rgba(240,251,247,0.86),rgba(230,238,255,0.8)_50%,rgba(246,236,255,0.82))] shadow-[0_16px_32px_rgba(151,177,196,0.22),inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/36 dark:bg-[linear-gradient(165deg,rgba(50,58,70,0.68),rgba(66,64,88,0.62)_52%,rgba(58,74,70,0.64))]"
+            : "border-white/80 bg-[linear-gradient(165deg,rgba(236,245,255,0.84),rgba(230,247,242,0.8)_50%,rgba(242,238,255,0.8))] shadow-[0_16px_32px_rgba(151,177,196,0.2),inset_0_1px_0_rgba(255,255,255,0.66)] dark:border-white/34 dark:bg-[linear-gradient(165deg,rgba(45,56,68,0.7),rgba(52,70,66,0.62)_52%,rgba(60,64,84,0.64))]"
+        }`}
+      >
+        <div className="sticky top-0 z-10 -mx-1 mb-1 flex items-center justify-between rounded-[18px] px-2 py-1">
+          <button
+            type="button"
+            aria-label="Close ambient picker"
+            onClick={() => setActiveAmbientPicker(null)}
+            className="flex h-7 w-7 items-center shadow-sm justify-center rounded-full border border-black/5 bg-white/45 text-zinc-600 transition-colors hover:border-black/10 hover:bg-white/70 hover:text-zinc-900 dark:border-white/10 dark:bg-white/5 dark:text-zinc-300 dark:hover:border-white/18 dark:hover:bg-white/10 dark:hover:text-zinc-50"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.7} />
+          </button>
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          {ambientPickerOptions.map((option) => {
+            const audioVisual = isAudioPicker
+              ? AMBIENT_AUDIO_VISUALS[option.id as AmbientAudioId]
+              : null;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  if (isAudioPicker) {
+                    onAmbientAudioChange(option.id as AmbientAudioId);
+                  } else {
+                    onAmbientBackgroundChange(option.id as AmbientBackgroundId);
+                  }
+                  setActiveAmbientPicker(null);
+                }}
+                className={`group relative aspect-[1.22] overflow-hidden rounded-[18px] text-left transition-all ${
+                  isAudioPicker
+                    ? "border border-white/70 bg-white/52 shadow-[inset_1px_1px_0_rgba(255,255,255,0.58),inset_-1px_-1px_0_rgba(207,219,235,0.25),0_10px_18px_rgba(145,164,183,0.18)] dark:border-white/35 dark:bg-white/14"
+                    : "border border-white/66 bg-white/45 shadow-[inset_1px_1px_0_rgba(255,255,255,0.56),inset_-1px_-1px_0_rgba(207,219,235,0.2),0_10px_18px_rgba(145,164,183,0.14)] dark:border-white/30 dark:bg-white/10"
+                } ${
+                  option.id === activeAmbientValue
+                    ? "border-white/85 ring-1 ring-white/70 dark:border-white/50 dark:ring-white/45"
+                    : "hover:border-white/85 dark:hover:border-white/45"
+                }`}
+              >
+                <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.03]">
+                  {isAudioPicker ? (
+                    <>
+                      <span
+                        className={`absolute inset-0 ${audioVisual?.cardGradient ?? ""}`}
+                      />
+                      <span className="absolute right-3 top-3 z-[2]">
+                        <HugeiconsIcon
+                          icon={audioVisual?.icon ?? SpeakerIcon}
+                          size={38}
+                          strokeWidth={1.95}
+                          className={`${audioVisual?.iconAccent ?? "text-zinc-500 dark:text-zinc-200"} drop-shadow-[0_2px_3px_rgba(255,255,255,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.42)]`}
+                        />
+                      </span>
+                    </>
+                  ) : (
+                    renderAmbientBackgroundPreview(
+                      option as AmbientBackgroundConfig,
+                      option.label
+                    )
+                  )}
+                </div>
+                <div
+                  className={`absolute inset-0 ${
+                    isAudioPicker
+                      ? "bg-gradient-to-t from-white/28 via-transparent to-transparent dark:from-black/12"
+                      : "bg-gradient-to-t from-black/42 via-black/8 to-transparent dark:from-black/52"
+                  }`}
+                />
+                <div className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/18" />
+                <p
+                  className={`absolute inset-x-2 bottom-2 truncate text-xs font-semibold ${
+                    isAudioPicker
+                      ? "text-zinc-800/95 dark:text-zinc-700/95"
+                      : "text-white/95"
+                  }`}
+                >
+                  {option.label}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+        <p className="px-1 pt-2 text-center text-[11px] font-medium leading-4 text-zinc-600/78 dark:text-zinc-300/72">
+          {comingSoonLabel}.
+        </p>
       </div>
     </div>
     </>
