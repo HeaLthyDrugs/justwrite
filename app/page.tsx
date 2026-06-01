@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
@@ -99,6 +100,12 @@ const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
 const EDGE_HOVER_TRIGGER_PX = 20;
 
 type ExportFormat = "txt" | "md" | "json";
+
+const subscribeToHydration = () => () => {};
+
+function useIsHydrated() {
+  return useSyncExternalStore(subscribeToHydration, () => true, () => false);
+}
 
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") {
@@ -375,6 +382,7 @@ function wrapSelection(
 }
 
 export default function Home() {
+  const isHydrated = useIsHydrated();
   const [isOnline, setIsOnline] = useState(true);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
   const [notesDrawerManualOpen, setNotesDrawerManualOpen] = useState(false);
@@ -1476,7 +1484,7 @@ export default function Home() {
     "--editor-line-height": 1.8,
   };
 
-  return (
+  return isHydrated ? (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-100/30 via-transparent to-zinc-900/12 dark:from-zinc-900/30 dark:to-black/24" />
@@ -1755,5 +1763,7 @@ export default function Home() {
       />
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>
+  ) : (
+    <div className="h-screen w-full" suppressHydrationWarning />
   );
 }

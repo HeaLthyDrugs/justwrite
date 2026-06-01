@@ -82,7 +82,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans", figtree.variable)}
     >
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <TooltipProvider>
           <FontProvider>
             <ServiceWorkerRegister />
