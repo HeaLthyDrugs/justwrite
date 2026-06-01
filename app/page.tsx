@@ -78,6 +78,13 @@ import {
   THEME_SHORTCUT_TOGGLED_EVENT,
   type AppTheme,
 } from "@/lib/theme-shortcut";
+import {
+  DEFAULT_TYPING_SOUND_VARIANT_ID,
+  TYPING_SOUND_VARIANT_ORDER,
+  TYPING_SOUND_VARIANTS,
+  isTypingSoundVariantId,
+  type TypingSoundVariantId,
+} from "@/lib/typing-sound-variants";
 
 interface NotesState {
   notes: Note[];
@@ -85,6 +92,7 @@ interface NotesState {
 }
 
 const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
+const TYPING_SOUND_VARIANT_STORAGE_KEY = "justwrite.typing-sound.variant";
 const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
 const SHOW_SAVED_TIMESTAMP_STORAGE_KEY = "justwrite.show-saved-timestamp.enabled";
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
@@ -198,6 +206,22 @@ function getInitialShowSavedTimestamp() {
   if (storedValue === "true") return true;
   if (storedValue === "false") return false;
   return true;
+}
+
+function getInitialTypingSoundVariant(): TypingSoundVariantId {
+  if (typeof window === "undefined") {
+    return DEFAULT_TYPING_SOUND_VARIANT_ID;
+  }
+  if (!hasPreferenceConsent()) {
+    return DEFAULT_TYPING_SOUND_VARIANT_ID;
+  }
+
+  const storedValue = window.localStorage.getItem(TYPING_SOUND_VARIANT_STORAGE_KEY);
+  if (storedValue && isTypingSoundVariantId(storedValue)) {
+    return storedValue;
+  }
+
+  return DEFAULT_TYPING_SOUND_VARIANT_ID;
 }
 
 function getInitialSpellCheckEnabled() {
@@ -393,6 +417,9 @@ export default function Home() {
   const [typingEffectsEnabled, setTypingEffectsEnabled] = useState(
     getInitialTypingEffectsEnabled
   );
+  const [typingSoundVariant, setTypingSoundVariant] = useState<TypingSoundVariantId>(
+    getInitialTypingSoundVariant
+  );
   const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
   const [showSavedTimestamp, setShowSavedTimestamp] = useState(getInitialShowSavedTimestamp);
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
@@ -454,6 +481,16 @@ export default function Home() {
     []
   );
 
+  const typingSoundOptions = useMemo(
+    () =>
+      TYPING_SOUND_VARIANT_ORDER.map((variantId) => ({
+        id: variantId,
+        label: TYPING_SOUND_VARIANTS[variantId].label,
+        category: TYPING_SOUND_VARIANTS[variantId].category,
+      })),
+    []
+  );
+
   const ambientBackgroundOptions = useMemo(
     () =>
       AMBIENT_BACKGROUND_ORDER.map(
@@ -500,6 +537,13 @@ export default function Home() {
     const typingSaved = window.localStorage.getItem(TYPING_EFFECTS_STORAGE_KEY);
     if (typingSaved === "true" || typingSaved === "false") {
       setTypingEffectsEnabled(typingSaved === "true");
+    }
+
+    const typingVariantSaved = window.localStorage.getItem(
+      TYPING_SOUND_VARIANT_STORAGE_KEY
+    );
+    if (typingVariantSaved && isTypingSoundVariantId(typingVariantSaved)) {
+      setTypingSoundVariant(typingVariantSaved);
     }
 
     const wordCountSaved = window.localStorage.getItem(SHOW_WORD_COUNT_STORAGE_KEY);
@@ -605,6 +649,12 @@ export default function Home() {
 
   useEffect(() => {
     if (hasPreferencesConsent) {
+      localStorage.setItem(TYPING_SOUND_VARIANT_STORAGE_KEY, typingSoundVariant);
+    }
+  }, [typingSoundVariant, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
       localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
     }
   }, [showWordCount, hasPreferencesConsent]);
@@ -676,11 +726,11 @@ export default function Home() {
   }, [ambientBackdropDim, hasPreferencesConsent]);
 
   useEffect(() => {
-    const keyAudio = new Audio("/sounds/keystorkes.mp3");
+    const keyAudio = new Audio();
     keyAudio.preload = "auto";
     keyAudio.volume = 0.24;
 
-    const spaceAudio = new Audio("/sounds/spacebar.mp3");
+    const spaceAudio = new Audio();
     spaceAudio.preload = "auto";
     spaceAudio.volume = 0.24;
 
@@ -700,6 +750,35 @@ export default function Home() {
       ambientAudioRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const keyAudio = keyAudioRef.current;
+    const spaceAudio = spaceAudioRef.current;
+    if (!keyAudio || !spaceAudio) {
+      return;
+    }
+
+    const selectedVariant =
+      TYPING_SOUND_VARIANTS[typingSoundVariant] ??
+      TYPING_SOUND_VARIANTS[DEFAULT_TYPING_SOUND_VARIANT_ID];
+
+    const syncSource = (audio: HTMLAudioElement, source: string) => {
+      const resolvedSource = new URL(source, window.location.origin).href;
+      if (audio.src !== resolvedSource) {
+        audio.pause();
+        audio.src = source;
+        audio.load();
+      }
+      audio.volume = 0.24;
+    };
+
+    syncSource(keyAudio, selectedVariant.keyPath);
+    syncSource(spaceAudio, selectedVariant.spacePath);
+  }, [typingSoundVariant]);
 
   useEffect(() => {
     const ambientPlayer = ambientAudioRef.current;
@@ -961,6 +1040,16 @@ export default function Home() {
       icon: SpeakerIcon,
       title: enabled ? "Typing sound on" : "Typing sound off",
       description: enabled ? "Audio feedback enabled." : "Audio feedback disabled.",
+    });
+  };
+
+  const handleTypingSoundVariantChange = (variantId: TypingSoundVariantId) => {
+    setTypingSoundVariant(variantId);
+    pushToast({
+      type: "info",
+      icon: SpeakerIcon,
+      title: "Typing sound style changed",
+      description: `${TYPING_SOUND_VARIANTS[variantId].label} is now active.`,
     });
   };
 
@@ -1738,6 +1827,9 @@ export default function Home() {
         onClose={closeSettingsDrawer}
         typingEffectsEnabled={typingEffectsEnabled}
         onTypingEffectsEnabledChange={handleTypingEffectsChange}
+        typingSoundVariantId={typingSoundVariant}
+        typingSoundVariants={typingSoundOptions}
+        onTypingSoundVariantChange={handleTypingSoundVariantChange}
         ambientEnabled={ambientEnabled}
         onAmbientEnabledChange={handleAmbientEnabledChange}
         ambientAudioId={ambientAudio}

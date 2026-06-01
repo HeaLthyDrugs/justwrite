@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
   BookOpen02Icon,
   Cancel01Icon,
   CloudLittleRainIcon,
@@ -21,17 +22,34 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { IconButton } from "@/components/ui/icon-button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type {
   AmbientAudioId,
   AmbientBackgroundId,
   AmbientBackgroundConfig,
 } from "@/lib/ambient-scenes";
+import type { TypingSoundVariantId } from "@/lib/typing-sound-variants";
 
 interface FamilyDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   typingEffectsEnabled: boolean;
   onTypingEffectsEnabledChange: (enabled: boolean) => void;
+  typingSoundVariantId: TypingSoundVariantId;
+  typingSoundVariants: Array<{
+    id: TypingSoundVariantId;
+    label: string;
+    category: string;
+  }>;
+  onTypingSoundVariantChange: (variantId: TypingSoundVariantId) => void;
   ambientEnabled: boolean;
   onAmbientEnabledChange: (enabled: boolean) => void;
   ambientAudioId: AmbientAudioId;
@@ -107,6 +125,9 @@ export function FamilyDrawer({
   onClose,
   typingEffectsEnabled,
   onTypingEffectsEnabledChange,
+  typingSoundVariantId,
+  typingSoundVariants,
+  onTypingSoundVariantChange,
   ambientEnabled,
   onAmbientEnabledChange,
   ambientAudioId,
@@ -154,6 +175,12 @@ export function FamilyDrawer({
   const [activeAmbientPicker, setActiveAmbientPicker] = useState<
     "background" | "audio" | null
   >(null);
+  const typingSoundCategories = Array.from(
+    new Set(typingSoundVariants.map((option) => option.category))
+  );
+  const selectedTypingSoundVariant =
+    typingSoundVariants.find((variant) => variant.id === typingSoundVariantId) ??
+    typingSoundVariants[0];
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -374,6 +401,57 @@ export function FamilyDrawer({
                 }`}
             />
           </button>
+          </div>
+          <div className={`mt-2 ${typingEffectsEnabled ? "" : "opacity-60"}`}>
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+                Sound Style
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={!typingEffectsEnabled}
+                    className="inline-flex h-8 min-w-[132px] items-center justify-between gap-2 rounded-full border border-black/10 bg-black/[0.03] px-3 text-xs font-medium text-zinc-700 transition-colors hover:bg-black/[0.06] dark:border-white/12 dark:bg-white/[0.03] dark:text-zinc-200 dark:hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <span className="truncate">
+                      {selectedTypingSoundVariant?.label ?? "Select"}
+                    </span>
+                    <HugeiconsIcon
+                      icon={ArrowDown01Icon}
+                      size={13}
+                      strokeWidth={2}
+                      className="text-zinc-500 dark:text-zinc-400"
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Choose typing sound</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={typingSoundVariantId}
+                    onValueChange={(value) =>
+                      onTypingSoundVariantChange(value as TypingSoundVariantId)
+                    }
+                  >
+                    {typingSoundCategories.map((category, index) => (
+                      <Fragment key={category}>
+                        {index > 0 ? <DropdownMenuSeparator /> : null}
+                        <DropdownMenuLabel className="py-1 text-[10px] uppercase tracking-[0.08em]">
+                          {category}
+                        </DropdownMenuLabel>
+                        {typingSoundVariants
+                          .filter((option) => option.category === category)
+                          .map((option) => (
+                            <DropdownMenuRadioItem key={option.id} value={option.id}>
+                              {option.label}
+                            </DropdownMenuRadioItem>
+                          ))}
+                      </Fragment>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
           <div className="border-t border-black/5 pt-4 dark:border-white/10">

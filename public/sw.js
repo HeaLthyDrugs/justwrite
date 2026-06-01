@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justwrite-v5";
+const CACHE_VERSION = "justwrite-v6";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
@@ -16,6 +16,14 @@ const PRECACHE_URLS = [
   "/logo/justwrite-logo-dark.svg",
   "/sounds/keystorkes.mp3",
   "/sounds/spacebar.mp3",
+  "/sounds/typing/classic/key.mp3",
+  "/sounds/typing/classic/space.mp3",
+  "/sounds/typing/crisp/key.mp3",
+  "/sounds/typing/crisp/space.mp3",
+  "/sounds/typing/typewriter/key.mp3",
+  "/sounds/typing/typewriter/space.mp3",
+  "/sounds/typing/soft/key.mp3",
+  "/sounds/typing/soft/space.mp3",
   "/sounds/ambient/rain.mp3",
   "/sounds/ambient/cafe.mp3",
   "/sounds/ambient/library.mp3",
