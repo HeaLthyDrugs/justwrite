@@ -2,6 +2,19 @@ import Link from "next/link";
 
 const changelogEntries = [
   {
+    date: "June 1, 2026",
+    title: "Ambient Mode V2 + Shortcut Expansion",
+    items: [
+      "Ambient controls now support independent Scene and Audio pickers directly from Settings.",
+      "Ambient audio picker redesigned with Hugeicons and soft pastel, neumorphic cards across light and dark themes.",
+      "Scene picker visuals updated to match the audio picker style for a consistent modal texture and layout.",
+      "Improved dark-theme readability for ambient cards: better icon clarity, label contrast, and overlay balance.",
+      "Fixed picker interaction flow: switching between Scene and Audio triggers no longer closes the drawer unexpectedly.",
+      "Keyboard shortcuts expanded to a full Alt+1 through Alt+7 set (new note, theme, focus mode, font size, typing sound, notebook lines, ambient mode).",
+      "Shortcuts documentation page polished to reflect the complete quick-action workflow.",
+    ],
+  },
+  {
     date: "May 25, 2026",
     title: "Ambient Mode V1",
     items: [
