@@ -13,11 +13,11 @@ import {
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  ArrowDown01Icon,
   CenterFocusIcon,
   ChevronDown,
   Delete02Icon,
   FileExportIcon,
+  MobileProgramming01Icon,
   MoonIcon,
   NoteAddIcon,
   Pin02Icon,
@@ -48,6 +48,11 @@ import {
   ButtonGroup,
   ButtonGroupSeparator,
 } from "@/components/ui/button-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   CustomToastViewport,
   type ToastMessage,
@@ -1591,22 +1596,30 @@ export default function Home() {
     }
 
     return (
-      <button
-        type="button"
-        aria-label="Download app"
-        onClick={() => window.dispatchEvent(new Event(PWA_TRIGGER_INSTALL_EVENT))}
-        className={`inline-flex items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 active:scale-95 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white dark:active:shadow-[inset_0_1px_4px_rgba(255,255,255,0.22)] ${
-          compact ? "h-8 w-8" : "h-9 gap-1.5 px-3 text-xs font-medium"
-        }`}
-      >
-        <HugeiconsIcon
-          icon={ArrowDown01Icon}
-          size={compact ? 15 : 14}
-          strokeWidth={1.6}
-          className="shrink-0 sm:size-4"
-        />
-        {!compact ? <span className="truncate">Download</span> : null}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label="Install Justwrite app"
+            onClick={() =>
+              window.dispatchEvent(new Event(PWA_TRIGGER_INSTALL_EVENT))
+            }
+            className={`inline-flex items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 active:scale-95 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white dark:active:shadow-[inset_0_1px_4px_rgba(255,255,255,0.22)] ${
+              compact ? "h-8 w-8" : "h-9 w-9"
+            }`}
+          >
+            <HugeiconsIcon
+              icon={MobileProgramming01Icon}
+              size={compact ? 15 : 16}
+              strokeWidth={1.7}
+              className="shrink-0"
+            />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={8}>
+          Install Justwrite on this device
+        </TooltipContent>
+      </Tooltip>
     );
   };
 
