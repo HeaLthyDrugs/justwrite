@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   useCallback,
   useEffect,
@@ -12,6 +13,7 @@ import {
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  ArrowDown01Icon,
   CenterFocusIcon,
   ChevronDown,
   Delete02Icon,
@@ -32,6 +34,7 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
+import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotesDrawer } from "@/components/notes-drawer";
 import { FamilyDrawer } from "@/components/ui/family-drawer";
@@ -78,6 +81,12 @@ import {
   THEME_SHORTCUT_TOGGLED_EVENT,
   type AppTheme,
 } from "@/lib/theme-shortcut";
+import {
+  PWA_APPLY_UPDATE_EVENT,
+  PWA_INSTALL_AVAILABILITY_EVENT,
+  PWA_TRIGGER_INSTALL_EVENT,
+  PWA_UPDATE_READY_EVENT,
+} from "@/lib/pwa";
 import {
   DEFAULT_TYPING_SOUND_VARIANT_ID,
   TYPING_SOUND_VARIANT_ORDER,
@@ -268,6 +277,14 @@ function getInitialFocusMode() {
   return false;
 }
 
+function getInitialOnlineStatus() {
+  if (typeof navigator === "undefined") {
+    return true;
+  }
+
+  return navigator.onLine;
+}
+
 function getInitialAmbientEnabled() {
   if (typeof window === "undefined") {
     return false;
@@ -407,7 +424,7 @@ function wrapSelection(
 
 export default function Home() {
   const isHydrated = useIsHydrated();
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(getInitialOnlineStatus);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
   const [notesDrawerManualOpen, setNotesDrawerManualOpen] = useState(false);
   const [settingsDrawerManualOpen, setSettingsDrawerManualOpen] = useState(false);
@@ -446,6 +463,11 @@ export default function Home() {
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
+  const pwaUpdateToastShownRef = useRef(false);
+  const [ambientVideoFallbackSource, setAmbientVideoFallbackSource] = useState<
+    string | null
+  >(null);
+  const [canInstallApp, setCanInstallApp] = useState(false);
   const drawerOpen = notesDrawerManualOpen || notesDrawerHoverOpen;
   const settingsOpen = settingsDrawerManualOpen || settingsDrawerHoverOpen;
   const closeDrawers = useCallback(() => {
@@ -500,32 +522,29 @@ export default function Home() {
   );
 
   const selectedAmbientBackground = AMBIENT_BACKGROUNDS[ambientBackground];
+  const shouldUseAmbientVideo =
+    selectedAmbientBackground.background.type === "video" &&
+    isOnline &&
+    ambientVideoFallbackSource !== selectedAmbientBackground.background.source;
 
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
+  const pushToast = useCallback((toast: Omit<ToastMessage, "id">) => {
+    const id = crypto.randomUUID();
+    const durationMs = toast.durationMs ?? 2600;
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
+    setToasts((previous) => [...previous, { id, ...toast }]);
+    if (durationMs > 0) {
+      window.setTimeout(() => {
+        setToasts((previous) => previous.filter((item) => item.id !== id));
+      }, durationMs);
+    }
   }, []);
 
-  useEffect(() => {
-    const syncConsent = () => setHasPreferencesConsent(hasPreferenceConsent());
-    window.addEventListener(CONSENT_CHANGED_EVENT, syncConsent);
-    return () => {
-      window.removeEventListener(CONSENT_CHANGED_EVENT, syncConsent);
-    };
+  const dismissToast = useCallback((id: string) => {
+    setToasts((previous) => previous.filter((item) => item.id !== id));
   }, []);
 
-  useEffect(() => {
-    if (!hasPreferencesConsent || typeof window === "undefined") {
+  const syncStoredPreferences = useCallback(() => {
+    if (typeof window === "undefined" || !hasPreferenceConsent()) {
       return;
     }
 
@@ -546,12 +565,16 @@ export default function Home() {
       setTypingSoundVariant(typingVariantSaved);
     }
 
-    const wordCountSaved = window.localStorage.getItem(SHOW_WORD_COUNT_STORAGE_KEY);
+    const wordCountSaved = window.localStorage.getItem(
+      SHOW_WORD_COUNT_STORAGE_KEY
+    );
     if (wordCountSaved === "true" || wordCountSaved === "false") {
       setShowWordCount(wordCountSaved === "true");
     }
 
-    const savedTimestampPref = window.localStorage.getItem(SHOW_SAVED_TIMESTAMP_STORAGE_KEY);
+    const savedTimestampPref = window.localStorage.getItem(
+      SHOW_SAVED_TIMESTAMP_STORAGE_KEY
+    );
     if (savedTimestampPref === "true" || savedTimestampPref === "false") {
       setShowSavedTimestamp(savedTimestampPref === "true");
     }
@@ -586,7 +609,9 @@ export default function Home() {
       setAmbientEnabled(ambientEnabledSaved === "true");
     }
 
-    const ambientAudioSaved = window.localStorage.getItem(AMBIENT_AUDIO_STORAGE_KEY);
+    const ambientAudioSaved = window.localStorage.getItem(
+      AMBIENT_AUDIO_STORAGE_KEY
+    );
     if (ambientAudioSaved && isAmbientAudioId(ambientAudioSaved)) {
       setAmbientAudio(ambientAudioSaved);
     } else {
@@ -601,7 +626,10 @@ export default function Home() {
     const ambientBackgroundSaved = window.localStorage.getItem(
       AMBIENT_BACKGROUND_STORAGE_KEY
     );
-    if (ambientBackgroundSaved && isAmbientBackgroundId(ambientBackgroundSaved)) {
+    if (
+      ambientBackgroundSaved &&
+      isAmbientBackgroundId(ambientBackgroundSaved)
+    ) {
       setAmbientBackground(ambientBackgroundSaved);
     } else {
       const legacySceneSaved = window.localStorage.getItem(
@@ -631,7 +659,42 @@ export default function Home() {
         setAmbientBackdropDim(Math.min(90, Math.max(0, parsed)));
       }
     }
-  }, [hasPreferencesConsent]);
+  }, []);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setAmbientVideoFallbackSource(null);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setAmbientVideoFallbackSource(selectedAmbientBackground.background.source);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [selectedAmbientBackground.background.source]);
+
+  useEffect(() => {
+    const syncConsent = () => {
+      const nextHasConsent = hasPreferenceConsent();
+      setHasPreferencesConsent(nextHasConsent);
+
+      if (nextHasConsent) {
+        syncStoredPreferences();
+      }
+    };
+
+    window.addEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+    return () => {
+      window.removeEventListener(CONSENT_CHANGED_EVENT, syncConsent);
+    };
+  }, [syncStoredPreferences]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -830,7 +893,11 @@ export default function Home() {
 
   useEffect(() => {
     const video = ambientVideoRef.current;
-    if (!video || selectedAmbientBackground.background.type !== "video") {
+    if (
+      !video ||
+      selectedAmbientBackground.background.type !== "video" ||
+      !shouldUseAmbientVideo
+    ) {
       return;
     }
 
@@ -847,6 +914,7 @@ export default function Home() {
     ambientEnabled,
     selectedAmbientBackground.background.source,
     selectedAmbientBackground.background.type,
+    shouldUseAmbientVideo,
   ]);
 
   useEffect(() => {
@@ -873,7 +941,7 @@ export default function Home() {
       ? "opacity-100 translate-x-0"
       : "opacity-0 pointer-events-none translate-x-[420px]";
 
-  const toggleFocus = () => {
+  const toggleFocus = useCallback(() => {
     const next = !focusMode;
     setFocusMode(next);
     if (next) {
@@ -887,9 +955,9 @@ export default function Home() {
         ? "Distraction-free writing is now on."
         : "Toolbars and drawers are back.",
     });
-  };
+  }, [closeDrawers, focusMode, pushToast]);
 
-  const updateActiveNote = (nextValues: Partial<Pick<Note, "body">>) => {
+  const updateActiveNote = useCallback((nextValues: Partial<Pick<Note, "body">>) => {
     setNotesState((previousState) => {
       let hasChanges = false;
 
@@ -920,9 +988,9 @@ export default function Home() {
         notes: updatedNotes,
       };
     });
-  };
+  }, []);
 
-  const handleCreateNote = () => {
+  const handleCreateNote = useCallback(() => {
     const note = createEmptyNote();
     setNotesState((previousState) => ({
       notes: [note, ...previousState.notes],
@@ -936,7 +1004,7 @@ export default function Home() {
       title: "New note created",
       description: "You can start writing right away.",
     });
-  };
+  }, [pushToast]);
 
   const handleDeleteNote = (noteId: string) => {
     const noteToDelete = notes.find((note) => note.id === noteId);
@@ -1009,18 +1077,6 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  const pushToast = (toast: Omit<ToastMessage, "id">) => {
-    const id = crypto.randomUUID();
-    setToasts((previous) => [...previous, { id, ...toast }]);
-    window.setTimeout(() => {
-      setToasts((previous) => previous.filter((item) => item.id !== id));
-    }, 2600);
-  };
-
-  const dismissToast = (id: string) => {
-    setToasts((previous) => previous.filter((item) => item.id !== id));
-  };
-
   const handleThemeToggle = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -1033,7 +1089,7 @@ export default function Home() {
     });
   };
 
-  const handleTypingEffectsChange = (enabled: boolean) => {
+  const handleTypingEffectsChange = useCallback((enabled: boolean) => {
     setTypingEffectsEnabled(enabled);
     pushToast({
       type: "info",
@@ -1041,7 +1097,7 @@ export default function Home() {
       title: enabled ? "Typing sound on" : "Typing sound off",
       description: enabled ? "Audio feedback enabled." : "Audio feedback disabled.",
     });
-  };
+  }, [pushToast]);
 
   const handleTypingSoundVariantChange = (variantId: TypingSoundVariantId) => {
     setTypingSoundVariant(variantId);
@@ -1053,7 +1109,7 @@ export default function Home() {
     });
   };
 
-  const handleAmbientEnabledChange = (enabled: boolean) => {
+  const handleAmbientEnabledChange = useCallback((enabled: boolean) => {
     setAmbientEnabled(enabled);
     pushToast({
       type: "info",
@@ -1063,7 +1119,7 @@ export default function Home() {
         ? `${AMBIENT_AUDIOS[ambientAudio].label} audio is now playing.`
         : "Ambient playback is paused.",
     });
-  };
+  }, [ambientAudio, pushToast]);
 
   const handleAmbientAudioChange = (audioId: AmbientAudioId) => {
     setAmbientAudio(audioId);
@@ -1081,6 +1137,7 @@ export default function Home() {
 
   const handleAmbientBackgroundChange = (backgroundId: AmbientBackgroundId) => {
     setAmbientBackground(backgroundId);
+    setAmbientVideoFallbackSource(null);
     pushToast({
       type: "info",
       icon: SiriIcon,
@@ -1107,7 +1164,7 @@ export default function Home() {
     });
   };
 
-  const handleNotebookLinesChange = (enabled: boolean) => {
+  const handleNotebookLinesChange = useCallback((enabled: boolean) => {
     setNotebookLinesEnabled(enabled);
     pushToast({
       type: "info",
@@ -1115,7 +1172,7 @@ export default function Home() {
       title: enabled ? "Notebook lines on" : "Notebook lines off",
       description: enabled ? "Writing area now has guide lines." : "Writing area is now clean.",
     });
-  };
+  }, [pushToast]);
 
   const handleShowSavedTimestampChange = (enabled: boolean) => {
     setShowSavedTimestamp(enabled);
@@ -1139,7 +1196,7 @@ export default function Home() {
     });
   };
 
-  const handleFontSizeChange = (size: number) => {
+  const handleFontSizeChange = useCallback((size: number) => {
     setFontSize(size);
     pushToast({
       type: "info",
@@ -1147,13 +1204,13 @@ export default function Home() {
       title: "Font size updated",
       description: `Font size set to ${size}px.`,
     });
-  };
+  }, [pushToast]);
 
-  const focusEditor = () => {
+  const focusEditor = useCallback(() => {
     window.requestAnimationFrame(() => {
       textareaRef.current?.focus();
     });
-  };
+  }, []);
 
   const handleToggleNotesDrawer = () => {
     if (drawerOpen) {
@@ -1320,6 +1377,53 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const handlePwaUpdateReady = () => {
+      if (pwaUpdateToastShownRef.current) {
+        return;
+      }
+
+      pwaUpdateToastShownRef.current = true;
+      pushToast({
+        type: "info",
+        title: "Update ready",
+        description: "Refresh once to install the latest offline bundle.",
+        actionLabel: "Refresh now",
+        durationMs: 0,
+        onAction: () => {
+          window.dispatchEvent(new Event(PWA_APPLY_UPDATE_EVENT));
+        },
+      });
+    };
+
+    window.addEventListener(PWA_UPDATE_READY_EVENT, handlePwaUpdateReady);
+    return () => {
+      window.removeEventListener(PWA_UPDATE_READY_EVENT, handlePwaUpdateReady);
+    };
+  }, [pushToast]);
+
+  useEffect(() => {
+    const handleInstallAvailabilityChange = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ available?: boolean; installed?: boolean }>
+      ).detail;
+
+      setCanInstallApp(Boolean(detail?.available) && !detail?.installed);
+    };
+
+    window.addEventListener(
+      PWA_INSTALL_AVAILABILITY_EVENT,
+      handleInstallAvailabilityChange as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        PWA_INSTALL_AVAILABILITY_EVENT,
+        handleInstallAvailabilityChange as EventListener
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     const handleGlobalShortcut = (event: globalThis.KeyboardEvent) => {
       if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;
@@ -1376,6 +1480,7 @@ export default function Home() {
     document.addEventListener("keydown", handleGlobalShortcut, true);
     return () => document.removeEventListener("keydown", handleGlobalShortcut, true);
   }, [
+    focusEditor,
     handleCreateNote,
     handleFontSizeChange,
     handleAmbientEnabledChange,
@@ -1465,9 +1570,12 @@ export default function Home() {
             onClick={item.onClick}
             className="m-0.5 flex cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-xs font-medium text-zinc-500 outline-none transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
           >
-            <img
+            <Image
               src={item.iconSrc}
               alt={`${item.id} format`}
+              width={16}
+              height={16}
+              unoptimized
               className="h-4 w-4 shrink-0 opacity-75 transition-opacity group-hover/dropdown-menu-item:opacity-100 dark:invert dark:brightness-200 dark:opacity-85"
             />
             {item.label}
@@ -1476,6 +1584,31 @@ export default function Home() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+
+  const renderInstallButton = (compact = false) => {
+    if (!canInstallApp) {
+      return null;
+    }
+
+    return (
+      <button
+        type="button"
+        aria-label="Download app"
+        onClick={() => window.dispatchEvent(new Event(PWA_TRIGGER_INSTALL_EVENT))}
+        className={`inline-flex items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 active:scale-95 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white dark:active:shadow-[inset_0_1px_4px_rgba(255,255,255,0.22)] ${
+          compact ? "h-8 w-8" : "h-9 gap-1.5 px-3 text-xs font-medium"
+        }`}
+      >
+        <HugeiconsIcon
+          icon={ArrowDown01Icon}
+          size={compact ? 15 : 14}
+          strokeWidth={1.6}
+          className="shrink-0 sm:size-4"
+        />
+        {!compact ? <span className="truncate">Download</span> : null}
+      </button>
+    );
+  };
 
   const playAudioEffect = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
@@ -1581,7 +1714,7 @@ export default function Home() {
           className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${ambientEnabled ? "opacity-100" : "opacity-0"
             }`}
         >
-          {selectedAmbientBackground.background.type === "video" ? (
+          {shouldUseAmbientVideo ? (
             <video
               key={selectedAmbientBackground.background.source}
               ref={ambientVideoRef}
@@ -1590,6 +1723,11 @@ export default function Home() {
               loop
               playsInline
               poster={selectedAmbientBackground.background.poster}
+              onError={() =>
+                setAmbientVideoFallbackSource(
+                  selectedAmbientBackground.background.source
+                )
+              }
               className="h-full w-full object-cover"
             >
               <source src={selectedAmbientBackground.background.source} type="video/mp4" />
@@ -1598,7 +1736,13 @@ export default function Home() {
             <div
               aria-hidden="true"
               className="h-full w-full bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${selectedAmbientBackground.background.source})` }}
+              style={{
+                backgroundImage: `url(${
+                  selectedAmbientBackground.background.fallbackImage ??
+                  selectedAmbientBackground.background.poster ??
+                  selectedAmbientBackground.background.source
+                })`,
+              }}
             />
           )}
           <div
@@ -1730,6 +1874,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <FontSwitcher menuSide="top" />
                   {renderExportMenu()}
+                  {renderInstallButton()}
                 </div>
               </div>
             </div>
@@ -1802,6 +1947,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <FontSwitcher menuSide="top" compact showTooltip={false} />
             {renderExportMenu(true)}
+            {renderInstallButton(true)}
           </div>
         </div>
       ) : null}
@@ -1853,6 +1999,7 @@ export default function Home() {
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
       />
+      <PwaInstallPrompt hidden={focusMode} />
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>
   ) : (

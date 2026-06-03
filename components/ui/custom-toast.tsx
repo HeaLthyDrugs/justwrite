@@ -13,6 +13,8 @@ interface CustomToastProps {
   description?: string;
   type?: ToastType;
   icon?: IconSvgElement;
+  actionLabel?: string;
+  onAction?: () => void;
   onClose: (id: string) => void;
 }
 
@@ -34,7 +36,16 @@ const typeStyles: Record<
   },
 };
 
-function ToastItem({ id, title, description, type = "info", icon, onClose }: CustomToastProps) {
+function ToastItem({
+  id,
+  title,
+  description,
+  type = "info",
+  icon,
+  actionLabel,
+  onAction,
+  onClose,
+}: CustomToastProps) {
   const [visible, setVisible] = useState(false);
   const styles = typeStyles[type];
   const resolvedIcon = icon ?? styles.icon;
@@ -65,6 +76,15 @@ function ToastItem({ id, title, description, type = "info", icon, onClose }: Cus
               {description}
             </p>
           ) : null}
+          {actionLabel && onAction ? (
+            <button
+              type="button"
+              onClick={onAction}
+              className="mt-2 inline-flex items-center rounded-full border border-black/10 px-2.5 py-1 text-[10px] font-semibold tracking-[0.02em] text-zinc-700 transition-colors hover:bg-black/5 hover:text-black dark:border-white/15 dark:text-zinc-200 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              {actionLabel}
+            </button>
+          ) : null}
         </div>
         <button
           aria-label="Dismiss notification"
@@ -85,6 +105,9 @@ export interface ToastMessage {
   description?: string;
   type?: ToastType;
   icon?: IconSvgElement;
+  actionLabel?: string;
+  onAction?: () => void;
+  durationMs?: number;
 }
 
 interface ToastViewportProps {

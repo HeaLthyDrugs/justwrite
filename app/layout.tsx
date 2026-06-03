@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Pixelify_Sans, Figtree } from "next/font/google";
 import "./globals.css";
 import { FontProvider } from "@/components/font-context";
@@ -59,16 +59,28 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: [toAbsoluteUrl(siteConfig.ogImage)],
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: siteConfig.name,
+  },
   icons: {
     icon: [
-      { url: "/favicon/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/logo/justwrite-app-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo/justwrite-app-16.png", sizes: "16x16", type: "image/png" },
       { url: "/logo/justwrite-logo-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
       { url: "/logo/justwrite-logo-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
     ],
-    apple: "/favicon/apple-touch-icon.png",
+    apple: "/logo/apple-touch-icon.png",
   },
-  manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
 };
 
 export default function RootLayout({
