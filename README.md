@@ -31,6 +31,16 @@ docker compose up --build
 
 ## Features (Changelog Style)
 
+### June 4, 2026 - Installable App + PWA Release
+
+- Justwrite can now be installed as an app on supported desktop and mobile browsers.
+- Added a dedicated install action in the editor chrome for faster app installation.
+- Browser-aware install flow now supports native prompts where available and guided fallback steps on iOS and Safari.
+- Core app shell, static pages, local media, icons, and screenshots are cached for stronger offline support after the first visit.
+- Ambient video scenes now fall back to local images when offline.
+- Service worker updates now use an explicit refresh-ready flow instead of silently updating in the background.
+- PWA branding assets now use the real Justwrite logo across install surfaces and screenshots.
+
 ### May 10, 2026 - Launch Build
 
 - Local-first notes with autosave and offline-aware status.

@@ -264,14 +264,9 @@ export function PwaInstallPrompt({
                 void handleInstall();
               }}
             >
-              <HugeiconsIcon
-                icon={ArrowDown01Icon}
-                size={14}
-                strokeWidth={1.8}
-              />
               {primaryLabel}
             </Button>
-            <button
+            {/* <button
               type="button"
               aria-label="Dismiss install prompt"
               onClick={handleDismiss}
@@ -282,7 +277,7 @@ export function PwaInstallPrompt({
                 size={14}
                 strokeWidth={1.8}
               />
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

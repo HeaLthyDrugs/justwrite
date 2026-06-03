@@ -2,6 +2,19 @@ import Link from "next/link";
 
 const changelogEntries = [
   {
+    date: "June 4, 2026",
+    title: "Installable App + PWA Release",
+    items: [
+      "Justwrite can now be installed as an app on supported desktop and mobile browsers.",
+      "Added a dedicated install action in the editor chrome so users can add Justwrite to their device more easily.",
+      "New install flow now supports browser install prompts where available and shows guided fallback steps on platforms like iOS and Safari.",
+      "Core app shell, static pages, icons, screenshots, audio, and local backgrounds are now cached for stronger offline support after the first visit.",
+      "Ambient video scenes now fall back to local images when offline so the writing surface never breaks visually.",
+      "Service worker updates now use an explicit refresh-ready flow instead of silently swapping versions in the background.",
+      "PWA branding assets were refreshed to use the real Justwrite logo across install surfaces, icons, and screenshots.",
+    ],
+  },
+  {
     date: "June 1, 2026",
     title: "Ambient Mode V2 + Shortcut Expansion",
     items: [
