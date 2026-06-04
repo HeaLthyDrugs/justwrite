@@ -3,10 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowDown01Icon,
-  Cancel01Icon,
-} from "@hugeicons/core-free-icons";
+import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +20,7 @@ import {
   PWA_INSTALL_AVAILABILITY_EVENT,
   PWA_TRIGGER_INSTALL_EVENT,
   rememberInstallPromptDismissal,
+  rememberInstallPromptSnooze,
 } from "@/lib/pwa";
 
 type InstallSurface = "chromium" | "ios" | "mac-safari" | "unsupported";
@@ -169,6 +167,12 @@ export function PwaInstallPrompt({
     setGuideOpen(false);
   };
 
+  const handleRemindLater = () => {
+    rememberInstallPromptSnooze();
+    setIsDismissed(true);
+    setGuideOpen(false);
+  };
+
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) {
       if (surface === "ios" || surface === "mac-safari") {
@@ -230,106 +234,147 @@ export function PwaInstallPrompt({
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 bottom-18 z-50 flex justify-center px-3 md:bottom-5">
-        <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-[28px] border border-black/5 bg-white/90 p-3 shadow-[0_18px_45px_rgba(15,15,15,0.14)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/88 dark:ring-white/10">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10">
-            <Image
-              src="/logo/justwrite-logo-light.svg"
-              alt="Justwrite logo"
-              width={22}
-              height={24}
-              className="block dark:hidden"
-            />
-            <Image
-              src="/logo/justwrite-logo-dark.svg"
-              alt="Justwrite logo"
-              width={22}
-              height={24}
-              className="hidden dark:block"
-            />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              {title}
-            </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
-              {description}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              className="h-8 rounded-full bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
-              onClick={() => {
-                void handleInstall();
-              }}
-            >
-              {primaryLabel}
-            </Button>
-            {/* <button
+        <div className="pointer-events-auto flex w-full max-w-md flex-col overflow-hidden rounded-[30px] border border-black/5 bg-white/92 shadow-[0_22px_55px_rgba(15,15,15,0.16)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/90 dark:ring-white/10">
+          <div className="flex items-start gap-3 p-4 pb-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white ring-1 ring-black/5 dark:bg-zinc-950 dark:ring-white/10">
+              <Image
+                src="/logo/justwrite-logo-light.svg"
+                alt="Justwrite logo"
+                width={22}
+                height={24}
+                className="block dark:hidden"
+              />
+              <Image
+                src="/logo/justwrite-logo-dark.svg"
+                alt="Justwrite logo"
+                width={22}
+                height={24}
+                className="hidden dark:block"
+              />
+            </span>
+            <div className="min-w-0 flex-1 pr-2">
+              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                {title}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+                {description}
+              </p>
+            </div>
+            <button
               type="button"
               aria-label="Dismiss install prompt"
               onClick={handleDismiss}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
             >
               <HugeiconsIcon
                 icon={Cancel01Icon}
                 size={14}
                 strokeWidth={1.8}
               />
-            </button> */}
+            </button>
+          </div>
+
+          <div className="px-4 pb-4">
+            <div className="rounded-2xl bg-zinc-50/90 px-3 py-2.5 text-xs leading-relaxed text-zinc-600 ring-1 ring-black/5 dark:bg-white/5 dark:text-zinc-300 dark:ring-white/10">
+              Install Justwrite for faster launch, a cleaner writing space, and better offline access.
+            </div>
+          </div>
+
+          <div className="mt-auto flex flex-col-reverse gap-2 border-t border-black/5 bg-white/75 p-3 sm:flex-row sm:justify-end dark:border-white/10 dark:bg-zinc-950/40">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-full"
+              onClick={handleRemindLater}
+            >
+              Remind me later
+            </Button>
+            <Button
+              type="button"
+              className="rounded-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+              onClick={() => {
+                void handleInstall();
+              }}
+            >
+              {primaryLabel}
+            </Button>
           </div>
         </div>
       </div>
 
       <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
-        <DialogContent className="max-w-[calc(100%-2rem)] rounded-[32px] border border-black/5 bg-white/95 p-6 shadow-[0_28px_60px_rgba(15,15,15,0.18)] dark:border-white/10 dark:bg-zinc-950/95">
-          <DialogHeader className="gap-3">
-            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10">
-              <Image
-                src="/logo/justwrite-logo-light.svg"
-                alt="Justwrite logo"
-                width={26}
-                height={28}
-                className="block dark:hidden"
-              />
-              <Image
-                src="/logo/justwrite-logo-dark.svg"
-                alt="Justwrite logo"
-                width={26}
-                height={28}
-                className="hidden dark:block"
-              />
-            </div>
-            <DialogTitle className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-              {title}
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-              {description}
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          showCloseButton={false}
+          className="flex max-h-[calc(100vh-2rem)] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[32px] border border-black/5 bg-white/95 p-0 shadow-[0_28px_60px_rgba(15,15,15,0.18)] dark:border-white/10 dark:bg-zinc-950/95"
+        >
+          <div className="flex flex-1 flex-col overflow-y-auto p-6">
+            <DialogHeader className="gap-3 pr-10">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white ring-1 ring-black/5 dark:bg-zinc-900 dark:ring-white/10">
+                <Image
+                  src="/logo/justwrite-logo-light.svg"
+                  alt="Justwrite logo"
+                  width={26}
+                  height={28}
+                  className="block dark:hidden"
+                />
+                <Image
+                  src="/logo/justwrite-logo-dark.svg"
+                  alt="Justwrite logo"
+                  width={26}
+                  height={28}
+                  className="hidden dark:block"
+                />
+              </div>
+              <DialogTitle className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+                {title}
+              </DialogTitle>
+              <DialogDescription className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+                {description}
+              </DialogDescription>
+            </DialogHeader>
 
-          <ol className="space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
-            {guideSteps.map((step, index) => (
-              <li key={step} className="flex items-start gap-3">
-                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
-                  {index + 1}
-                </span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
+            <ol className="mt-6 space-y-3 text-sm text-zinc-700 dark:text-zinc-200">
+              {guideSteps.map((step, index) => (
+                <li key={step} className="flex items-start gap-3 rounded-2xl bg-zinc-50/90 p-3 ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
+                    {index + 1}
+                  </span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-auto border-t border-black/5 bg-white/75 p-4 sm:justify-end dark:border-white/10 dark:bg-zinc-950/50">
             <Button
               type="button"
               variant="outline"
               className="rounded-full"
-              onClick={handleDismiss}
+              onClick={handleRemindLater}
             >
-              Hide for now
+              Remind me later
+            </Button>
+            <Button
+              type="button"
+              className="rounded-full"
+              onClick={() => setGuideOpen(false)}
+            >
+              Got it
             </Button>
           </DialogFooter>
+
+          <button
+            type="button"
+            aria-label="Close install guide"
+            onClick={() => setGuideOpen(false)}
+            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-black/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-white"
+          >
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              size={16}
+              strokeWidth={1.8}
+            />
+          </button>
         </DialogContent>
       </Dialog>
     </>

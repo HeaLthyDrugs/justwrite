@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justwrite-v7";
+const CACHE_VERSION = "justwrite-v8";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const STATIC_ASSET_CACHE = `static-assets-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
@@ -17,14 +17,15 @@ const APP_SHELL_URLS = [
 ];
 
 const STATIC_ASSET_URLS = [
+  "/favicon.ico",
+  "/icon0.svg",
+  "/icon1.png",
+  "/apple-icon.png",
   "/logo/justwrite-logo.svg",
   "/logo/justwrite-logo-light.svg",
   "/logo/justwrite-logo-dark.svg",
-  "/logo/justwrite-app-16.png",
-  "/logo/justwrite-app-32.png",
   "/logo/justwrite-app-192.png",
   "/logo/justwrite-app-512.png",
-  "/logo/apple-touch-icon.png",
   "/screenshots/justwrite-desktop-install.png",
   "/screenshots/justwrite-mobile-install.png",
   "/sounds/keystorkes.mp3",

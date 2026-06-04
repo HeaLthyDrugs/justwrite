@@ -66,12 +66,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/logo/justwrite-app-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/logo/justwrite-app-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/logo/justwrite-logo-light.svg", type: "image/svg+xml", media: "(prefers-color-scheme: light)" },
-      { url: "/logo/justwrite-logo-dark.svg", type: "image/svg+xml", media: "(prefers-color-scheme: dark)" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon1.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon0.svg", type: "image/svg+xml" },
     ],
-    apple: "/logo/apple-touch-icon.png",
+    apple: "/apple-icon.png",
   },
 };
 

@@ -6,6 +6,7 @@ export const PWA_INSTALL_AVAILABILITY_EVENT =
 export const PWA_INSTALL_DISMISSED_AT_STORAGE_KEY =
   "justwrite.pwa.install.dismissed-at";
 export const PWA_INSTALL_PROMPT_COOLDOWN_MS = 1000 * 60 * 60 * 24 * 7;
+export const PWA_INSTALL_PROMPT_SNOOZE_MS = 1000 * 60 * 60 * 24;
 export const PWA_STANDALONE_MEDIA_QUERY = "(display-mode: standalone)";
 
 export function isInstallPromptCoolingDown(now = Date.now()) {
@@ -25,18 +26,33 @@ export function isInstallPromptCoolingDown(now = Date.now()) {
     return false;
   }
 
+  if (dismissedAt > now) {
+    return true;
+  }
+
   return now - dismissedAt < PWA_INSTALL_PROMPT_COOLDOWN_MS;
 }
 
-export function rememberInstallPromptDismissal(now = Date.now()) {
+function setInstallPromptCooldown(
+  cooldownMs: number,
+  now = Date.now()
+) {
   if (typeof window === "undefined") {
     return;
   }
 
   window.localStorage.setItem(
     PWA_INSTALL_DISMISSED_AT_STORAGE_KEY,
-    String(now)
+    String(now + cooldownMs)
   );
+}
+
+export function rememberInstallPromptDismissal(now = Date.now()) {
+  setInstallPromptCooldown(PWA_INSTALL_PROMPT_COOLDOWN_MS, now);
+}
+
+export function rememberInstallPromptSnooze(now = Date.now()) {
+  setInstallPromptCooldown(PWA_INSTALL_PROMPT_SNOOZE_MS, now);
 }
 
 export function clearInstallPromptDismissal() {
