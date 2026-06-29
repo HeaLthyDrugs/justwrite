@@ -7,6 +7,7 @@ import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
   BookOpen02Icon,
+  BookOpenTextIcon,
   Cancel01Icon,
   CloudLittleRainIcon,
   Clock01Icon,
@@ -66,6 +67,8 @@ interface FamilyDrawerProps {
   onShowWordCountChange: (enabled: boolean) => void;
   showSavedTimestamp: boolean;
   onShowSavedTimestampChange: (enabled: boolean) => void;
+  markdownToolsEnabled: boolean;
+  onMarkdownToolsEnabledChange: (enabled: boolean) => void;
   notebookLinesEnabled: boolean;
   onNotebookLinesEnabledChange: (enabled: boolean) => void;
   spellCheckEnabled: boolean;
@@ -144,6 +147,8 @@ export function FamilyDrawer({
   onShowWordCountChange,
   showSavedTimestamp,
   onShowSavedTimestampChange,
+  markdownToolsEnabled,
+  onMarkdownToolsEnabledChange,
   notebookLinesEnabled,
   onNotebookLinesEnabledChange,
   spellCheckEnabled,
@@ -376,6 +381,28 @@ export function FamilyDrawer({
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${spellCheckEnabled ? "translate-x-5" : "translate-x-0.5"
+                }`}
+            />
+          </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+            <HugeiconsIcon icon={BookOpenTextIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+            Markdown Preview
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={markdownToolsEnabled}
+            onClick={() => onMarkdownToolsEnabledChange(!markdownToolsEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${markdownToolsEnabled
+              ? "bg-zinc-900 dark:bg-zinc-100"
+              : "bg-zinc-300 dark:bg-zinc-700"
+              }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform dark:bg-zinc-900 ${markdownToolsEnabled ? "translate-x-5" : "translate-x-0.5"
                 }`}
             />
           </button>

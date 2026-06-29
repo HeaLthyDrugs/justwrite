@@ -2,6 +2,19 @@ import Link from "next/link";
 
 const changelogEntries = [
   {
+    date: "June 29, 2026",
+    title: "Markdown Preview + Split View",
+    items: [
+      "Added a Markdown Preview mode for rendering notes directly inside the editor card.",
+      "Added Edit, Preview, and Split tabs so users can switch between raw Markdown, rendered Markdown, and side-by-side writing.",
+      "Added a bottom-bar Markdown toggle that shows or hides the in-editor Markdown tabs.",
+      "Added a Settings toggle for Markdown Preview controls.",
+      "Markdown rendering now supports common formatting plus GitHub-flavored Markdown features like tables, task lists, and strikethrough.",
+      "Preview links open external URLs safely, and note-rendered HTML is sanitized before display.",
+      "Added Alt+8 as a keyboard shortcut for quickly opening Markdown preview tools.",
+    ],
+  },
+  {
     date: "June 4, 2026",
     title: "Installable App + PWA Release",
     items: [

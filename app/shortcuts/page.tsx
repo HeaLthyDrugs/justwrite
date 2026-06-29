@@ -9,6 +9,7 @@ const shortcutRows = [
   { keys: ["Alt", "5"], action: "Toggle typing sound" },
   { keys: ["Alt", "6"], action: "Toggle notebook lines" },
   { keys: ["Alt", "7"], action: "Toggle ambient mode" },
+  { keys: ["Alt", "8"], action: "Toggle Markdown preview" },
 ];
 
 export default function ShortcutsPage() {

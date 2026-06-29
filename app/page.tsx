@@ -14,9 +14,12 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CenterFocusIcon,
+  BookOpenTextIcon,
   ChevronDown,
   Delete02Icon,
+  Edit02Icon,
   FileExportIcon,
+  LayoutTwoColumnIcon,
   MobileProgramming01Icon,
   MoonIcon,
   NoteAddIcon,
@@ -34,6 +37,7 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
+import { MarkdownPreview } from "@/components/markdown-preview";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotesDrawer } from "@/components/notes-drawer";
@@ -122,6 +126,7 @@ const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
 const EDGE_HOVER_TRIGGER_PX = 20;
 
 type ExportFormat = "txt" | "md" | "json";
+type EditorMode = "edit" | "preview" | "split";
 
 const subscribeToHydration = () => () => {};
 
@@ -431,6 +436,8 @@ export default function Home() {
   const isHydrated = useIsHydrated();
   const [isOnline, setIsOnline] = useState(getInitialOnlineStatus);
   const [focusMode, setFocusMode] = useState(getInitialFocusMode);
+  const [markdownToolsEnabled, setMarkdownToolsEnabled] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>("edit");
   const [notesDrawerManualOpen, setNotesDrawerManualOpen] = useState(false);
   const [settingsDrawerManualOpen, setSettingsDrawerManualOpen] = useState(false);
   const [notesDrawerHoverOpen, setNotesDrawerHoverOpen] = useState(false);
@@ -1217,6 +1224,48 @@ export default function Home() {
     });
   }, []);
 
+  const handleEditorModeChange = useCallback((nextMode: EditorMode) => {
+    if (nextMode === editorMode) {
+      return;
+    }
+
+    setEditorMode(nextMode);
+    closeDrawers();
+
+    if (nextMode !== "preview") {
+      focusEditor();
+    }
+  }, [closeDrawers, editorMode, focusEditor]);
+
+  const handleMarkdownToolsEnabledChange = useCallback((enabled: boolean) => {
+    setMarkdownToolsEnabled(enabled);
+    closeDrawers();
+
+    if (!enabled) {
+      setEditorMode("edit");
+      focusEditor();
+    }
+
+    pushToast({
+      type: "info",
+      icon: BookOpenTextIcon,
+      title: enabled ? "Markdown tools shown" : "Markdown tools hidden",
+      description: enabled
+        ? "Edit, Preview, and Split tabs are now in the editor."
+        : "The editor is back to a plain writing surface.",
+    });
+  }, [closeDrawers, focusEditor, pushToast]);
+
+  const handleMarkdownPreviewToggle = useCallback(() => {
+    if (!markdownToolsEnabled) {
+      setMarkdownToolsEnabled(true);
+      handleEditorModeChange("preview");
+      return;
+    }
+
+    handleEditorModeChange(editorMode === "preview" ? "edit" : "preview");
+  }, [editorMode, handleEditorModeChange, markdownToolsEnabled]);
+
   const handleToggleNotesDrawer = () => {
     if (drawerOpen) {
       setNotesDrawerManualOpen(false);
@@ -1479,6 +1528,13 @@ export default function Home() {
         event.preventDefault();
         event.stopPropagation();
         handleAmbientEnabledChange(!ambientEnabled);
+        return;
+      }
+
+      if (event.code === "Digit8" || event.code === "Numpad8") {
+        event.preventDefault();
+        event.stopPropagation();
+        handleMarkdownPreviewToggle();
       }
     };
 
@@ -1490,6 +1546,7 @@ export default function Home() {
     handleFontSizeChange,
     handleAmbientEnabledChange,
     handleNotebookLinesChange,
+    handleMarkdownPreviewToggle,
     handleTypingEffectsChange,
     ambientEnabled,
     fontSize,
@@ -1517,6 +1574,16 @@ export default function Home() {
       iconSrc: "/logo/formats/json.svg",
       onClick: () => handleExport("json"),
     },
+  ];
+
+  const editorModeItems: Array<{
+    id: EditorMode;
+    label: string;
+    icon: typeof Edit02Icon;
+  }> = [
+    { id: "edit", label: "Edit", icon: Edit02Icon },
+    { id: "preview", label: "Preview", icon: BookOpenTextIcon },
+    { id: "split", label: "Split", icon: LayoutTwoColumnIcon },
   ];
 
   const renderExportMenu = (compact = false) => (
@@ -1623,6 +1690,26 @@ export default function Home() {
     );
   };
 
+  const renderMarkdownToolsButton = () => (
+    <IconButton
+      label={
+        markdownToolsEnabled ? "Hide Markdown tools" : "Show Markdown tools"
+      }
+      onClick={() => handleMarkdownToolsEnabledChange(!markdownToolsEnabled)}
+      pressed={markdownToolsEnabled}
+      className="h-8 w-8 border-none"
+    >
+      <Image
+        src="/logo/formats/md.svg"
+        alt=""
+        width={16}
+        height={16}
+        unoptimized
+        className="h-4 w-4 opacity-75 dark:invert dark:brightness-200 dark:opacity-90"
+      />
+    </IconButton>
+  );
+
   const playAudioEffect = (audio: HTMLAudioElement | null) => {
     if (!audio) return;
 
@@ -1719,6 +1806,29 @@ export default function Home() {
     "--editor-line-height": 1.8,
   };
 
+  const renderEditorTextarea = (className = "") => (
+    <textarea
+      ref={textareaRef}
+      value={body}
+      onChange={(event) => {
+        closeDrawers();
+        updateActiveNote({ body: event.target.value });
+      }}
+      onFocus={closeDrawers}
+      onPointerDown={closeDrawers}
+      onKeyDown={(event) => {
+        closeDrawers();
+        handleTextareaKeyDown(event);
+      }}
+      placeholder="Start. Flow. Finish."
+      spellCheck={spellCheckEnabled}
+      style={textareaStyle}
+      className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${markdownToolsEnabled ? "pt-20 md:pt-20 lg:pt-20" : ""
+        } ${notebookLinesEnabled ? "notebook-lines" : ""
+        } ${className}`}
+    />
+  );
+
   return isHydrated ? (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -1781,7 +1891,9 @@ export default function Home() {
             <IconButton
               label="Exit focus mode"
               onClick={toggleFocus}
-              className="absolute top-4 right-4 z-20 rounded-full bg-white/80 backdrop-blur-md dark:bg-zinc-800/80"
+              className={`absolute top-4 z-30 rounded-full bg-white/80 backdrop-blur-md dark:bg-zinc-800/80 ${
+                markdownToolsEnabled ? "left-4" : "right-4"
+              }`}
             >
               <HugeiconsIcon
                 icon={CenterFocusIcon}
@@ -1791,26 +1903,64 @@ export default function Home() {
             </IconButton>
           ) : null}
 
-          <section className="flex h-full w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
-            <textarea
-              ref={textareaRef}
-              value={body}
-              onChange={(event) => {
-                closeDrawers();
-                updateActiveNote({ body: event.target.value });
-              }}
-              onFocus={closeDrawers}
-              onPointerDown={closeDrawers}
-              onKeyDown={(event) => {
-                closeDrawers();
-                handleTextareaKeyDown(event);
-              }}
-              placeholder="Start. Flow. Finish."
-              spellCheck={spellCheckEnabled}
-              style={textareaStyle}
-              className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${notebookLinesEnabled ? "notebook-lines" : ""
-                }`}
-            />
+          <section className="relative flex h-full w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
+            {markdownToolsEnabled ? (
+              <div
+                role="tablist"
+                aria-label="Markdown view mode"
+                className="absolute top-3 right-3 z-20 inline-flex rounded-full border border-black/5 bg-white/85 p-1 shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/75"
+              >
+                {editorModeItems.map((item) => {
+                  const selected = editorMode === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected}
+                      aria-label={`${item.label} Markdown`}
+                      onClick={() => handleEditorModeChange(item.id)}
+                      className={`inline-flex h-8 min-w-8 items-center justify-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 ${selected
+                        ? "bg-zinc-100/95 text-zinc-800 shadow-sm ring-1 ring-black/5 hover:text-zinc-900 dark:bg-white/12 dark:text-zinc-100 dark:ring-white/10 dark:hover:text-white"
+                        : ""
+                        }`}
+                    >
+                      <HugeiconsIcon
+                        icon={item.icon}
+                        size={14}
+                        strokeWidth={1.7}
+                        className="shrink-0"
+                      />
+                      <span className="hidden sm:inline">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {markdownToolsEnabled && editorMode === "preview" ? (
+              <MarkdownPreview
+                body={body}
+                fontSize={fontSize}
+                className="pt-20 md:pt-20 lg:pt-20"
+              />
+            ) : markdownToolsEnabled && editorMode === "split" ? (
+              <div className="grid h-full min-h-0 w-full grid-rows-2 md:grid-cols-2 md:grid-rows-1">
+                <div className="min-h-0 border-b border-black/5 dark:border-white/10 md:border-r md:border-b-0">
+                  {renderEditorTextarea(
+                    "md:pr-8 lg:pr-10"
+                  )}
+                </div>
+                <MarkdownPreview
+                  body={body}
+                  fontSize={fontSize}
+                  className="min-h-0 pt-20 md:pl-8 md:pt-20 lg:pl-10 lg:pt-20"
+                />
+              </div>
+            ) : (
+              renderEditorTextarea()
+            )}
             {!focusMode && (showWordCount || showSavedTimestamp || !isOnline) ? (
               <div className="pointer-events-none absolute bottom-4 left-6 flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
                 {!isOnline ? (
@@ -1882,6 +2032,7 @@ export default function Home() {
                   >
                     <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
                   </IconButton>
+                  {renderMarkdownToolsButton()}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -1955,9 +2106,10 @@ export default function Home() {
             >
               <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
             </IconButton>
+            {renderMarkdownToolsButton()}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <FontSwitcher menuSide="top" compact showTooltip={false} />
             {renderExportMenu(true)}
             {renderInstallButton(true)}
@@ -2005,6 +2157,8 @@ export default function Home() {
         onShowWordCountChange={handleWordCountChange}
         showSavedTimestamp={showSavedTimestamp}
         onShowSavedTimestampChange={handleShowSavedTimestampChange}
+        markdownToolsEnabled={markdownToolsEnabled}
+        onMarkdownToolsEnabledChange={handleMarkdownToolsEnabledChange}
         notebookLinesEnabled={notebookLinesEnabled}
         onNotebookLinesEnabledChange={handleNotebookLinesChange}
         spellCheckEnabled={spellCheckEnabled}
