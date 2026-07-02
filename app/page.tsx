@@ -38,6 +38,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { MarkdownPreview } from "@/components/markdown-preview";
+import { ProductHuntBadge } from "@/components/product-hunt-badge";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { IconButton } from "@/components/ui/icon-button";
 import { NotesDrawer } from "@/components/notes-drawer";
@@ -1977,7 +1978,7 @@ export default function Home() {
 
           {!focusMode ? (
             <div className={`mt-3 hidden items-center justify-center transition-all duration-300 md:flex ${chromeClass}`}>
-              <div className="flex w-full max-w-[760px] items-center justify-between rounded-full border border-black/5 bg-white/80 p-1.5 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
+              <div className="flex w-full max-w-[920px] items-center justify-between rounded-full border border-black/5 bg-white/80 p-1.5 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
                 <div className="flex items-center gap-2">
                   <IconButton
                     label="New note"
@@ -2039,6 +2040,7 @@ export default function Home() {
                   <FontSwitcher menuSide="top" />
                   {renderExportMenu()}
                   {renderInstallButton()}
+                  <ProductHuntBadge />
                 </div>
               </div>
             </div>
