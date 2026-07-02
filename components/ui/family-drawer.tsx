@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
@@ -52,6 +52,8 @@ interface FamilyDrawerProps {
     category: string;
   }>;
   onTypingSoundVariantChange: (variantId: TypingSoundVariantId) => void;
+  typingSoundVolume: number;
+  onTypingSoundVolumeChange: (volume: number) => void;
   ambientEnabled: boolean;
   onAmbientEnabledChange: (enabled: boolean) => void;
   ambientAudioId: AmbientAudioId;
@@ -132,6 +134,8 @@ export function FamilyDrawer({
   typingSoundVariantId,
   typingSoundVariants,
   onTypingSoundVariantChange,
+  typingSoundVolume,
+  onTypingSoundVolumeChange,
   ambientEnabled,
   onAmbientEnabledChange,
   ambientAudioId,
@@ -181,6 +185,7 @@ export function FamilyDrawer({
   const [activeAmbientPicker, setActiveAmbientPicker] = useState<
     "background" | "audio" | null
   >(null);
+  const ambientPickerRef = useRef<HTMLDivElement | null>(null);
   const typingSoundCategories = Array.from(
     new Set(typingSoundVariants.map((option) => option.category))
   );
@@ -245,6 +250,18 @@ export function FamilyDrawer({
   const comingSoonLabel = isAudioPicker
     ? "More audios will be added"
     : "More scenes will be added";
+
+  useEffect(() => {
+    if (!resolvedActiveAmbientPicker) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      ambientPickerRef.current
+        ?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+        ?.focus();
+    });
+  }, [resolvedActiveAmbientPicker]);
 
   return (
     <>
@@ -481,6 +498,32 @@ export function FamilyDrawer({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            <div className="mt-3 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="typing-sound-volume-range"
+                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400"
+                >
+                  Volume
+                </label>
+                <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300">
+                  {typingSoundVolume}%
+                </span>
+              </div>
+              <input
+                id="typing-sound-volume-range"
+                type="range"
+                min={0}
+                max={60}
+                step={1}
+                value={typingSoundVolume}
+                disabled={!typingEffectsEnabled}
+                onChange={(event) =>
+                  onTypingSoundVolumeChange(Number(event.target.value))
+                }
+                className="w-full accent-zinc-800 dark:accent-zinc-200 disabled:cursor-not-allowed"
+              />
+            </div>
           </div>
 
           <div className="border-t border-black/5 pt-4 dark:border-white/10">
@@ -686,9 +729,12 @@ export function FamilyDrawer({
         }`}
     />
     <div
+      ref={ambientPickerRef}
       aria-hidden={!resolvedActiveAmbientPicker}
+      aria-label={isAudioPicker ? "Choose ambient audio" : "Choose ambient scene"}
       data-ambient-dropdown-content
       data-drawer-root="settings"
+      role="dialog"
       className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+10px)] md:top-1/2 md:w-[300px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
         ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
         : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"

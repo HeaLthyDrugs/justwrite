@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
   type CSSProperties,
+  type UIEvent,
   type KeyboardEvent,
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -104,6 +105,7 @@ import {
   isTypingSoundVariantId,
   type TypingSoundVariantId,
 } from "@/lib/typing-sound-variants";
+import type { SpellCheckSegment } from "@/lib/spellcheck";
 
 interface NotesState {
   notes: Note[];
@@ -112,6 +114,7 @@ interface NotesState {
 
 const TYPING_EFFECTS_STORAGE_KEY = "justwrite.typing-effects.enabled";
 const TYPING_SOUND_VARIANT_STORAGE_KEY = "justwrite.typing-sound.variant";
+const TYPING_SOUND_VOLUME_STORAGE_KEY = "justwrite.typing-sound.volume";
 const SHOW_WORD_COUNT_STORAGE_KEY = "justwrite.show-word-count.enabled";
 const SHOW_SAVED_TIMESTAMP_STORAGE_KEY = "justwrite.show-saved-timestamp.enabled";
 const NOTEBOOK_LINES_STORAGE_KEY = "justwrite.notebook-lines.enabled";
@@ -125,6 +128,11 @@ const AMBIENT_LEGACY_SCENE_STORAGE_KEY = "justwrite.ambient.scene";
 const AMBIENT_VOLUME_STORAGE_KEY = "justwrite.ambient.volume";
 const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
 const EDGE_HOVER_TRIGGER_PX = 20;
+const DRAWER_HOVER_CLOSE_DELAY_MS = 420;
+const DRAWER_SAFE_CORRIDOR_PX = 56;
+const DEFAULT_TYPING_SOUND_VOLUME = 18;
+const MAX_TYPING_SOUND_VOLUME = 60;
+const TYPING_SOUND_THROTTLE_MS = 34;
 
 type ExportFormat = "txt" | "md" | "json";
 type EditorMode = "edit" | "preview" | "split";
@@ -174,16 +182,16 @@ function getInitialNotesState(): NotesState {
 
 function getInitialTypingEffectsEnabled() {
   if (typeof window === "undefined") {
-    return true;
+    return false;
   }
   if (!hasPreferenceConsent()) {
-    return true;
+    return false;
   }
 
   const storedValue = window.localStorage.getItem(TYPING_EFFECTS_STORAGE_KEY);
   if (storedValue === "true") return true;
   if (storedValue === "false") return false;
-  return true;
+  return false;
 }
 
 function getInitialShowWordCount() {
@@ -242,6 +250,25 @@ function getInitialTypingSoundVariant(): TypingSoundVariantId {
   }
 
   return DEFAULT_TYPING_SOUND_VARIANT_ID;
+}
+
+function getInitialTypingSoundVolume() {
+  if (typeof window === "undefined") {
+    return DEFAULT_TYPING_SOUND_VOLUME;
+  }
+  if (!hasPreferenceConsent()) {
+    return DEFAULT_TYPING_SOUND_VOLUME;
+  }
+
+  const storedValue = window.localStorage.getItem(TYPING_SOUND_VOLUME_STORAGE_KEY);
+  if (storedValue) {
+    const parsed = parseInt(storedValue, 10);
+    if (!isNaN(parsed)) {
+      return Math.min(MAX_TYPING_SOUND_VOLUME, Math.max(0, parsed));
+    }
+  }
+
+  return DEFAULT_TYPING_SOUND_VOLUME;
 }
 
 function getInitialSpellCheckEnabled() {
@@ -450,6 +477,9 @@ export default function Home() {
   const [typingSoundVariant, setTypingSoundVariant] = useState<TypingSoundVariantId>(
     getInitialTypingSoundVariant
   );
+  const [typingSoundVolume, setTypingSoundVolume] = useState(
+    getInitialTypingSoundVolume
+  );
   const [showWordCount, setShowWordCount] = useState(getInitialShowWordCount);
   const [showSavedTimestamp, setShowSavedTimestamp] = useState(getInitialShowSavedTimestamp);
   const [notebookLinesEnabled, setNotebookLinesEnabled] = useState(getInitialNotebookLinesEnabled);
@@ -471,12 +501,19 @@ export default function Home() {
   );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [spellCheckSegments, setSpellCheckSegments] = useState<SpellCheckSegment[]>([
+    { text: "", misspelled: false },
+  ]);
+  const [editorScrollTop, setEditorScrollTop] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const keyAudioRef = useRef<HTMLAudioElement | null>(null);
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
   const pwaUpdateToastShownRef = useRef(false);
+  const notesHoverCloseTimeoutRef = useRef<number | null>(null);
+  const settingsHoverCloseTimeoutRef = useRef<number | null>(null);
+  const lastTypingSoundAtRef = useRef(0);
   const [ambientVideoFallbackSource, setAmbientVideoFallbackSource] = useState<
     string | null
   >(null);
@@ -499,6 +536,9 @@ export default function Home() {
   );
 
   const body = activeNote.body;
+  const visibleSpellCheckSegments = spellCheckEnabled
+    ? spellCheckSegments
+    : [{ text: body, misspelled: false }];
 
   const wordCount = useMemo(() => {
     const trimmed = body.trim();
@@ -576,6 +616,16 @@ export default function Home() {
     );
     if (typingVariantSaved && isTypingSoundVariantId(typingVariantSaved)) {
       setTypingSoundVariant(typingVariantSaved);
+    }
+
+    const typingVolumeSaved = window.localStorage.getItem(
+      TYPING_SOUND_VOLUME_STORAGE_KEY
+    );
+    if (typingVolumeSaved) {
+      const parsed = parseInt(typingVolumeSaved, 10);
+      if (!isNaN(parsed)) {
+        setTypingSoundVolume(Math.min(MAX_TYPING_SOUND_VOLUME, Math.max(0, parsed)));
+      }
     }
 
     const wordCountSaved = window.localStorage.getItem(
@@ -731,6 +781,12 @@ export default function Home() {
 
   useEffect(() => {
     if (hasPreferencesConsent) {
+      localStorage.setItem(TYPING_SOUND_VOLUME_STORAGE_KEY, String(typingSoundVolume));
+    }
+  }, [typingSoundVolume, hasPreferencesConsent]);
+
+  useEffect(() => {
+    if (hasPreferencesConsent) {
       localStorage.setItem(SHOW_WORD_COUNT_STORAGE_KEY, String(showWordCount));
     }
   }, [showWordCount, hasPreferencesConsent]);
@@ -804,11 +860,11 @@ export default function Home() {
   useEffect(() => {
     const keyAudio = new Audio();
     keyAudio.preload = "auto";
-    keyAudio.volume = 0.24;
+    keyAudio.volume = DEFAULT_TYPING_SOUND_VOLUME / 100;
 
     const spaceAudio = new Audio();
     spaceAudio.preload = "auto";
-    spaceAudio.volume = 0.24;
+    spaceAudio.volume = DEFAULT_TYPING_SOUND_VOLUME / 100;
 
     const ambientAudio = new Audio(AMBIENT_AUDIOS[DEFAULT_AMBIENT_AUDIO_ID].assetPath);
     ambientAudio.preload = "auto";
@@ -849,12 +905,12 @@ export default function Home() {
         audio.src = source;
         audio.load();
       }
-      audio.volume = 0.24;
+      audio.volume = typingSoundVolume / 100;
     };
 
     syncSource(keyAudio, selectedVariant.keyPath);
     syncSource(spaceAudio, selectedVariant.spacePath);
-  }, [typingSoundVariant]);
+  }, [typingSoundVariant, typingSoundVolume]);
 
   useEffect(() => {
     const ambientPlayer = ambientAudioRef.current;
@@ -943,6 +999,26 @@ export default function Home() {
       window.clearTimeout(timeoutId);
     };
   }, [notesState]);
+
+  useEffect(() => {
+    if (!spellCheckEnabled) {
+      return;
+    }
+
+    let isCancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      void import("@/lib/spellcheck").then(({ getSpellCheckSegments }) => {
+        if (!isCancelled) {
+          setSpellCheckSegments(getSpellCheckSegments(body));
+        }
+      });
+    }, 140);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [body, spellCheckEnabled]);
 
   const chromeClass = focusMode
     ? "opacity-0 pointer-events-none translate-y-2"
@@ -1122,6 +1198,10 @@ export default function Home() {
     });
   };
 
+  const handleTypingSoundVolumeChange = (volume: number) => {
+    setTypingSoundVolume(Math.min(MAX_TYPING_SOUND_VOLUME, Math.max(0, volume)));
+  };
+
   const handleAmbientEnabledChange = useCallback((enabled: boolean) => {
     setAmbientEnabled(enabled);
     pushToast({
@@ -1205,7 +1285,9 @@ export default function Home() {
       type: "info",
       icon: TextCheckIcon,
       title: enabled ? "Spell check on" : "Spell check off",
-      description: enabled ? "Typos will be highlighted." : "Spell checking disabled.",
+      description: enabled
+        ? "Typos are highlighted when detected."
+        : "Spell checking disabled.",
     });
   };
 
@@ -1300,8 +1382,55 @@ export default function Home() {
   };
 
   useEffect(() => {
+    const clearHoverCloseTimeout = (drawer: "notes" | "settings") => {
+      const ref =
+        drawer === "notes"
+          ? notesHoverCloseTimeoutRef
+          : settingsHoverCloseTimeoutRef;
+
+      if (ref.current !== null) {
+        window.clearTimeout(ref.current);
+        ref.current = null;
+      }
+    };
+
+    const setHoverOpenWithDelay = (
+      drawer: "notes" | "settings",
+      shouldOpen: boolean
+    ) => {
+      const setOpen =
+        drawer === "notes" ? setNotesDrawerHoverOpen : setSettingsDrawerHoverOpen;
+      const ref =
+        drawer === "notes"
+          ? notesHoverCloseTimeoutRef
+          : settingsHoverCloseTimeoutRef;
+
+      if (shouldOpen) {
+        clearHoverCloseTimeout(drawer);
+        setOpen(true);
+        return;
+      }
+
+      if (ref.current !== null) {
+        return;
+      }
+
+      ref.current = window.setTimeout(() => {
+        setOpen(false);
+        ref.current = null;
+      }, DRAWER_HOVER_CLOSE_DELAY_MS);
+    };
+
+    const isInsideDrawerVerticalRange = (clientY: number) => {
+      const top = window.innerHeight * 0.09 - DRAWER_SAFE_CORRIDOR_PX;
+      const bottom = window.innerHeight * 0.91 + DRAWER_SAFE_CORRIDOR_PX;
+      return clientY >= top && clientY <= bottom;
+    };
+
     const handlePointerMove = (event: PointerEvent) => {
       if (focusMode) {
+        setNotesDrawerHoverOpen(false);
+        setSettingsDrawerHoverOpen(false);
         return;
       }
 
@@ -1322,21 +1451,33 @@ export default function Home() {
       const isNearLeftEdge = event.clientX <= EDGE_HOVER_TRIGGER_PX;
       const isNearRightEdge =
         event.clientX >= window.innerWidth - EDGE_HOVER_TRIGGER_PX;
+      const isInVerticalCorridor = isInsideDrawerVerticalRange(event.clientY);
+      const isInSettingsCorridor =
+        settingsDrawerHoverOpen &&
+        isInVerticalCorridor &&
+        event.clientX <= 300 + 24 + DRAWER_SAFE_CORRIDOR_PX;
+      const isInNotesCorridor =
+        notesDrawerHoverOpen &&
+        isInVerticalCorridor &&
+        event.clientX >=
+          window.innerWidth - 320 - 24 - DRAWER_SAFE_CORRIDOR_PX;
 
-      const nextSettingsHoverOpen = isNearLeftEdge || isOverSettingsDrawer;
-      const nextNotesHoverOpen = isNearRightEdge || isOverNotesDrawer;
+      const nextSettingsHoverOpen =
+        isNearLeftEdge || isOverSettingsDrawer || isInSettingsCorridor;
+      const nextNotesHoverOpen =
+        isNearRightEdge || isOverNotesDrawer || isInNotesCorridor;
 
-      setSettingsDrawerHoverOpen((previous) =>
-        previous === nextSettingsHoverOpen ? previous : nextSettingsHoverOpen
-      );
-      setNotesDrawerHoverOpen((previous) =>
-        previous === nextNotesHoverOpen ? previous : nextNotesHoverOpen
-      );
+      setHoverOpenWithDelay("settings", nextSettingsHoverOpen);
+      setHoverOpenWithDelay("notes", nextNotesHoverOpen);
     };
 
     document.addEventListener("pointermove", handlePointerMove);
-    return () => document.removeEventListener("pointermove", handlePointerMove);
-  }, [focusMode]);
+    return () => {
+      document.removeEventListener("pointermove", handlePointerMove);
+      clearHoverCloseTimeout("notes");
+      clearHoverCloseTimeout("settings");
+    };
+  }, [focusMode, notesDrawerHoverOpen, settingsDrawerHoverOpen]);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -1789,9 +1930,19 @@ export default function Home() {
       return;
     }
 
-    if (!typingEffectsEnabled || !shouldPlayTypingFeedback(event)) {
+    if (
+      !typingEffectsEnabled ||
+      event.repeat ||
+      !shouldPlayTypingFeedback(event)
+    ) {
       return;
     }
+
+    const now = event.timeStamp;
+    if (now - lastTypingSoundAtRef.current < TYPING_SOUND_THROTTLE_MS) {
+      return;
+    }
+    lastTypingSoundAtRef.current = now;
 
     if (event.key === " ") {
       playAudioEffect(spaceAudioRef.current);
@@ -1807,27 +1958,57 @@ export default function Home() {
     "--editor-line-height": 1.8,
   };
 
+  const handleEditorScroll = (event: UIEvent<HTMLTextAreaElement>) => {
+    setEditorScrollTop(event.currentTarget.scrollTop);
+  };
+
   const renderEditorTextarea = (className = "") => (
-    <textarea
-      ref={textareaRef}
-      value={body}
-      onChange={(event) => {
-        closeDrawers();
-        updateActiveNote({ body: event.target.value });
-      }}
-      onFocus={closeDrawers}
-      onPointerDown={closeDrawers}
-      onKeyDown={(event) => {
-        closeDrawers();
-        handleTextareaKeyDown(event);
-      }}
-      placeholder="Start. Flow. Finish."
-      spellCheck={spellCheckEnabled}
-      style={textareaStyle}
-      className={`h-full w-full resize-none px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${markdownToolsEnabled ? "pt-20 md:pt-20 lg:pt-20" : ""
-        } ${notebookLinesEnabled ? "notebook-lines" : ""
-        } ${className}`}
-    />
+    <div className="relative h-full w-full">
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 z-0 overflow-hidden px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-transparent md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 ${markdownToolsEnabled ? "pt-20 md:pt-20 lg:pt-20" : ""
+          } ${className}`}
+        style={textareaStyle}
+      >
+        <div
+          className="whitespace-pre-wrap break-words"
+          style={{ transform: `translateY(-${editorScrollTop}px)` }}
+        >
+          {visibleSpellCheckSegments.map((segment, index) =>
+            segment.misspelled ? (
+              <span
+                key={`${index}-${segment.text}`}
+                className="underline decoration-rose-500/85 decoration-wavy decoration-1 underline-offset-[3px] dark:decoration-rose-300/85"
+              >
+                {segment.text}
+              </span>
+            ) : (
+              <span key={`${index}-${segment.text}`}>{segment.text}</span>
+            )
+          )}
+        </div>
+      </div>
+      <textarea
+        ref={textareaRef}
+        value={body}
+        onChange={(event) => {
+          closeDrawers();
+          updateActiveNote({ body: event.target.value });
+        }}
+        onFocus={closeDrawers}
+        onPointerDown={closeDrawers}
+        onScroll={handleEditorScroll}
+        onKeyDown={(event) => {
+          closeDrawers();
+          handleTextareaKeyDown(event);
+        }}
+        placeholder="Start. Flow. Finish."
+        spellCheck={spellCheckEnabled}
+        style={textareaStyle}
+        className={`relative z-10 h-full w-full resize-none bg-transparent px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${markdownToolsEnabled ? "pt-20 md:pt-20 lg:pt-20" : ""
+          } ${notebookLinesEnabled ? "notebook-lines" : ""} ${className}`}
+      />
+    </div>
   );
 
   return isHydrated ? (
@@ -2143,6 +2324,8 @@ export default function Home() {
         typingSoundVariantId={typingSoundVariant}
         typingSoundVariants={typingSoundOptions}
         onTypingSoundVariantChange={handleTypingSoundVariantChange}
+        typingSoundVolume={typingSoundVolume}
+        onTypingSoundVolumeChange={handleTypingSoundVolumeChange}
         ambientEnabled={ambientEnabled}
         onAmbientEnabledChange={handleAmbientEnabledChange}
         ambientAudioId={ambientAudio}
