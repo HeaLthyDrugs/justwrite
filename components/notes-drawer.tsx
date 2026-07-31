@@ -205,8 +205,17 @@ export function NotesDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="notes"
-      className={`fixed right-6 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/20 bg-white/95 p-5 shadow-[0_28px_70px_rgba(8,8,8,0.28)] backdrop-blur-[20px] transition-all duration-500 ease-in-out dark:border-white/25 dark:bg-black/86 ${className}`}
+      className={`fixed right-0 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-visible rounded-l-[28px] bg-white/95 p-5 shadow-[0_28px_70px_rgba(8,8,8,0.28)] backdrop-blur-[20px] will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] dark:bg-black/86 ${className}`}
     >
+      {/* Top-Right Screen-Edge Concave Fillet */}
+      <div
+        className="pointer-events-none absolute -top-[27.5px] right-0 h-[28px] w-[28px] overflow-hidden bg-white/95 backdrop-blur-[20px] dark:bg-black/86 [mask-image:radial-gradient(circle_at_0%_0%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_0%_0%,transparent_27.5px,black_28px)]"
+      />
+
+      {/* Bottom-Right Screen-Edge Concave Fillet */}
+      <div
+        className="pointer-events-none absolute -bottom-[27.5px] right-0 h-[28px] w-[28px] overflow-hidden bg-white/95 backdrop-blur-[20px] dark:bg-black/86 [mask-image:radial-gradient(circle_at_0%_100%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_0%_100%,transparent_27.5px,black_28px)]"
+      />
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Notes

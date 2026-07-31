@@ -36,13 +36,21 @@ import {
   TextCheckIcon,
   TextFontIcon,
   TextNumberSignIcon,
+  Link02Icon,
+  Share01Icon,
+  Book01Icon,
+  Menu01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
 import { MarkdownPreview } from "@/components/markdown-preview";
 import { ProductHuntBadge } from "@/components/product-hunt-badge";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { IconButton } from "@/components/ui/icon-button";
+import { GooeyMenu, type MenuItem } from "@/components/ui/gooey-menu";
 import { NotesDrawer } from "@/components/notes-drawer";
+import { SyncModal } from "@/components/sync-modal";
+import { ShareModal } from "@/components/share-modal";
+import { getStoredSyncCode, performNotesSync, getAutoSyncEnabled } from "@/lib/sync";
 import { FamilyDrawer } from "@/components/ui/family-drawer";
 import {
   DropdownMenu,
@@ -518,6 +526,64 @@ export default function Home() {
     string | null
   >(null);
   const [canInstallApp, setCanInstallApp] = useState(false);
+  const [syncModalOpen, setSyncModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [isAutoSyncing, setIsAutoSyncing] = useState(false);
+  const autoSyncDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initial sync on mount
+  useEffect(() => {
+    const code = getStoredSyncCode();
+    if (code) {
+      setIsAutoSyncing(true);
+      void performNotesSync(
+        {
+          version: 1,
+          notes: notesState.notes,
+          activeNoteId: notesState.activeNoteId,
+        },
+        code
+      ).then((res) => {
+        setIsAutoSyncing(false);
+        if (res.success && res.mergedSnapshot) {
+          setNotesState({
+            notes: res.mergedSnapshot.notes,
+            activeNoteId: res.mergedSnapshot.activeNoteId ?? res.mergedSnapshot.notes[0]?.id ?? "",
+          });
+        }
+      });
+    }
+  }, []);
+
+  // Real-time debounced auto sync when notes change
+  useEffect(() => {
+    const code = getStoredSyncCode();
+    if (!code || !getAutoSyncEnabled()) return;
+
+    if (autoSyncDebounceRef.current) {
+      clearTimeout(autoSyncDebounceRef.current);
+    }
+
+    autoSyncDebounceRef.current = setTimeout(() => {
+      setIsAutoSyncing(true);
+      void performNotesSync(
+        {
+          version: 1,
+          notes: notesState.notes,
+          activeNoteId: notesState.activeNoteId,
+        },
+        code
+      ).then(() => {
+        setIsAutoSyncing(false);
+      });
+    }, 1800);
+
+    return () => {
+      if (autoSyncDebounceRef.current) {
+        clearTimeout(autoSyncDebounceRef.current);
+      }
+    };
+  }, [notesState]);
   const drawerOpen = notesDrawerManualOpen || notesDrawerHoverOpen;
   const settingsOpen = settingsDrawerManualOpen || settingsDrawerHoverOpen;
   const closeDrawers = useCallback(() => {
@@ -1025,10 +1091,10 @@ export default function Home() {
     : "opacity-100";
 
   const drawerClass = focusMode
-    ? "opacity-0 pointer-events-none translate-x-[420px]"
+    ? "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]"
     : drawerOpen
       ? "opacity-100 translate-x-0"
-      : "opacity-0 pointer-events-none translate-x-[420px]";
+      : "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]";
 
   const toggleFocus = useCallback(() => {
     const next = !focusMode;
@@ -1455,12 +1521,12 @@ export default function Home() {
       const isInSettingsCorridor =
         settingsDrawerHoverOpen &&
         isInVerticalCorridor &&
-        event.clientX <= 300 + 24 + DRAWER_SAFE_CORRIDOR_PX;
+        event.clientX <= 300 + DRAWER_SAFE_CORRIDOR_PX;
       const isInNotesCorridor =
         notesDrawerHoverOpen &&
         isInVerticalCorridor &&
         event.clientX >=
-          window.innerWidth - 320 - 24 - DRAWER_SAFE_CORRIDOR_PX;
+          window.innerWidth - 320 - DRAWER_SAFE_CORRIDOR_PX;
 
       const nextSettingsHoverOpen =
         isNearLeftEdge || isOverSettingsDrawer || isInSettingsCorridor;
@@ -1730,48 +1796,17 @@ export default function Home() {
 
   const renderExportMenu = (compact = false) => (
     <DropdownMenu>
-      <ButtonGroup
-        className={`overflow-hidden rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out dark:border-white/10 dark:bg-zinc-800/5 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] ${
-          compact ? "h-8" : "h-9"
-        }`}
-      >
-        <span
-          className={`flex items-center transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
-            compact
-              ? "h-8 w-8 justify-center"
-              : "h-9 gap-1.5 px-2.5 py-2 sm:gap-2 sm:px-3"
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Export note"
+          className={`flex items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0 ${
+            compact ? "h-8 px-2.5" : "h-9 px-3"
           }`}
         >
-          <HugeiconsIcon
-            icon={FileExportIcon}
-            size={compact ? 15 : 14}
-            strokeWidth={1.6}
-            className="shrink-0 sm:size-4"
-          />
-          {!compact ? (
-            <span className="truncate text-[10px] font-medium sm:text-xs">
-              Export
-            </span>
-          ) : null}
-        </span>
-        <ButtonGroupSeparator className="bg-black/10 dark:bg-white/10" />
-        <DropdownMenuTrigger asChild>
-          <button
-            aria-label="Open export menu"
-            type="button"
-            className={`flex items-center justify-center rounded-none text-zinc-400 outline-none transition-colors hover:bg-black/5 dark:hover:bg-white/10 ${
-              compact ? "h-8 w-8" : "h-9 w-8 sm:w-8.5"
-            }`}
-          >
-            <HugeiconsIcon
-              icon={ChevronDown}
-              size={12}
-              strokeWidth={1.6}
-              className="shrink-0 rotate-180 sm:size-3.5"
-            />
-          </button>
-        </DropdownMenuTrigger>
-      </ButtonGroup>
+          <span>Export As</span>
+        </button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent
         side="top"
         sideOffset={8}
@@ -2161,13 +2196,6 @@ export default function Home() {
             <div className={`mt-3 hidden items-center justify-center transition-all duration-300 md:flex ${chromeClass}`}>
               <div className="flex w-full max-w-[920px] items-center justify-between rounded-full border border-black/5 bg-white/80 p-1.5 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/80">
                 <div className="flex items-center gap-2">
-                  <IconButton
-                    label="New note"
-                    className="h-8 w-8 border-none"
-                    onClick={handleCreateNote}
-                  >
-                    <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
-                  </IconButton>
                   <div data-drawer-toggle>
                     <IconButton
                       label={settingsOpen ? "Close settings" : "Open settings"}
@@ -2218,10 +2246,39 @@ export default function Home() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <FontSwitcher menuSide="top" />
+                  <button
+                    type="button"
+                    onClick={() => setSyncModalOpen(true)}
+                    className="h-9 px-3.5 rounded-full border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold shadow-[inset_0_1px_2px_rgba(245,158,11,0.15)] transition-all flex items-center space-x-2 cursor-pointer shrink-0"
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <HugeiconsIcon
+                        icon={Book01Icon}
+                        size={15}
+                        strokeWidth={1.7}
+                        className={isAutoSyncing ? "animate-spin text-amber-500" : "text-amber-600 dark:text-amber-400"}
+                      />
+                      {getStoredSyncCode() && getAutoSyncEnabled() && !isAutoSyncing && (
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900 animate-pulse" />
+                      )}
+                    </div>
+                    <span>Your Book</span>
+                  </button>
+                  <IconButton
+                    label="Share note"
+                    onClick={() => setShareModalOpen(true)}
+                    className="h-9 w-9 border-black/5 bg-transparent shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] dark:border-white/10 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)]"
+                  >
+                    <HugeiconsIcon icon={Share01Icon} size={16} strokeWidth={1.6} />
+                  </IconButton>
                   {renderExportMenu()}
-                  {renderInstallButton()}
-                  <ProductHuntBadge />
+                  <button
+                    type="button"
+                    onClick={handleCreateNote}
+                    className="h-9 px-3.5 rounded-full border border-black/5 bg-transparent text-zinc-700 dark:text-zinc-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 dark:border-white/10 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0"
+                  >
+                    <span>New Note</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -2231,71 +2288,72 @@ export default function Home() {
 
       {!focusMode ? (
         <div className="fixed bottom-2 left-1/2 z-40 flex w-[calc(100%-0.75rem)] max-w-[calc(100%-0.75rem)] -translate-x-1/2 items-center justify-between rounded-full border border-black/5 bg-white/85 px-2 py-1.5 backdrop-blur-md dark:border-white/10 dark:bg-zinc-800/85 md:hidden">
-          <div className="flex items-center gap-1">
-            <IconButton
-              label="New note"
-              className="h-8 w-8 border-none"
-              onClick={handleCreateNote}
+          <div className="flex items-center gap-2">
+            <GooeyMenu
+              items={[
+                {
+                  name: "Settings",
+                  icon: <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />,
+                  onClick: handleToggleSettingsDrawer,
+                  pressed: settingsOpen,
+                },
+                {
+                  name: theme === "dark" ? "Light mode" : "Dark mode",
+                  icon: <HugeiconsIcon icon={theme === "dark" ? Sun01Icon : MoonIcon} size={16} strokeWidth={1.6} />,
+                  onClick: handleThemeToggle,
+                  pressed: theme === "dark",
+                },
+                {
+                  name: drawerOpen ? "Close notes drawer" : "Open notes drawer",
+                  icon: <HugeiconsIcon icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon} size={16} strokeWidth={1.6} />,
+                  onClick: handleToggleNotesDrawer,
+                  pressed: drawerOpen,
+                },
+                {
+                  name: focusMode ? "Exit focus" : "Focus mode",
+                  icon: <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />,
+                  onClick: toggleFocus,
+                  pressed: focusMode,
+                },
+                {
+                  name: "Share note",
+                  icon: <HugeiconsIcon icon={Share01Icon} size={16} strokeWidth={1.6} />,
+                  onClick: () => setShareModalOpen(true),
+                },
+              ]}
+              direction="top"
+              triggerIcon={<HugeiconsIcon icon={Menu01Icon} size={16} strokeWidth={1.6} />}
+            />
+
+            <button
+              type="button"
+              onClick={() => setSyncModalOpen(true)}
+              className="h-8 px-3 rounded-full border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold shadow-[inset_0_1px_2px_rgba(245,158,11,0.2)] dark:shadow-[inset_0_1px_2px_rgba(245,158,11,0.25)] transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
             >
-              <HugeiconsIcon icon={NoteAddIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-
-            <div data-drawer-toggle>
-              <IconButton
-                label={settingsOpen ? "Close settings" : "Open settings"}
-                onClick={handleToggleSettingsDrawer}
-                pressed={settingsOpen}
-                className="h-8 w-8 border-none"
-              >
-                <HugeiconsIcon icon={Settings02Icon} size={16} strokeWidth={1.6} />
-              </IconButton>
-            </div>
-
-            <IconButton
-              label={
-                theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-              }
-              onClick={handleThemeToggle}
-              pressed={theme === "dark"}
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon
-                icon={theme === "dark" ? Sun01Icon : MoonIcon}
-                size={16}
-                strokeWidth={1.6}
-              />
-            </IconButton>
-
-            <div data-drawer-toggle>
-              <IconButton
-                label={drawerOpen ? "Close notes drawer" : "Open notes drawer"}
-                onClick={handleToggleNotesDrawer}
-                pressed={drawerOpen}
-                className="h-8 w-8 border-none"
-              >
+              <div className="relative flex items-center justify-center">
                 <HugeiconsIcon
-                  icon={drawerOpen ? PanelRightCloseIcon : PanelRightOpenIcon}
-                  size={16}
-                  strokeWidth={1.6}
+                  icon={Book01Icon}
+                  size={14}
+                  strokeWidth={1.7}
+                  className={isAutoSyncing ? "animate-spin text-amber-500" : "text-amber-600 dark:text-amber-400"}
                 />
-              </IconButton>
-            </div>
-
-            <IconButton
-              label={focusMode ? "Exit focus" : "Focus mode"}
-              onClick={toggleFocus}
-              pressed={focusMode}
-              className="h-8 w-8 border-none"
-            >
-              <HugeiconsIcon icon={CenterFocusIcon} size={16} strokeWidth={1.6} />
-            </IconButton>
-            {renderMarkdownToolsButton()}
+                {getStoredSyncCode() && getAutoSyncEnabled() && !isAutoSyncing && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900 animate-pulse" />
+                )}
+              </div>
+              <span>Your Book</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            <FontSwitcher menuSide="top" compact showTooltip={false} />
+          <div className="flex items-center gap-1.5">
             {renderExportMenu(true)}
-            {renderInstallButton(true)}
+            <button
+              type="button"
+              onClick={handleCreateNote}
+              className="h-8 px-3 rounded-full border border-black/5 bg-transparent text-zinc-700 dark:text-zinc-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] dark:border-white/10 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0"
+            >
+              <span>New Note</span>
+            </button>
           </div>
         </div>
       ) : null}
@@ -2351,6 +2409,29 @@ export default function Home() {
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
       />
+
+      <SyncModal
+        isOpen={syncModalOpen}
+        onClose={() => setSyncModalOpen(false)}
+        snapshot={{
+          version: 1,
+          notes: notesState.notes,
+          activeNoteId: notesState.activeNoteId,
+        }}
+        onSnapshotUpdated={(newSnapshot) => {
+          setNotesState({
+            notes: newSnapshot.notes,
+            activeNoteId: newSnapshot.activeNoteId ?? newSnapshot.notes[0]?.id ?? "",
+          });
+        }}
+      />
+
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        note={activeNote}
+      />
+
       <PwaInstallPrompt hidden={focusMode} />
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>

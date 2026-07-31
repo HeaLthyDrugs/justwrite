@@ -23,6 +23,7 @@ import {
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
 import { ProductHuntBadge } from "@/components/product-hunt-badge";
+import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
 import {
   DropdownMenu,
@@ -268,11 +269,20 @@ export function FamilyDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="settings"
-      className={`fixed left-6 top-1/2 z-30 flex h-[82vh] w-[300px] -translate-y-1/2 flex-col overflow-hidden rounded-[28px] border border-black/10 bg-white/80 p-5 shadow-[0_24px_60px_rgba(8,8,8,0.24)] backdrop-blur-[52px] transition-all duration-500 ease-in-out dark:border-white/20 dark:bg-black/70 ${isOpen
-        ? "opacity-100 translate-x-0"
-        : "pointer-events-none opacity-0 -translate-x-[340px]"
+      className={`fixed left-0 top-1/2 z-30 flex h-[82vh] w-[300px] -translate-y-1/2 flex-col overflow-visible rounded-r-[28px] bg-white/80 p-5 shadow-[0_24px_60px_rgba(8,8,8,0.24)] backdrop-blur-[52px] will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] dark:bg-black/70 ${isOpen
+        ? "opacity-100 translate-x-0 pointer-events-auto"
+        : "pointer-events-none opacity-0 -translate-x-[calc(100%+36px)]"
         }`}
     >
+      {/* Top-Left Screen-Edge Concave Fillet */}
+      <div
+        className="pointer-events-none absolute -top-[27.5px] left-0 h-[28px] w-[28px] overflow-hidden bg-white/80 backdrop-blur-[52px] dark:bg-black/70 [mask-image:radial-gradient(circle_at_100%_0%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_100%_0%,transparent_27.5px,black_28px)]"
+      />
+
+      {/* Bottom-Left Screen-Edge Concave Fillet */}
+      <div
+        className="pointer-events-none absolute -bottom-[27.5px] left-0 h-[28px] w-[28px] overflow-hidden bg-white/80 backdrop-blur-[52px] dark:bg-black/70 [mask-image:radial-gradient(circle_at_100%_100%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_100%_100%,transparent_27.5px,black_28px)]"
+      />
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Settings
@@ -314,10 +324,18 @@ export function FamilyDrawer({
           </div>
 
           <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
-            <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
-            Font Size
+            <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+              <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+              Font Style
+            </div>
+            <FontSwitcher menuSide="bottom" showTooltip={false} />
           </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
+              <HugeiconsIcon icon={TextFontIcon} size={16} strokeWidth={1.6} className="text-zinc-500 dark:text-zinc-400" />
+              Font Size
+            </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -735,7 +753,7 @@ export function FamilyDrawer({
       data-ambient-dropdown-content
       data-drawer-root="settings"
       role="dialog"
-      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(1.5rem+300px+10px)] md:top-1/2 md:w-[300px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
+      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(300px+12px)] md:top-1/2 md:w-[300px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
         ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
         : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
         }`}
