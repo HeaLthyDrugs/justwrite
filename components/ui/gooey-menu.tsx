@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils";
 
 const blurAni: MotionProps = {
   variants: {
-    ini: { filter: "blur(4px)" },
-    ani: { filter: "blur(0px)" },
+    ini: { filter: "blur(4px)", opacity: 0 },
+    ani: { filter: "blur(0px)", opacity: 1 },
     exit: { filter: "blur(4px)", opacity: 0 },
   },
   initial: "ini",
@@ -97,8 +97,8 @@ export function GooeyMenu({
           document.body
         )}
 
-      <div className="relative inline-block z-50">
-        {/* Layer 1: Gooey SVG Filtered Buttons (No shadows) */}
+      <div className="relative inline-block z-50 size-9">
+        {/* Layer 1: Gooey SVG Filtered Buttons ONLY (menu items — trigger button is NOT inside this filter) */}
         <div style={{ filter: `url(#${fId})` }}>
           <div
             id={mId}
@@ -122,8 +122,14 @@ export function GooeyMenu({
                   }}
                   className={cn(
                     "absolute inset-0 flex size-9 cursor-pointer items-center justify-center rounded-full pointer-events-auto",
-                    "border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 active:scale-95 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] transform-gpu dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white dark:active:shadow-[inset_0_1px_4px_rgba(255,255,255,0.22)]",
-                    i.pressed ? "bg-black/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] dark:bg-white/10 dark:shadow-[inset_0_2px_4px_rgba(255,255,255,0.22)]" : ""
+                    "bg-white dark:bg-zinc-800 border border-black/10 dark:border-white/15",
+                    "text-zinc-600 dark:text-zinc-300",
+                    "shadow-sm transition-colors duration-200 ease-out",
+                    "hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-white",
+                    "active:scale-95 transform-gpu",
+                    i.pressed
+                      ? "bg-zinc-100 text-zinc-900 ring-1 ring-black/10 dark:bg-zinc-700 dark:text-white dark:ring-white/15"
+                      : ""
                   )}
                   onClick={() => handleClick(i)}
                 >
@@ -131,49 +137,68 @@ export function GooeyMenu({
                   <span className="sr-only">{i.name}</span>
                 </motion.button>
               ))}
+              {/* Solid placeholder at trigger position so gooey filter has a base shape to merge from */}
+              <div className="absolute inset-0 size-9 rounded-full bg-white dark:bg-zinc-800" />
             </div>
           </div>
-
-          <button
-            type="button"
-            className={cn(
-              "relative z-10 flex size-9 cursor-pointer items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 active:scale-95 active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.18)] transform-gpu dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white dark:active:shadow-[inset_0_1px_4px_rgba(255,255,255,0.22)]",
-              className
-            )}
-            onClick={() => setOpen(!open)}
-            aria-haspopup="true"
-            aria-expanded={open}
-            aria-controls={mId}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span {...blurAni} key={open ? "open" : "close"}>
-                {open ? (
-                  <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.6} />
-                ) : (
-                  triggerIcon || <HugeiconsIcon icon={Menu01Icon} size={16} strokeWidth={1.6} />
-                )}
-              </motion.span>
-            </AnimatePresence>
-          </button>
         </div>
 
-        {/* Layer 2: Crisp Animated Text Labels (Synchronized Motion) */}
+        {/* Layer 2: Trigger button — intentionally outside the gooey filter so the icon stays pixel-crisp */}
+        <button
+          type="button"
+          className={cn(
+            "absolute inset-0 z-10 flex size-9 cursor-pointer items-center justify-center rounded-full",
+            "bg-white dark:bg-zinc-800",
+            "border border-black/10 dark:border-white/15",
+            "text-zinc-600 dark:text-zinc-300",
+            "shadow-sm transition-all duration-200 ease-out",
+            "hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-white",
+            "active:scale-95 transform-gpu",
+            open ? "ring-2 ring-zinc-400/50 dark:ring-zinc-500/50" : "",
+            className
+          )}
+          onClick={() => setOpen(!open)}
+          aria-haspopup="true"
+          aria-expanded={open}
+          aria-controls={mId}
+          aria-label={open ? "Close menu" : "Open menu"}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span {...blurAni} key={open ? "open" : "close"}>
+              {open ? (
+                <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.8} />
+              ) : (
+                triggerIcon || <HugeiconsIcon icon={Menu01Icon} size={16} strokeWidth={1.8} />
+              )}
+            </motion.span>
+          </AnimatePresence>
+        </button>
+
+        {/* Layer 3: Crisp Animated Text Labels (Synchronized Motion, staggered) */}
         <div className="absolute top-0 left-0 pointer-events-none z-50">
           {items.map((i, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, x: -8 }}
+              initial={{ opacity: 0, x: -6 }}
               animate={{
                 [axis]: open
                   ? `calc(${100 * dir * (idx + 1)}% + ${dir * (idx + 1) * 10 + dir * 16}px)`
                   : 0,
                 opacity: open ? 1 : 0,
-                x: open ? 0 : -8,
+                x: open ? 0 : -6,
               }}
+              transition={{ ...transition as object, delay: open ? idx * 0.03 : 0 }}
               className="absolute top-0 left-11 flex items-center h-9 whitespace-nowrap pointer-events-none"
             >
-              <span className="px-3 py-1 text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-white/95 dark:bg-zinc-900/95 border border-black/10 dark:border-white/15 rounded-full shadow-md backdrop-blur-md">
+              <span
+                className={cn(
+                  "px-3 py-1 text-xs font-semibold rounded-full shadow-sm backdrop-blur-md",
+                  "text-zinc-700 dark:text-zinc-200",
+                  "bg-white/95 dark:bg-zinc-800/95",
+                  "border border-black/8 dark:border-white/12",
+                  i.pressed ? "text-zinc-900 font-bold dark:text-white" : ""
+                )}
+              >
                 {i.name}
               </span>
             </motion.div>

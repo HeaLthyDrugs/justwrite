@@ -1800,8 +1800,8 @@ export default function Home() {
         <button
           type="button"
           aria-label="Export note"
-          className={`flex items-center justify-center rounded-full border border-black/5 bg-transparent text-zinc-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 dark:border-white/10 dark:text-zinc-200 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] dark:hover:bg-white/10 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0 ${
-            compact ? "h-8 px-2.5" : "h-9 px-3"
+          className={`flex items-center justify-center rounded-full border border-black/10 bg-white text-zinc-600 shadow-sm transition-all duration-200 ease-out hover:bg-zinc-100 hover:text-zinc-900 dark:border-white/15 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0 ${
+            compact ? "h-9 px-3" : "h-9 px-3"
           }`}
         >
           <span>Export As</span>
@@ -2328,7 +2328,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setSyncModalOpen(true)}
-              className="h-8 px-3 rounded-full border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold shadow-[inset_0_1px_2px_rgba(245,158,11,0.2)] dark:shadow-[inset_0_1px_2px_rgba(245,158,11,0.25)] transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+              className="h-9 px-3 rounded-full border border-amber-500/40 bg-amber-500/15 hover:bg-amber-500/25 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer shrink-0 shadow-sm"
             >
               <div className="relative flex items-center justify-center">
                 <HugeiconsIcon
@@ -2350,7 +2350,7 @@ export default function Home() {
             <button
               type="button"
               onClick={handleCreateNote}
-              className="h-8 px-3 rounded-full border border-black/5 bg-transparent text-zinc-700 dark:text-zinc-200 shadow-[inset_0_1px_2px_rgba(0,0,0,0.15)] dark:border-white/10 dark:shadow-[inset_0_1px_2px_rgba(255,255,255,0.18)] transition-all duration-300 ease-out hover:bg-black/5 hover:text-zinc-900 dark:hover:bg-white/10 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0"
+              className="h-9 px-3 rounded-full border border-black/10 bg-white text-zinc-600 dark:text-zinc-300 dark:border-white/15 dark:bg-zinc-800 shadow-sm transition-all duration-200 ease-out hover:bg-zinc-100 hover:text-zinc-900 dark:hover:bg-zinc-700 dark:hover:text-white text-xs font-semibold cursor-pointer shrink-0"
             >
               <span>New Note</span>
             </button>
