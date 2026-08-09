@@ -242,7 +242,7 @@ body {
 }
 
 .squircle-inner {
-  border-radius: 29px;
+  border-radius: 30px;
   corner-smoothing: 1;
   -webkit-corner-smoothing: 1;
 }
@@ -252,4 +252,26 @@ body {
   corner-smoothing: 1;
   -webkit-corner-smoothing: 1;
 }
+
+/* Polished Scroll Mask Fade Utilities */
+[data-scroll-fade="none"] {
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+[data-scroll-fade="both"] {
+  mask-image: linear-gradient(to bottom, transparent 0px, black 28px, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 28px, black calc(100% - 28px), transparent 100%);
+}
+
+[data-scroll-fade="top"] {
+  mask-image: linear-gradient(to bottom, transparent 0px, black 28px, black 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0px, black 28px, black 100%);
+}
+
+[data-scroll-fade="bottom"] {
+  mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 28px), transparent 100%);
+}
+
 

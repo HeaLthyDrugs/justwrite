@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Delete02Icon,
@@ -69,8 +69,8 @@ function NotesSection({
               key={note.id}
               className={`group flex w-full flex-col rounded-[18px] squircle-card border px-3 py-2.5 text-left transition-all ${
                 isActive
-                  ? "border-zinc-900/25 bg-black/[0.08] shadow-sm dark:border-white/25 dark:bg-white/[0.12]"
-                  : "border-black/10 bg-white/70 hover:border-black/20 dark:border-white/15 dark:bg-black/50 dark:hover:border-white/30"
+                  ? "border-black/10 bg-black/[0.07] shadow-sm dark:border-transparent dark:bg-white/[0.09]"
+                  : "border-black/5 bg-black/[0.03] hover:bg-black/[0.05] dark:border-transparent dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
               }`}
             >
               <div className="flex w-full items-center justify-between">
@@ -82,14 +82,14 @@ function NotesSection({
                   }}
                   className="flex min-w-0 flex-1 items-center gap-3 text-left"
                 >
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/8 text-zinc-700 dark:bg-white/10 dark:text-zinc-100">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/6 text-zinc-700 dark:bg-white/8 dark:text-zinc-100">
                     <HugeiconsIcon icon={NoteIcon} size={16} strokeWidth={1.6} />
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-100">
                       {getNoteDisplayTitle(note, 42)}
                     </div>
-                    <div className="truncate text-xs text-zinc-700 dark:text-zinc-200">
+                    <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">
                       Updated {formatNoteDateTime(note.updatedAt)}
                     </div>
                   </div>
@@ -97,7 +97,7 @@ function NotesSection({
                 <div className="ml-2 flex items-center gap-1">
                   <IconButton
                     label={note.isPinned ? "Unpin note" : "Pin note"}
-                    className={`h-8 w-8 border-none bg-black/10 dark:bg-white/12 ${
+                    className={`h-8 w-8 border-none bg-black/6 dark:bg-white/8 ${
                       isActive || isConfirmingDelete
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
@@ -115,7 +115,7 @@ function NotesSection({
                   </IconButton>
                   <IconButton
                     label={isConfirmingDelete ? "Cancel delete" : "Delete note"}
-                    className={`h-8 w-8 border-none bg-black/10 dark:bg-white/12 ${
+                    className={`h-8 w-8 border-none bg-black/6 dark:bg-white/8 ${
                       isActive || isConfirmingDelete
                         ? "opacity-100"
                         : "opacity-0 group-hover:opacity-100"
@@ -178,6 +178,28 @@ export function NotesDrawer({
   const [pendingDeleteNoteId, setPendingDeleteNoteId] = useState<string | null>(
     null
   );
+  const [showTopFade, setShowTopFade] = useState(false);
+  const [showBottomFade, setShowBottomFade] = useState(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  const checkScrollFades = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    setShowTopFade(scrollTop > 4);
+    setShowBottomFade(scrollTop + clientHeight < scrollHeight - 4);
+  }, []);
+
+  useEffect(() => {
+    checkScrollFades();
+  }, [notes, checkScrollFades]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const timer = window.setTimeout(checkScrollFades, 50);
+      return () => window.clearTimeout(timer);
+    }
+  }, [isOpen, checkScrollFades]);
 
   const visiblePendingDeleteNoteId =
     pendingDeleteNoteId && notes.some((note) => note.id === pendingDeleteNoteId)
@@ -205,12 +227,12 @@ export function NotesDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="notes"
-      className={`fixed right-3 sm:right-4 top-1/2 z-30 flex h-[84vh] w-[320px] sm:w-[340px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
+      className={`fixed right-3 sm:right-4 top-1/2 z-30 flex h-[84vh] w-[320px] sm:w-[340px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
         ? "opacity-100 translate-x-0 pointer-events-auto"
         : "pointer-events-none opacity-0 translate-x-[calc(100%+40px)]"
         } ${className}`}
     >
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[29px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Notes
@@ -238,7 +260,18 @@ export function NotesDrawer({
 
       <div className="relative mt-6 min-h-0 flex-1 overflow-hidden -mx-5 px-5 isolate">
         <div
-          className="h-full space-y-5 overflow-y-auto pr-1 pt-2 pb-0"
+          ref={scrollRef}
+          onScroll={checkScrollFades}
+          data-scroll-fade={
+            !showTopFade && !showBottomFade
+              ? "none"
+              : showTopFade && showBottomFade
+              ? "both"
+              : showTopFade
+              ? "top"
+              : "bottom"
+          }
+          className="h-full space-y-5 overflow-y-auto pr-1 pt-2 pb-4 transition-[mask-image] duration-300"
         >
           {pinnedNotes.length > 0 ? (
             <NotesSection
