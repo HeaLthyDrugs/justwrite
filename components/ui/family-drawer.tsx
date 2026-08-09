@@ -163,7 +163,8 @@ export function FamilyDrawer({
   onFontSizeChange,
 }: FamilyDrawerProps) {
   const quickPages = [
-    { href: "/changelog", label: "Changelog" },
+    { href: "/changelog", label: "Changelog", hasBadge: true },
+    { href: "/how-it-works", label: "How Book & Sharing Works" },
     { href: "/about", label: "About" },
     { href: "/shortcuts", label: "Shortcuts" },
   ];
@@ -708,9 +709,15 @@ export function FamilyDrawer({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
+                className="group flex items-center justify-between text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
               >
-                {item.label}
+                <span>{item.label}</span>
+                {item.hasBadge && (
+                  <span className="relative flex h-2 w-2 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                )}
               </Link>
             ))}
           </div>
