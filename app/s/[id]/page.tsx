@@ -9,8 +9,7 @@ import {
   Download01Icon,
   Tick01Icon,
   ArrowLeft02Icon,
-  SecurityCheckIcon,
-  Clock01Icon,
+  Copy01Icon,
 } from "@hugeicons/core-free-icons";
 import { MarkdownPreview } from "@/components/markdown-preview";
 import { loadNotesSnapshot, saveNotesSnapshot, createEmptyNote, formatNoteDateTime } from "@/lib/notes-storage";
@@ -30,6 +29,7 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState<boolean>(false);
+  const [copiedContent, setCopiedContent] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchAndDecrypt() {
@@ -105,79 +105,104 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
     }, 800);
   };
 
+  const handleCopyContent = async () => {
+    if (!noteData?.body) return;
+    try {
+      await navigator.clipboard.writeText(noteData.body);
+      setCopiedContent(true);
+      setTimeout(() => setCopiedContent(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col font-sans">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-neutral-200/80 dark:border-neutral-800">
-        <Link
-          href="/"
-          className="flex items-center space-x-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition"
-        >
-          <HugeiconsIcon icon={ArrowLeft02Icon} size={16} />
-          <span>Open JustWrite</span>
-        </Link>
-
-        <div className="flex items-center space-x-3">
-          <span className="flex items-center space-x-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-            <HugeiconsIcon icon={SecurityCheckIcon} size={14} />
-            <span>Zero-Knowledge Encrypted</span>
-          </span>
-
-          {noteData && (
-            <button
-              onClick={handleImportNote}
-              disabled={imported}
-              className="flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-500 rounded-xl shadow-xs transition disabled:opacity-50"
-            >
-              <HugeiconsIcon icon={imported ? Tick01Icon : Download01Icon} size={15} />
-              <span>{imported ? "Imported!" : "Import Note to My App"}</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="flex-1 max-w-3xl w-full mx-auto p-6 md:p-12">
+    <div className="flex h-screen w-full items-center justify-center overflow-hidden p-3 md:p-6 bg-neutral-50/50 dark:bg-neutral-950 text-zinc-900 dark:text-zinc-100 font-sans relative">
+      <main className="relative flex h-full w-full max-w-[920px] flex-col justify-center py-4 md:py-6 z-10">
         {isLoading ? (
-          <div className="py-24 flex flex-col items-center justify-center space-y-4">
-            <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Decrypting private shared note...
-            </p>
+          <div className="w-full flex items-center justify-center">
+            <div className="w-full max-w-md rounded-[32px] border border-white/60 bg-white/70 p-10 text-center shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10 space-y-4">
+              <div className="w-9 h-9 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                Decrypting shared note...
+              </p>
+            </div>
           </div>
         ) : error ? (
-          <div className="py-16 text-center space-y-4">
-            <div className="inline-flex p-4 rounded-full bg-rose-500/10 text-rose-500">
-              <HugeiconsIcon icon={LockIcon} size={32} />
-            </div>
-            <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
-              Unable to Decrypt Shared Note
-            </h2>
-            <p className="text-sm text-neutral-500 max-w-md mx-auto">{error}</p>
-            <div className="pt-4">
-              <Link
-                href="/"
-                className="inline-flex items-center px-4 py-2 text-xs font-semibold text-white bg-neutral-900 dark:bg-white dark:text-neutral-900 rounded-xl"
-              >
-                Go to JustWrite Home
-              </Link>
+          <div className="w-full flex items-center justify-center">
+            <div className="w-full max-w-md rounded-[32px] border border-white/60 bg-white/70 p-8 text-center shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10 space-y-4">
+              <div className="inline-flex p-3 rounded-2xl bg-rose-500/10 text-rose-500">
+                <HugeiconsIcon icon={LockIcon} size={28} />
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  Unable to Decrypt Shared Note
+                </h2>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
+                  {error}
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  href="/"
+                  className="inline-flex items-center space-x-2 h-9 px-4 rounded-full text-xs font-semibold text-white bg-zinc-900 dark:bg-white dark:text-zinc-900 shadow-xs hover:opacity-90 transition cursor-pointer"
+                >
+                  <HugeiconsIcon icon={ArrowLeft02Icon} size={15} />
+                  <span>Back to App</span>
+                </Link>
+              </div>
             </div>
           </div>
         ) : noteData ? (
-          <article className="space-y-6 bg-white dark:bg-neutral-900 p-8 md:p-12 rounded-3xl border border-neutral-200/80 dark:border-neutral-800 shadow-xl">
-            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800">
-              <div className="flex items-center space-x-2 text-xs text-neutral-400">
-                <HugeiconsIcon icon={Clock01Icon} size={14} />
-                <span>Shared Note • {formatNoteDateTime(noteData.updatedAt || noteData.createdAt)}</span>
-              </div>
+          <div className="w-full flex flex-col h-full min-h-0 animate-in fade-in duration-200">
+            {/* Plain text Date and Time outside top right corner of card */}
+            <div className="w-full flex justify-end mb-2 px-3 shrink-0">
+              <span className="text-xs font-medium text-zinc-500/90 dark:text-zinc-400/90">
+                {formatNoteDateTime(noteData.updatedAt || noteData.createdAt)}
+              </span>
             </div>
 
-            <div className="prose dark:prose-invert max-w-none">
-              <MarkdownPreview body={noteData.body} fontSize={16} />
+            {/* Note Preview Container - Fixed height & responsive like app editor */}
+            <article className="relative flex h-[68vh] min-h-[380px] max-h-[720px] w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
+              <MarkdownPreview body={noteData.body} fontSize={18} className="h-full w-full" />
+            </article>
+
+            {/* Action buttons below Note preview */}
+            <div className="w-full mt-3 flex items-center justify-between gap-3 shrink-0">
+              <Link
+                href="/"
+                className="h-9 px-4 rounded-full border border-black/5 bg-white/80 hover:bg-white text-zinc-700 dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-800 dark:text-zinc-200 text-xs font-semibold shadow-xs backdrop-blur-md transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+              >
+                <HugeiconsIcon icon={ArrowLeft02Icon} size={15} />
+                <span>Back to App</span>
+              </Link>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyContent}
+                  className="h-9 px-3.5 rounded-full border border-black/5 bg-white/80 hover:bg-white text-zinc-700 dark:border-white/10 dark:bg-zinc-800/80 dark:hover:bg-zinc-800 dark:text-zinc-200 text-xs font-semibold shadow-xs backdrop-blur-md transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+                >
+                  <HugeiconsIcon icon={copiedContent ? Tick01Icon : Copy01Icon} size={14} />
+                  <span>{copiedContent ? "Copied!" : "Copy Text"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleImportNote}
+                  disabled={imported}
+                  className="h-9 px-4 rounded-full border border-amber-500/30 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-sm transition-all flex items-center space-x-1.5 cursor-pointer shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  <HugeiconsIcon icon={imported ? Tick01Icon : Download01Icon} size={15} />
+                  <span>{imported ? "Imported!" : "Import Note"}</span>
+                </button>
+              </div>
             </div>
-          </article>
+          </div>
         ) : null}
       </main>
     </div>
   );
 }
+
+
