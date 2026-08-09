@@ -233,3 +233,23 @@ body {
     --notebook-margin-left: 48px;
   }
 }
+
+/* Squircle & Double Layer Border Utilities */
+.squircle-outer {
+  border-radius: 34px;
+  corner-smoothing: 1;
+  -webkit-corner-smoothing: 1;
+}
+
+.squircle-inner {
+  border-radius: 29px;
+  corner-smoothing: 1;
+  -webkit-corner-smoothing: 1;
+}
+
+.squircle-card {
+  border-radius: 20px;
+  corner-smoothing: 1;
+  -webkit-corner-smoothing: 1;
+}
+

@@ -118,7 +118,7 @@ export default function ChangelogPage() {
             href="/"
             className="text-sm font-medium text-zinc-600 underline underline-offset-4 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
           >
-            Back to Editor
+            Back to Editor so this should be a link to the main page
           </Link>
         </div>
       </div>

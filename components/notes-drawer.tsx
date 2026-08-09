@@ -67,10 +67,10 @@ function NotesSection({
           return (
             <div
               key={note.id}
-              className={`group flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition-colors ${
+              className={`group flex w-full flex-col rounded-[18px] squircle-card border px-3 py-2.5 text-left transition-all ${
                 isActive
-                  ? "border-zinc-900/20 bg-black/12 dark:border-white/25 dark:bg-white/16"
-                  : "border-black/15 bg-white/88 dark:border-white/20 dark:bg-black/55"
+                  ? "border-zinc-900/25 bg-black/[0.08] shadow-sm dark:border-white/25 dark:bg-white/[0.12]"
+                  : "border-black/10 bg-white/70 hover:border-black/20 dark:border-white/15 dark:bg-black/50 dark:hover:border-white/30"
               }`}
             >
               <div className="flex w-full items-center justify-between">
@@ -205,17 +205,12 @@ export function NotesDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="notes"
-      className={`fixed right-0 top-1/2 z-30 flex h-[82vh] w-[320px] -translate-y-1/2 flex-col overflow-visible rounded-l-[28px] bg-white/95 p-5 shadow-[0_28px_70px_rgba(8,8,8,0.28)] backdrop-blur-[20px] will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] dark:bg-black/86 ${className}`}
+      className={`fixed right-3 sm:right-4 top-1/2 z-30 flex h-[84vh] w-[320px] sm:w-[340px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
+        ? "opacity-100 translate-x-0 pointer-events-auto"
+        : "pointer-events-none opacity-0 translate-x-[calc(100%+40px)]"
+        } ${className}`}
     >
-      {/* Top-Right Screen-Edge Concave Fillet */}
-      <div
-        className="pointer-events-none absolute -top-[27.5px] right-0 h-[28px] w-[28px] overflow-hidden bg-white/95 backdrop-blur-[20px] dark:bg-black/86 [mask-image:radial-gradient(circle_at_0%_0%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_0%_0%,transparent_27.5px,black_28px)]"
-      />
-
-      {/* Bottom-Right Screen-Edge Concave Fillet */}
-      <div
-        className="pointer-events-none absolute -bottom-[27.5px] right-0 h-[28px] w-[28px] overflow-hidden bg-white/95 backdrop-blur-[20px] dark:bg-black/86 [mask-image:radial-gradient(circle_at_0%_100%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_0%_100%,transparent_27.5px,black_28px)]"
-      />
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[29px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Notes
@@ -278,11 +273,12 @@ export function NotesDrawer({
             />
           ) : null}
           {notes.length === 0 ? (
-            <div className="rounded-2xl border border-black/15 bg-white/90 px-4 py-3 text-sm text-zinc-800 dark:border-white/20 dark:bg-black/55 dark:text-zinc-100">
+            <div className="rounded-[18px] squircle-card border border-black/15 bg-white/90 px-4 py-3 text-sm text-zinc-800 dark:border-white/20 dark:bg-black/55 dark:text-zinc-100">
               No notes yet. Create one to get started.
             </div>
           ) : null}
         </div>
+      </div>
       </div>
     </aside>
   );

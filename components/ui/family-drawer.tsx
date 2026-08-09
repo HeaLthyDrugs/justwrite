@@ -270,20 +270,12 @@ export function FamilyDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="settings"
-      className={`fixed left-0 top-1/2 z-30 flex h-[82vh] w-[300px] -translate-y-1/2 flex-col overflow-visible rounded-r-[28px] bg-white/80 p-5 shadow-[0_24px_60px_rgba(8,8,8,0.24)] backdrop-blur-[52px] will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] dark:bg-black/70 ${isOpen
+      className={`fixed left-3 sm:left-4 top-1/2 z-30 flex h-[84vh] w-[310px] sm:w-[320px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
         ? "opacity-100 translate-x-0 pointer-events-auto"
-        : "pointer-events-none opacity-0 -translate-x-[calc(100%+36px)]"
+        : "pointer-events-none opacity-0 -translate-x-[calc(100%+40px)]"
         }`}
     >
-      {/* Top-Left Screen-Edge Concave Fillet */}
-      <div
-        className="pointer-events-none absolute -top-[27.5px] left-0 h-[28px] w-[28px] overflow-hidden bg-white/80 backdrop-blur-[52px] dark:bg-black/70 [mask-image:radial-gradient(circle_at_100%_0%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_100%_0%,transparent_27.5px,black_28px)]"
-      />
-
-      {/* Bottom-Left Screen-Edge Concave Fillet */}
-      <div
-        className="pointer-events-none absolute -bottom-[27.5px] left-0 h-[28px] w-[28px] overflow-hidden bg-white/80 backdrop-blur-[52px] dark:bg-black/70 [mask-image:radial-gradient(circle_at_100%_100%,transparent_27.5px,black_28px)] [-webkit-mask-image:radial-gradient(circle_at_100%_100%,transparent_27.5px,black_28px)]"
-      />
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-[29px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_12px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Settings
@@ -741,6 +733,7 @@ export function FamilyDrawer({
           </div>
         </div>
       </div>
+      </div>
     </aside>
     <button
       type="button"
@@ -760,18 +753,21 @@ export function FamilyDrawer({
       data-ambient-dropdown-content
       data-drawer-root="settings"
       role="dialog"
-      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(300px+12px)] md:top-1/2 md:w-[300px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
+      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(320px+24px)] md:top-1/2 md:w-[310px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
         ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
         : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
         }`}
     >
       <div
-        className={`max-h-[48vh] overflow-y-auto overflow-x-hidden rounded-[26px] border p-2 backdrop-blur-2xl md:max-h-[62vh] ${
-          isAudioPicker
-            ? "border-white/80 bg-[linear-gradient(165deg,rgba(240,251,247,0.86),rgba(230,238,255,0.8)_50%,rgba(246,236,255,0.82))] shadow-[0_16px_32px_rgba(151,177,196,0.22),inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/36 dark:bg-[linear-gradient(165deg,rgba(50,58,70,0.68),rgba(66,64,88,0.62)_52%,rgba(58,74,70,0.64))]"
-            : "border-white/80 bg-[linear-gradient(165deg,rgba(236,245,255,0.84),rgba(230,247,242,0.8)_50%,rgba(242,238,255,0.8))] shadow-[0_16px_32px_rgba(151,177,196,0.2),inset_0_1px_0_rgba(255,255,255,0.66)] dark:border-white/34 dark:bg-[linear-gradient(165deg,rgba(45,56,68,0.7),rgba(52,70,66,0.62)_52%,rgba(60,64,84,0.64))]"
-        }`}
+        className={`max-h-[48vh] overflow-y-auto overflow-x-hidden rounded-[30px] squircle-outer border border-black/10 dark:border-white/15 bg-white/80 dark:bg-zinc-950/80 p-2 shadow-[0_24px_50px_rgba(0,0,0,0.22)] backdrop-blur-3xl md:max-h-[62vh]`}
       >
+        <div
+          className={`overflow-hidden rounded-[22px] squircle-inner border p-2 backdrop-blur-2xl ${
+            isAudioPicker
+              ? "border-white/80 bg-[linear-gradient(165deg,rgba(240,251,247,0.86),rgba(230,238,255,0.8)_50%,rgba(246,236,255,0.82))] shadow-[0_16px_32px_rgba(151,177,196,0.22),inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/36 dark:bg-[linear-gradient(165deg,rgba(50,58,70,0.68),rgba(66,64,88,0.62)_52%,rgba(58,74,70,0.64))]"
+              : "border-white/80 bg-[linear-gradient(165deg,rgba(236,245,255,0.84),rgba(230,247,242,0.8)_50%,rgba(242,238,255,0.8))] shadow-[0_16px_32px_rgba(151,177,196,0.2),inset_0_1px_0_rgba(255,255,255,0.66)] dark:border-white/34 dark:bg-[linear-gradient(165deg,rgba(45,56,68,0.7),rgba(52,70,66,0.62)_52%,rgba(60,64,84,0.64))]"
+          }`}
+        >
         <div className="sticky top-0 z-10 -mx-1 mb-1 flex items-center justify-between rounded-[18px] px-2 py-1">
           <button
             type="button"
@@ -856,6 +852,7 @@ export function FamilyDrawer({
         <p className="px-1 pt-2 text-center text-[11px] font-medium leading-4 text-zinc-600/78 dark:text-zinc-300/72">
           {comingSoonLabel}.
         </p>
+        </div>
       </div>
     </div>
     </>
