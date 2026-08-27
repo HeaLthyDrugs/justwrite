@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { AdBanner } from "@/components/ad-banner";
 
 export const metadata = {
   title: "How Book & Sharing Work | Justwrite",
@@ -135,6 +136,9 @@ const encrypted = await crypto.subtle.encrypt(
             </table>
           </div>
         </section>
+
+        {/* Ad Unit */}
+        <AdBanner className="my-6" />
 
         {/* Footer */}
         <div className="pt-4">

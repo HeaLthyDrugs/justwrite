@@ -11,6 +11,7 @@ import {
   PinOffIcon,
 } from "@hugeicons/core-free-icons";
 import { IconButton } from "@/components/ui/icon-button";
+import { AdBanner } from "@/components/ad-banner";
 import {
   formatNoteDateTime,
   getNoteDisplayTitle,
@@ -310,6 +311,8 @@ export function NotesDrawer({
               No notes yet. Create one to get started.
             </div>
           ) : null}
+
+          <AdBanner className="mt-4" />
         </div>
       </div>
       </div>

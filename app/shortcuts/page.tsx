@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Kbd } from "@/components/ui/kbd";
+import { AdBanner } from "@/components/ad-banner";
 
 const shortcutRows = [
   { keys: ["Alt", "1"], action: "Create a new note" },
@@ -56,6 +57,8 @@ export default function ShortcutsPage() {
             </tbody>
           </table>
         </div>
+
+        <AdBanner className="mt-6" />
 
         <div className="mt-6">
           <Link

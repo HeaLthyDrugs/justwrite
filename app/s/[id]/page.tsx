@@ -12,6 +12,7 @@ import {
   Copy01Icon,
 } from "@hugeicons/core-free-icons";
 import { MarkdownPreview } from "@/components/markdown-preview";
+import { AdBanner } from "@/components/ad-banner";
 import { loadNotesSnapshot, saveNotesSnapshot, createEmptyNote, formatNoteDateTime } from "@/lib/notes-storage";
 import { decryptData, EncryptedPayload } from "@/lib/crypto";
 
@@ -117,7 +118,7 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
   };
 
   return (
-    <div className="flex h-screen w-full items-center justify-center overflow-hidden p-3 md:p-6 bg-neutral-50/50 dark:bg-neutral-950 text-zinc-900 dark:text-zinc-100 font-sans relative">
+    <div className="flex min-h-screen w-full items-center justify-center overflow-y-auto p-3 md:p-6 bg-neutral-50/50 dark:bg-neutral-950 text-zinc-900 dark:text-zinc-100 font-sans relative">
       <main className="relative flex h-full w-full max-w-[920px] flex-col justify-center py-4 md:py-6 z-10">
         {isLoading ? (
           <div className="w-full flex items-center justify-center">
@@ -198,6 +199,8 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
                 </button>
               </div>
             </div>
+
+            <AdBanner className="mt-4 shrink-0" />
           </div>
         ) : null}
       </main>

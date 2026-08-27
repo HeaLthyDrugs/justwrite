@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdBanner } from "@/components/ad-banner";
 
 export default function AboutPage() {
   return (
@@ -9,6 +10,8 @@ export default function AboutPage() {
           <p>Why this exists: to help you write fast, privately, and without distractions.</p>
           <p>Who made it: built by Manish and launched with care.</p>
         </div>
+
+        <AdBanner className="mt-6" />
 
         <div className="mt-6">
           <Link

@@ -72,6 +72,9 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
+  other: {
+    "google-adsense-account": "ca-pub-3459385721774517",
+  },
 };
 
 export const viewport: Viewport = {
@@ -93,6 +96,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans", figtree.variable)}
     >
+      <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
+          crossOrigin="anonymous"
+        />
+        <meta name="google-adsense-account" content="ca-pub-3459385721774517" />
+      </head>
       <body className="antialiased" suppressHydrationWarning>
         <TooltipProvider>
           <FontProvider>

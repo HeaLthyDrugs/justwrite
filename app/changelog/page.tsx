@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdBanner } from "@/components/ad-banner";
 
 const changelogEntries = [
   {
@@ -112,6 +113,8 @@ export default function ChangelogPage() {
             </section>
           ))}
         </div>
+
+        <AdBanner className="mt-8" />
 
         <div className="mt-8 pt-4">
           <Link
