@@ -274,4 +274,19 @@ body {
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 28px), transparent 100%);
 }
 
+/* Drawer container viewport containment and protection against external style injections */
+[data-drawer-root="notes"],
+[data-drawer-root="settings"] {
+  height: 84vh !important;
+  max-height: calc(100dvh - 2rem) !important;
+  max-height: min(84vh, calc(100dvh - 2rem)) !important;
+}
+
+[data-drawer-root="notes"] > div,
+[data-drawer-root="settings"] > div {
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+}
+
 

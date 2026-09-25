@@ -293,12 +293,12 @@ export function FamilyDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="settings"
-      className={`fixed left-3 sm:left-4 top-1/2 z-30 flex h-[84vh] w-[310px] sm:w-[320px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
+      className={`fixed left-3 sm:left-4 top-1/2 z-30 flex h-[84vh] max-h-[calc(100dvh-2rem)] w-[310px] sm:w-[320px] max-w-[calc(100vw-1.5rem)] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
         ? "opacity-100 translate-x-0 pointer-events-auto"
         : "pointer-events-none opacity-0 -translate-x-[calc(100%+40px)]"
         }`}
     >
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
+      <div className="flex h-full max-h-full w-full min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Settings

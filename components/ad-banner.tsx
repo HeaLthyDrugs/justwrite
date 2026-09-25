@@ -64,7 +64,7 @@ export function AdBanner({
           Advertisement
         </div>
       )}
-      <div className="flex min-h-[90px] w-full items-center justify-center overflow-hidden">
+      <div className="flex min-h-[90px] max-h-[300px] w-full items-center justify-center overflow-hidden">
         <ins
           ref={adRef}
           className="adsbygoogle block w-full text-center"

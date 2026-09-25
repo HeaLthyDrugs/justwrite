@@ -182,6 +182,7 @@ export function NotesDrawer({
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const asideRef = useRef<HTMLElement | null>(null);
 
   const checkScrollFades = useCallback(() => {
     const el = scrollRef.current;
@@ -201,6 +202,72 @@ export function NotesDrawer({
       return () => window.clearTimeout(timer);
     }
   }, [isOpen, checkScrollFades]);
+
+  // Strip any inline style="height: auto !important" injected by AdSense or external scripts
+  useEffect(() => {
+    const asideEl = asideRef.current;
+    if (!asideEl) return;
+
+    const cleanupInlineStyles = () => {
+      let cleaned = false;
+      if (asideEl.style.height) {
+        asideEl.style.removeProperty("height");
+        cleaned = true;
+      }
+      const inner = asideEl.firstElementChild as HTMLElement | null;
+      if (inner && inner.style.height) {
+        inner.style.removeProperty("height");
+        cleaned = true;
+      }
+      const scrollParent = scrollRef.current?.parentElement;
+      if (scrollParent && scrollParent.style.height) {
+        scrollParent.style.removeProperty("height");
+        cleaned = true;
+      }
+      if (cleaned) {
+        checkScrollFades();
+      }
+    };
+
+    cleanupInlineStyles();
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "style") {
+          cleanupInlineStyles();
+        }
+      }
+    });
+
+    observer.observe(asideEl, { attributes: true, attributeFilter: ["style"] });
+    if (asideEl.firstElementChild) {
+      observer.observe(asideEl.firstElementChild, {
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+    }
+
+    return () => observer.disconnect();
+  }, [checkScrollFades]);
+
+  // Observe content resizing (e.g. notes list change, dynamic ad load) to update fade masks
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    checkScrollFades();
+
+    const resizeObserver = new ResizeObserver(() => {
+      checkScrollFades();
+    });
+
+    resizeObserver.observe(el);
+    if (el.firstElementChild) {
+      resizeObserver.observe(el.firstElementChild);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [checkScrollFades]);
 
   const visiblePendingDeleteNoteId =
     pendingDeleteNoteId && notes.some((note) => note.id === pendingDeleteNoteId)
@@ -226,14 +293,15 @@ export function NotesDrawer({
 
   return (
     <aside
+      ref={asideRef}
       aria-hidden={!isOpen}
       data-drawer-root="notes"
-      className={`fixed right-3 sm:right-4 top-1/2 z-30 flex h-[84vh] w-[320px] sm:w-[340px] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
+      className={`fixed right-3 sm:right-4 top-1/2 z-30 flex h-[84vh] max-h-[calc(100dvh-2rem)] w-[320px] sm:w-[340px] max-w-[calc(100vw-1.5rem)] -translate-y-1/2 flex-col overflow-hidden rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
         ? "opacity-100 translate-x-0 pointer-events-auto"
         : "pointer-events-none opacity-0 translate-x-[calc(100%+40px)]"
         } ${className}`}
     >
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
+      <div className="flex h-full max-h-full w-full min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-800 dark:text-zinc-100">
           Notes
@@ -312,7 +380,7 @@ export function NotesDrawer({
             </div>
           ) : null}
 
-          <AdBanner className="mt-4" />
+          <AdBanner className="mt-4 shrink-0" format="rectangle" responsive={false} />
         </div>
       </div>
       </div>
