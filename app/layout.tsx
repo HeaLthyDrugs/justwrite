@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Pixelify_Sans, Figtree } from "next/font/google";
 import "./globals.css";
 import { FontProvider } from "@/components/font-context";
@@ -85,6 +86,31 @@ export const viewport: Viewport = {
   ],
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Justwrite",
+  description: siteConfig.description,
+  url: siteConfig.url,
+  applicationCategory: "ProductivityApplication",
+  operatingSystem: "Web",
+  browserRequirements: "Requires a modern web browser with JavaScript enabled",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Person",
+    name: "Manish",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Justwrite",
+    url: siteConfig.url,
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -96,44 +122,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans", figtree.variable)}
     >
-      <head>
+      <body className="antialiased" suppressHydrationWarning>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              "name": "Justwrite",
-              "description": siteConfig.description,
-              "url": siteConfig.url,
-              "applicationCategory": "ProductivityApplication",
-              "operatingSystem": "Web",
-              "browserRequirements": "Requires a modern web browser with JavaScript enabled",
-              "offers": {
-                "@type": "Offer",
-                "price": "0",
-                "priceCurrency": "USD"
-              },
-              "author": {
-                "@type": "Person",
-                "name": "Manish"
-              },
-              "publisher": {
-                "@type": "Organization",
-                "name": "Justwrite",
-                "url": siteConfig.url
-              }
-            })
+            __html: JSON.stringify(jsonLd),
           }}
         />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
-          crossOrigin="anonymous"
-        />
-        <meta name="google-adsense-account" content="ca-pub-3459385721774517" />
-      </head>
-      <body className="antialiased" suppressHydrationWarning>
         <TooltipProvider>
           <FontProvider>
             <ServiceWorkerRegister />
@@ -142,6 +137,12 @@ export default function RootLayout({
             <CookieConsentBanner />
           </FontProvider>
         </TooltipProvider>
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

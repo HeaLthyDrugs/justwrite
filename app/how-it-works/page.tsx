@@ -51,7 +51,7 @@ export default function HowItWorksPage() {
               alt="Hand-drawn diagram showing laptop and mobile phone encrypted data sync"
               width={1200}
               height={675}
-              className="w-full object-cover"
+              className="h-auto w-full object-cover"
               priority
             />
           </div>
@@ -95,7 +95,7 @@ const encrypted = await crypto.subtle.encrypt(
               alt="Hand-drawn diagram showing browser URL hash fragment client-side decryption"
               width={1200}
               height={675}
-              className="w-full object-cover"
+              className="h-auto w-full object-cover"
             />
           </div>
 

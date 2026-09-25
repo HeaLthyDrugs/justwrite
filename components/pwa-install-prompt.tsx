@@ -242,14 +242,14 @@ export function PwaInstallPrompt({
                 alt="Justwrite logo"
                 width={22}
                 height={24}
-                className="block dark:hidden"
+                className="h-auto w-auto block dark:hidden"
               />
               <Image
                 src="/logo/justwrite-logo-dark.svg"
                 alt="Justwrite logo"
                 width={22}
                 height={24}
-                className="hidden dark:block"
+                className="h-auto w-auto hidden dark:block"
               />
             </span>
             <div className="min-w-0 flex-1 pr-2">
@@ -315,14 +315,14 @@ export function PwaInstallPrompt({
                   alt="Justwrite logo"
                   width={26}
                   height={28}
-                  className="block dark:hidden"
+                  className="h-auto w-auto block dark:hidden"
                 />
                 <Image
                   src="/logo/justwrite-logo-dark.svg"
                   alt="Justwrite logo"
                   width={26}
                   height={28}
-                  className="hidden dark:block"
+                  className="h-auto w-auto hidden dark:block"
                 />
               </div>
               <DialogTitle className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
