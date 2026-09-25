@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { Geist, Geist_Mono, Pixelify_Sans, Figtree } from "next/font/google";
 import "./globals.css";
 import { FontProvider } from "@/components/font-context";
@@ -137,11 +136,10 @@ export default function RootLayout({
             <CookieConsentBanner />
           </FontProvider>
         </TooltipProvider>
-        <Script
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
         />
       </body>
     </html>
