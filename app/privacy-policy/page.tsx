@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
+import { Footer } from "@/components/footer";
 
 export const metadata = {
   title: "Privacy Policy | Justwrite",
@@ -59,14 +60,7 @@ export default function PrivacyPolicyPage() {
 
         <AdBanner className="mt-6" />
 
-        <div className="mt-6 pt-2">
-          <Link
-            href="/"
-            className="text-sm font-medium text-zinc-600 underline underline-offset-4 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
-          >
-            Back to Editor
-          </Link>
-        </div>
+        <Footer />
       </div>
     </main>
   );

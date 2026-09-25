@@ -98,6 +98,35 @@ export default function RootLayout({
     >
       <head>
         <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Justwrite",
+              "description": siteConfig.description,
+              "url": siteConfig.url,
+              "applicationCategory": "ProductivityApplication",
+              "operatingSystem": "Web",
+              "browserRequirements": "Requires a modern web browser with JavaScript enabled",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "author": {
+                "@type": "Person",
+                "name": "Manish"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Justwrite",
+                "url": siteConfig.url
+              }
+            })
+          }}
+        />
+        <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
           crossOrigin="anonymous"
