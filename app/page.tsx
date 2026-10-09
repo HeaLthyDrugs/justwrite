@@ -1180,10 +1180,8 @@ export default function Home() {
     : "opacity-100";
 
   const drawerClass = focusMode
-    ? "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]"
-    : notesDrawerVisible
-      ? "opacity-100 translate-x-0"
-      : "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]";
+    ? "opacity-0 pointer-events-none"
+    : "";
 
   const toggleFocus = useCallback(() => {
     const next = !focusMode;

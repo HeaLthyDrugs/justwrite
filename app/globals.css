@@ -172,25 +172,38 @@ body {
 @keyframes drawer-enter-from-right {
   from {
     opacity: 0;
-    transform: translate3d(calc(100% + 40px), -50%, 0);
+    translate: calc(100% + 40px) -50%;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, -50%, 0);
+    translate: 0 -50%;
   }
 }
 
 @keyframes drawer-enter-from-left {
   from {
     opacity: 0;
-    transform: translate3d(calc(-100% - 40px), -50%, 0);
+    translate: calc(-100% - 40px) -50%;
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, -50%, 0);
+    translate: 0 -50%;
   }
+}
+
+.drawer-position-center {
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.drawer-off-right {
+  translate: calc(100% + 40px) -50%;
+}
+
+.drawer-off-left {
+  translate: calc(-100% - 40px) -50%;
 }
 
 .drawer-enter-from-right {
