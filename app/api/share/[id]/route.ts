@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDevSharedNote } from "../route";
+import { getDevSharedNote } from "@/lib/share-store";
 
 async function getKVBinding() {
   try {

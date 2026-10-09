@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-// Dev mode in-memory store for shared notes
-const devShareStore = new Map<string, { payload: unknown; createdAt: string }>();
+import { setDevSharedNote } from "@/lib/share-store";
 
 async function getKVBinding() {
   try {
@@ -42,15 +40,11 @@ export async function POST(req: NextRequest) {
         expirationTtl: 60 * 60 * 24 * 90,
       });
     } else {
-      devShareStore.set(shareId, { payload, createdAt: new Date().toISOString() });
+      setDevSharedNote(shareId, payload);
     }
 
     return NextResponse.json({ shareId });
   } catch {
     return NextResponse.json({ error: "Failed to create share link" }, { status: 500 });
   }
-}
-
-export async function getDevSharedNote(shareId: string) {
-  return devShareStore.get(shareId)?.payload ?? null;
 }
