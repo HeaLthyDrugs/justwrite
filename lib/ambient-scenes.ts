@@ -93,8 +93,8 @@ export const AMBIENT_BACKGROUNDS: Record<
     background: {
       type: "video",
       source: `${BACKGROUND_VIDEO_BASE_URL}/beach-shore.mp4`,
-      poster: "/backgrounds/1.jpg",
-      fallbackImage: "/backgrounds/1.jpg",
+      poster: "/backgrounds/optimized/1.jpg",
+      fallbackImage: "/backgrounds/optimized/1.jpg",
     },
   },
   butterfly: {
@@ -108,8 +108,8 @@ export const AMBIENT_BACKGROUNDS: Record<
     background: {
       type: "video",
       source: `${BACKGROUND_VIDEO_BASE_URL}/butterfly.mp4`,
-      poster: "/backgrounds/2.jpg",
-      fallbackImage: "/backgrounds/2.jpg",
+      poster: "/backgrounds/optimized/2.jpg",
+      fallbackImage: "/backgrounds/optimized/2.jpg",
     },
   },
   flowers: {
@@ -123,8 +123,8 @@ export const AMBIENT_BACKGROUNDS: Record<
     background: {
       type: "video",
       source: `${BACKGROUND_VIDEO_BASE_URL}/flowers.mp4`,
-      poster: "/backgrounds/3.jpg",
-      fallbackImage: "/backgrounds/3.jpg",
+      poster: "/backgrounds/optimized/3.jpg",
+      fallbackImage: "/backgrounds/optimized/3.jpg",
     },
   },
   "nature-walk": {
@@ -138,8 +138,8 @@ export const AMBIENT_BACKGROUNDS: Record<
     background: {
       type: "video",
       source: `${BACKGROUND_VIDEO_BASE_URL}/nature-walk.mp4`,
-      poster: "/backgrounds/4.jpg",
-      fallbackImage: "/backgrounds/4.jpg",
+      poster: "/backgrounds/optimized/4.jpg",
+      fallbackImage: "/backgrounds/optimized/4.jpg",
     },
   },
 };

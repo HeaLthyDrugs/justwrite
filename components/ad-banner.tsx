@@ -36,20 +36,62 @@ export function AdBanner({
   const isPushedRef = useRef(false);
 
   useEffect(() => {
-    // Only attempt to push if the ad unit hasn't been initialized yet
-    if (isPushedRef.current) return;
+    let cancelled = false;
 
-    try {
-      if (adRef.current && !adRef.current.getAttribute("data-adsbygoogle-status")) {
-        isPushedRef.current = true;
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+    const pushAd = () => {
+      if (cancelled || isPushedRef.current || !adRef.current) return;
+
+      const push = () => {
+        if (cancelled || isPushedRef.current || !adRef.current) return;
+
+        try {
+          if (!adRef.current.getAttribute("data-adsbygoogle-status")) {
+            isPushedRef.current = true;
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+          }
+        } catch (err) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("AdSense push:", err);
+          }
+        }
+      };
+
+      const existingScript = document.querySelector<HTMLScriptElement>(
+        "#justwrite-adsense-script"
+      );
+      if (existingScript) {
+        if (window.adsbygoogle) {
+          push();
+        } else {
+          existingScript.addEventListener("load", push, { once: true });
+        }
+        return;
       }
-    } catch (err) {
-      // AdSense push may fail gracefully if an ad blocker is running or during fast navigation
-      if (process.env.NODE_ENV === "development") {
-        console.debug("AdSense push:", err);
+
+      const script = document.createElement("script");
+      script.id = "justwrite-adsense-script";
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      script.src =
+        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517";
+      script.addEventListener("load", push, { once: true });
+      document.head.appendChild(script);
+    };
+
+    const idleId = "requestIdleCallback" in window
+      ? window.requestIdleCallback(pushAd, { timeout: 2000 })
+      : null;
+    const timeoutId = idleId === null ? window.setTimeout(pushAd, 1200) : null;
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
       }
-    }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   return (

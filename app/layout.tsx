@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Pixelify_Sans, Figtree } from "next/font/google";
+import { Geist, Geist_Mono, Pixelify_Sans } from "next/font/google";
 import "./globals.css";
 import { FontProvider } from "@/components/font-context";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
@@ -9,8 +9,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { defaultKeywords, siteConfig, toAbsoluteUrl } from "@/lib/seo";
 
-const figtree = Figtree({ subsets: ['latin'], variable: '--font-sans' });
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -19,11 +17,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 const pixelFont = Pixelify_Sans({
   variable: "--font-pixel",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -140,7 +140,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans", figtree.variable)}
+      className={cn(geistSans.variable, geistMono.variable, pixelFont.variable, "font-sans")}
     >
       <body className="antialiased" suppressHydrationWarning>
         <script
@@ -157,11 +157,6 @@ export default function RootLayout({
             <CookieConsentBanner />
           </FontProvider>
         </TooltipProvider>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3459385721774517"
-          crossOrigin="anonymous"
-        />
       </body>
     </html>
   );

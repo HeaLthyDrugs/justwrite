@@ -3,9 +3,6 @@ import { cn } from "@/lib/utils";
 const PRODUCT_HUNT_BADGE_HREF =
   "https://www.producthunt.com/products/justwrite?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-justwrite";
 
-const PRODUCT_HUNT_BADGE_SRC =
-  "https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1183546&theme=light&t=1783007555870";
-
 export function ProductHuntBadge({
   className,
 }: {
@@ -22,15 +19,9 @@ export function ProductHuntBadge({
         className
       )}
     >
-      <span className="pointer-events-none">Featured on Product Hunt</span>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        alt="Justwrite - A private, local-first writing space that works offline | Product Hunt"
-        width="250"
-        height="54"
-        src={PRODUCT_HUNT_BADGE_SRC}
-        className="absolute -inset-px block h-[calc(100%+2px)] w-[calc(100%+2px)] max-w-none rounded-full object-cover"
-      />
+      <span className="absolute inset-0 flex items-center justify-center bg-white/90 px-3 text-[10px] font-semibold dark:bg-white/90">
+        Featured on Product Hunt
+      </span>
     </a>
   );
 }

@@ -237,32 +237,14 @@ export function FamilyDrawer({
     label: string
   ) => {
     const { background } = backgroundConfig;
-    if (background.type === "video") {
-      return (
-        <video
-          key={background.source}
-          aria-hidden={label ? undefined : true}
-          aria-label={label || undefined}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          poster={background.poster}
-          className="h-full w-full object-cover object-center"
-        >
-          <source key={background.source} src={background.source} type="video/mp4" />
-        </video>
-      );
-    }
-
     return (
       <Image
-        src={background.source}
+        src={background.poster ?? background.fallbackImage ?? background.source}
         alt={label}
         fill
         sizes="160px"
         className="object-cover object-center"
+        loading="lazy"
       />
     );
   };

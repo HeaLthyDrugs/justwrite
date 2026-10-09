@@ -5,6 +5,24 @@ export const SYNC_CODE_STORAGE_KEY = "justwrite.sync.code.v1";
 export const LAST_SYNC_TIME_KEY = "justwrite.sync.last_time.v1";
 export const AUTO_SYNC_ENABLED_KEY = "justwrite.sync.auto_enabled.v1";
 export const DEVICE_ID_KEY = "justwrite.device.id.v1";
+const SYNC_REQUEST_TIMEOUT_MS = 5000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(
+    () => controller.abort(),
+    SYNC_REQUEST_TIMEOUT_MS
+  );
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
 
 export interface DeviceInfo {
   id: string;
@@ -131,7 +149,9 @@ export async function performNotesSync(
     const currentDeviceName = getDeviceName();
 
     // 1. Fetch remote encrypted snapshot
-    const res = await fetch(`/api/sync?vaultId=${encodeURIComponent(vaultId)}`);
+    const res = await fetchWithTimeout(
+      `/api/sync?vaultId=${encodeURIComponent(vaultId)}`
+    );
     let remoteNotes: Note[] = [];
     let remoteDevices: DeviceInfo[] = [];
 
@@ -189,7 +209,7 @@ export async function performNotesSync(
     );
 
     // 5. Push encrypted snapshot to server
-    const pushRes = await fetch("/api/sync", {
+    const pushRes = await fetchWithTimeout("/api/sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -232,7 +252,9 @@ export async function removeDeviceFromSync(
   try {
     const vaultId = await hashSyncCode(syncCode);
 
-    const res = await fetch(`/api/sync?vaultId=${encodeURIComponent(vaultId)}`);
+    const res = await fetchWithTimeout(
+      `/api/sync?vaultId=${encodeURIComponent(vaultId)}`
+    );
     let remoteNotes: Note[] = localSnapshot.notes;
     let remoteDevices: DeviceInfo[] = [];
 
@@ -257,7 +279,7 @@ export async function removeDeviceFromSync(
       syncCode
     );
 
-    const pushRes = await fetch("/api/sync", {
+    const pushRes = await fetchWithTimeout("/api/sync", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ vaultId, payload: encryptedPayload }),

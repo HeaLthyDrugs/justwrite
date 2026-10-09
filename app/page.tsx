@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -43,16 +44,10 @@ import {
   Menu01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
-import { MarkdownPreview } from "@/components/markdown-preview";
 import { ProductHuntBadge } from "@/components/product-hunt-badge";
-import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { IconButton } from "@/components/ui/icon-button";
-import { GooeyMenu, type MenuItem } from "@/components/ui/gooey-menu";
-import { NotesDrawer } from "@/components/notes-drawer";
-import { SyncModal } from "@/components/sync-modal";
-import { ShareModal } from "@/components/share-modal";
+import type { MenuItem } from "@/components/ui/gooey-menu";
 import { getStoredSyncCode, performNotesSync, getAutoSyncEnabled } from "@/lib/sync";
-import { FamilyDrawer } from "@/components/ui/family-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,6 +111,35 @@ import {
   type TypingSoundVariantId,
 } from "@/lib/typing-sound-variants";
 import type { SpellCheckSegment } from "@/lib/spellcheck";
+
+const MarkdownPreview = dynamic(
+  () => import("@/components/markdown-preview").then((module) => module.MarkdownPreview),
+  { ssr: false }
+);
+const NotesDrawer = dynamic(
+  () => import("@/components/notes-drawer").then((module) => module.NotesDrawer),
+  { ssr: false }
+);
+const FamilyDrawer = dynamic(
+  () => import("@/components/ui/family-drawer").then((module) => module.FamilyDrawer),
+  { ssr: false }
+);
+const SyncModal = dynamic(
+  () => import("@/components/sync-modal").then((module) => module.SyncModal),
+  { ssr: false }
+);
+const ShareModal = dynamic(
+  () => import("@/components/share-modal").then((module) => module.ShareModal),
+  { ssr: false }
+);
+const PwaInstallPrompt = dynamic(
+  () => import("@/components/pwa-install-prompt").then((module) => module.PwaInstallPrompt),
+  { ssr: false }
+);
+const GooeyMenu = dynamic(
+  () => import("@/components/ui/gooey-menu").then((module) => module.GooeyMenu),
+  { ssr: false }
+);
 
 interface NotesState {
   notes: Note[];
@@ -644,6 +668,7 @@ export default function Home() {
 
   const selectedAmbientBackground = AMBIENT_BACKGROUNDS[ambientBackground];
   const shouldUseAmbientVideo =
+    ambientEnabled &&
     selectedAmbientBackground.background.type === "video" &&
     isOnline &&
     ambientVideoFallbackSource !== selectedAmbientBackground.background.source;
@@ -1055,16 +1080,26 @@ export default function Home() {
   ]);
 
   useEffect(() => {
+    let idleId: number | null = null;
     const timeoutId = window.setTimeout(() => {
-      saveNotesSnapshot({
+      const save = () => saveNotesSnapshot({
         version: NOTES_STORAGE_VERSION,
         notes: notesState.notes,
         activeNoteId: notesState.activeNoteId,
       });
+
+      if ("requestIdleCallback" in window) {
+        idleId = window.requestIdleCallback(save, { timeout: 1000 });
+      } else {
+        save();
+      }
     }, 160);
 
     return () => {
       window.clearTimeout(timeoutId);
+      if (idleId !== null && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
     };
   }, [notesState]);
 
@@ -1075,12 +1110,20 @@ export default function Home() {
 
     let isCancelled = false;
     const timeoutId = window.setTimeout(() => {
-      void import("@/lib/spellcheck").then(({ getSpellCheckSegments }) => {
+      const runSpellCheck = () => {
+        void import("@/lib/spellcheck").then(({ getSpellCheckSegments }) => {
         if (!isCancelled) {
           setSpellCheckSegments(getSpellCheckSegments(body));
         }
       });
-    }, 140);
+      };
+
+      if ("requestIdleCallback" in window) {
+        window.requestIdleCallback(runSpellCheck, { timeout: 1000 });
+      } else {
+        runSpellCheck();
+      }
+    }, body.length > 5000 ? 420 : 180);
 
     return () => {
       isCancelled = true;
@@ -2059,7 +2102,8 @@ export default function Home() {
           className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${ambientEnabled ? "opacity-100" : "opacity-0"
             }`}
         >
-          {shouldUseAmbientVideo ? (
+          {ambientEnabled ? (
+            shouldUseAmbientVideo ? (
             <video
               key={selectedAmbientBackground.background.source}
               ref={ambientVideoRef}
@@ -2067,6 +2111,7 @@ export default function Home() {
               muted
               loop
               playsInline
+              preload="metadata"
               poster={selectedAmbientBackground.background.poster}
               onError={() =>
                 setAmbientVideoFallbackSource(
@@ -2077,7 +2122,7 @@ export default function Home() {
             >
               <source src={selectedAmbientBackground.background.source} type="video/mp4" />
             </video>
-          ) : (
+            ) : (
             <div
               aria-hidden="true"
               className="h-full w-full bg-cover bg-center bg-no-repeat"
@@ -2089,7 +2134,8 @@ export default function Home() {
                 })`,
               }}
             />
-          )}
+            )
+          ) : null}
           <div
             className="absolute inset-0"
             style={{
@@ -2363,7 +2409,7 @@ export default function Home() {
         </div>
       ) : null}
 
-      <NotesDrawer
+      {drawerOpen ? <NotesDrawer
         isOpen={drawerOpen}
         onClose={closeNotesDrawer}
         notes={notes}
@@ -2378,8 +2424,8 @@ export default function Home() {
         onTogglePin={handleTogglePinned}
         onDeleteNote={handleDeleteNote}
         className={drawerClass}
-      />
-      <FamilyDrawer
+      /> : null}
+      {settingsOpen ? <FamilyDrawer
         isOpen={settingsOpen}
         onClose={closeSettingsDrawer}
         typingEffectsEnabled={typingEffectsEnabled}
@@ -2413,9 +2459,9 @@ export default function Home() {
         onSpellCheckEnabledChange={handleSpellCheckChange}
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
-      />
+      /> : null}
 
-      <SyncModal
+      {syncModalOpen ? <SyncModal
         isOpen={syncModalOpen}
         onClose={() => setSyncModalOpen(false)}
         snapshot={{
@@ -2429,13 +2475,13 @@ export default function Home() {
             activeNoteId: newSnapshot.activeNoteId ?? newSnapshot.notes[0]?.id ?? "",
           });
         }}
-      />
+      /> : null}
 
-      <ShareModal
+      {shareModalOpen ? <ShareModal
         isOpen={shareModalOpen}
         onClose={() => setShareModalOpen(false)}
         note={activeNote}
-      />
+      /> : null}
 
       <PwaInstallPrompt hidden={focusMode} />
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
