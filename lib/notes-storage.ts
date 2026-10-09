@@ -80,6 +80,43 @@ function dedupeNotesById(notes: Note[]) {
   });
 }
 
+export const DEFAULT_WELCOME_NOTE_BODY = `# Welcome to Justwrite ✍️
+
+Justwrite is a fast, distraction-free notes app built for private, uninterrupted writing.
+
+### 🔒 Privacy-First by Design
+- **No accounts or sign-in** — Your notes stay safely on your device in your browser.
+- **Offline ready** — Write anywhere, anytime with full offline autosave.
+- **Client-side sync** — Sync across your devices with end-to-end encryption via "Your Book".
+
+### ⌨️ Quick Keyboard Shortcuts
+- **Alt + 1**: Create a new blank note
+- **Alt + 2**: Toggle Light / Dark mode
+- **Alt + 3**: Toggle distraction-free Focus Mode
+- **Alt + 8**: Toggle split Markdown preview
+- **Ctrl/Cmd + B**: Bold | **Ctrl/Cmd + I**: Italic | **Ctrl/Cmd + K**: Link
+
+### 📚 Explore More
+- [How Book Sync & Sharing Works](/how-it-works)
+- [Keyboard Shortcuts Guide](/shortcuts)
+- [Blog & Writing Guides](/blog)
+- [About Justwrite](/about)
+
+---
+*Feel free to delete or edit this note to begin writing your own thoughts!*`;
+
+export function createWelcomeNote(): Note {
+  const now = new Date().toISOString();
+
+  return {
+    id: generateNoteId(),
+    body: DEFAULT_WELCOME_NOTE_BODY,
+    isPinned: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export function createEmptyNote(): Note {
   const now = new Date().toISOString();
 

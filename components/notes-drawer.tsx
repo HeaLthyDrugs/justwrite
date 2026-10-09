@@ -274,6 +274,8 @@ export function NotesDrawer({
       ? pendingDeleteNoteId
       : null;
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   const sortedNotes = useMemo(
     () =>
       [...notes].sort((left, right) => {
@@ -288,8 +290,16 @@ export function NotesDrawer({
     [notes]
   );
 
-  const pinnedNotes = sortedNotes.filter((note) => note.isPinned);
-  const unpinnedNotes = sortedNotes.filter((note) => !note.isPinned);
+  const filteredNotes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sortedNotes;
+    return sortedNotes.filter((note) =>
+      note.body.toLowerCase().includes(q)
+    );
+  }, [sortedNotes, searchQuery]);
+
+  const pinnedNotes = filteredNotes.filter((note) => note.isPinned);
+  const unpinnedNotes = filteredNotes.filter((note) => !note.isPinned);
 
   return (
     <aside
@@ -327,7 +337,39 @@ export function NotesDrawer({
         </div>
       </div>
 
-      <div className="relative mt-6 min-h-0 flex-1 overflow-hidden -mx-5 px-5 isolate">
+      <div className="relative mt-3 shrink-0">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search notes..."
+          className="w-full rounded-full border border-black/10 bg-black/[0.04] py-1.5 pl-8 pr-7 text-xs text-zinc-800 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.06] dark:text-zinc-100 dark:placeholder-zinc-500 transition-colors"
+        />
+        <svg
+          className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+        {searchQuery ? (
+          <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+          >
+            ✕
+          </button>
+        ) : null}
+      </div>
+
+      <div className="relative mt-4 min-h-0 flex-1 overflow-hidden -mx-5 px-5 isolate">
         <div
           ref={scrollRef}
           onScroll={checkScrollFades}
@@ -342,6 +384,11 @@ export function NotesDrawer({
           }
           className="h-full space-y-5 overflow-y-auto pr-1 pt-2 pb-4 transition-[mask-image] duration-300"
         >
+          {filteredNotes.length === 0 && searchQuery ? (
+            <div className="py-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              No notes found matching &ldquo;{searchQuery}&rdquo;
+            </div>
+          ) : null}
           {pinnedNotes.length > 0 ? (
             <NotesSection
               title="Pinned"
