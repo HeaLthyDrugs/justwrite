@@ -255,10 +255,6 @@ export function FamilyDrawer({
     resolvedActiveAmbientPicker === "audio" ? ambientAudioOptions : ambientBackgroundOptions;
   const isAudioPicker = resolvedActiveAmbientPicker === "audio";
   const activeAmbientValue = isAudioPicker ? ambientAudioId : ambientBackgroundId;
-  const comingSoonLabel = isAudioPicker
-    ? "More audios will be added"
-    : "More scenes will be added";
-
   useEffect(() => {
     if (!resolvedActiveAmbientPicker) {
       return;
@@ -276,10 +272,10 @@ export function FamilyDrawer({
     <aside
       aria-hidden={!isOpen}
       data-drawer-root="settings"
-      className={`fixed left-3 sm:left-4 top-1/2 z-30 flex h-[84vh] max-h-[calc(100dvh-2rem)] w-[310px] sm:w-[320px] max-w-[calc(100vw-1.5rem)] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-transform transform-gpu transition-all duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
+      className={`fixed left-3 sm:left-4 top-1/2 z-30 flex h-[84vh] max-h-[calc(100dvh-2rem)] w-[310px] sm:w-[320px] max-w-[calc(100vw-1.5rem)] -translate-y-1/2 flex-col overflow-visible rounded-[34px] squircle-outer border border-black/10 dark:border-white/14 bg-white/70 dark:bg-zinc-950/75 p-1 shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-3xl will-change-[transform,opacity] transform-gpu transition-[opacity,transform] duration-[360ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isOpen
         ? "opacity-100 translate-x-0 pointer-events-auto"
         : "pointer-events-none opacity-0 -translate-x-[calc(100%+40px)]"
-        }`}
+        } ${isOpen ? "drawer-enter-from-left" : ""}`}
     >
       <div className="flex h-full max-h-full w-full min-h-0 flex-1 flex-col overflow-hidden rounded-[30px] squircle-inner border border-black/[0.07] dark:border-white/10 bg-white/90 dark:bg-zinc-900/90 p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03),0_1px_2px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,0.9)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.05)]">
       <div className="flex shrink-0 items-center justify-between">
@@ -586,10 +582,6 @@ export function FamilyDrawer({
                 />
               </button>
             </div>
-            <p className="mt-1 text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">
-              Pick any background scene and any audio mix independently.
-            </p>
-
             <div className={`mt-3 space-y-3 ${ambientEnabled ? "" : "opacity-60"}`}>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -866,9 +858,6 @@ export function FamilyDrawer({
             );
           })}
         </div>
-        <p className="px-1 pt-2 text-center text-[11px] font-medium leading-4 text-zinc-600/78 dark:text-zinc-300/72">
-          {comingSoonLabel}.
-        </p>
         </div>
       </div>
     </div>

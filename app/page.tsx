@@ -163,6 +163,7 @@ const AMBIENT_VOLUME_STORAGE_KEY = "justwrite.ambient.volume";
 const AMBIENT_BACKDROP_DIM_STORAGE_KEY = "justwrite.ambient.backdrop-dim";
 const EDGE_HOVER_TRIGGER_PX = 20;
 const DRAWER_HOVER_CLOSE_DELAY_MS = 420;
+const DRAWER_ANIMATION_DURATION_MS = 360;
 const DRAWER_SAFE_CORRIDOR_PX = 56;
 const DEFAULT_TYPING_SOUND_VOLUME = 18;
 const MAX_TYPING_SOUND_VOLUME = 60;
@@ -612,6 +613,49 @@ export default function Home() {
   }, [notesState]);
   const drawerOpen = notesDrawerManualOpen || notesDrawerHoverOpen;
   const settingsOpen = settingsDrawerManualOpen || settingsDrawerHoverOpen;
+  const [notesDrawerRendered, setNotesDrawerRendered] = useState(false);
+  const [settingsDrawerRendered, setSettingsDrawerRendered] = useState(false);
+  const [notesDrawerVisible, setNotesDrawerVisible] = useState(false);
+  const [settingsDrawerVisible, setSettingsDrawerVisible] = useState(false);
+
+  useEffect(() => {
+    if (drawerOpen) {
+      setNotesDrawerRendered(true);
+      const frameId = window.requestAnimationFrame(() => {
+        setNotesDrawerVisible(true);
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
+    setNotesDrawerVisible(false);
+    const timeoutId = window.setTimeout(
+      () => setNotesDrawerRendered(false),
+      DRAWER_ANIMATION_DURATION_MS
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    if (settingsOpen) {
+      setSettingsDrawerRendered(true);
+      const frameId = window.requestAnimationFrame(() => {
+        setSettingsDrawerVisible(true);
+      });
+
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
+    setSettingsDrawerVisible(false);
+    const timeoutId = window.setTimeout(
+      () => setSettingsDrawerRendered(false),
+      DRAWER_ANIMATION_DURATION_MS
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [settingsOpen]);
+
   const closeDrawers = useCallback(() => {
     setNotesDrawerManualOpen(false);
     setSettingsDrawerManualOpen(false);
@@ -1137,7 +1181,7 @@ export default function Home() {
 
   const drawerClass = focusMode
     ? "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]"
-    : drawerOpen
+    : notesDrawerVisible
       ? "opacity-100 translate-x-0"
       : "opacity-0 pointer-events-none translate-x-[calc(100%+36px)]";
 
@@ -2409,8 +2453,8 @@ export default function Home() {
         </div>
       ) : null}
 
-      {drawerOpen ? <NotesDrawer
-        isOpen={drawerOpen}
+      {notesDrawerRendered ? <NotesDrawer
+        isOpen={notesDrawerVisible && !focusMode}
         onClose={closeNotesDrawer}
         notes={notes}
         activeNoteId={activeNoteId}
@@ -2425,8 +2469,8 @@ export default function Home() {
         onDeleteNote={handleDeleteNote}
         className={drawerClass}
       /> : null}
-      {settingsOpen ? <FamilyDrawer
-        isOpen={settingsOpen}
+      {settingsDrawerRendered ? <FamilyDrawer
+        isOpen={settingsDrawerVisible && !focusMode}
         onClose={closeSettingsDrawer}
         typingEffectsEnabled={typingEffectsEnabled}
         onTypingEffectsEnabledChange={handleTypingEffectsChange}
