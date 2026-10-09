@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Web Crypto API utilities for Zero-Knowledge End-to-End Encryption (E2EE)
  * Used for accountless note syncing and instant private note sharing.

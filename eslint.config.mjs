@@ -1,18 +1,25 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import nextPlugin from "@next/eslint-plugin-next";
+import reactHooks from "eslint-plugin-react-hooks";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  globalIgnores([
-    ".next/**",
-    ".open-next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-    "next.config.js",
-  ]),
-]);
-
-export default eslintConfig;
+export default [
+  nextPlugin.configs["core-web-vitals"],
+  reactHooks.configs.flat.recommended,
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react/no-unescaped-entities": "off",
+    },
+  },
+  {
+    ignores: [
+      ".next/**",
+      ".open-next/**",
+      ".kilo/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "next.config.js",
+    ],
+  },
+];

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Copy01Icon,
@@ -25,13 +25,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, note })
   const [error, setError] = useState<string | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (isOpen && note) {
-      void generateLink();
-    }
-  }, [isOpen, note]);
-
-  const generateLink = async () => {
+  const generateLink = useCallback(async () => {
     if (!note) return;
     setIsGenerating(true);
     setError(null);
@@ -72,7 +66,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, note })
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [note]);
+
+  useEffect(() => {
+    if (isOpen && note) {
+      void generateLink();
+    }
+  }, [isOpen, note, generateLink]);
 
   if (!isOpen || !note) return null;
 

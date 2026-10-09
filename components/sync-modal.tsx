@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Book01Icon,
@@ -144,6 +144,30 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const performSync = useCallback(
+    async (codeToUse: string) => {
+      if (isSyncing) return false;
+      setIsSyncing(true);
+      setStatusMessage(null);
+
+      const res = await performNotesSync(snapshot, codeToUse);
+      setIsSyncing(false);
+
+      if (res.success && res.mergedSnapshot) {
+        onSnapshotUpdated(res.mergedSnapshot);
+        setLastSyncTime(getStoredLastSyncTime());
+        if (res.devices) {
+          setDevices(res.devices);
+        }
+        return true;
+      } else {
+        setStatusMessage({ type: "error", text: res.error || "Sync failed" });
+        return false;
+      }
+    },
+    [isSyncing, onSnapshotUpdated, snapshot]
+  );
+
   useEffect(() => {
     if (isOpen) {
       let code = getStoredSyncCode();
@@ -158,30 +182,7 @@ export const SyncModal: React.FC<SyncModalProps> = ({
 
       void performSync(code);
     }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  const performSync = async (codeToUse: string) => {
-    if (isSyncing) return;
-    setIsSyncing(true);
-    setStatusMessage(null);
-
-    const res = await performNotesSync(snapshot, codeToUse);
-    setIsSyncing(false);
-
-    if (res.success && res.mergedSnapshot) {
-      onSnapshotUpdated(res.mergedSnapshot);
-      setLastSyncTime(getStoredLastSyncTime());
-      if (res.devices) {
-        setDevices(res.devices);
-      }
-      return true;
-    } else {
-      setStatusMessage({ type: "error", text: res.error || "Sync failed" });
-      return false;
-    }
-  };
+  }, [isOpen, performSync]);
 
   const handleCopyCode = async () => {
     try {
@@ -245,6 +246,8 @@ export const SyncModal: React.FC<SyncModalProps> = ({
     { id: "devices" as const, label: `Devices (${devices.length || 1})`, icon: LaptopIcon },
     { id: "link" as const, label: "Connect", icon: Link02Icon },
   ];
+
+  if (!isOpen) return null;
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   MotionProps,
@@ -49,12 +49,8 @@ export function GooeyMenu({
   triggerIcon,
 }: GooeyMenuProps) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const id = useId();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   function handleClick(item: MenuItem) {
     setOpen(false);
