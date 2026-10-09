@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -73,6 +74,7 @@ import {
 } from "@/components/ui/custom-toast";
 import {
   createEmptyNote,
+  createWelcomeNote,
   formatNoteDateTime,
   type Note,
   loadNotesSnapshot,
@@ -181,10 +183,10 @@ function getInitialNotesState(): NotesState {
     };
   }
 
-  const firstNote = createEmptyNote();
+  const welcomeNote = createWelcomeNote();
   return {
-    notes: [firstNote],
-    activeNoteId: firstNote.id,
+    notes: [welcomeNote],
+    activeNoteId: welcomeNote.id,
   };
 }
 
@@ -2048,6 +2050,9 @@ export default function Home() {
 
   return isHydrated ? (
     <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2">
+      <header className="sr-only">
+        <h1>Justwrite — Your Private Local Notes &amp; Distraction-Free Writing</h1>
+      </header>
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-zinc-100/30 via-transparent to-zinc-900/12 dark:from-zinc-900/30 dark:to-black/24" />
         <div
@@ -2436,6 +2441,27 @@ export default function Home() {
       <CustomToastViewport toasts={toasts} onClose={dismissToast} />
     </div>
   ) : (
-    <div className="h-screen w-full" suppressHydrationWarning />
+    <div className="flex h-screen w-full items-center justify-center overflow-hidden p-2" suppressHydrationWarning>
+      <header className="sr-only">
+        <h1>Justwrite — Your Private Local Notes &amp; Distraction-Free Writing</h1>
+        <p>
+          Justwrite is a fast, local-first notes app with zero accounts, client-side encryption, and full offline support.
+        </p>
+        <nav aria-label="Quick links">
+          <Link href="/how-it-works">How Book &amp; Sharing Works</Link>
+          <Link href="/shortcuts">Keyboard Shortcuts</Link>
+          <Link href="/blog">Blog &amp; Writing Guides</Link>
+          <Link href="/about">About Justwrite</Link>
+          <Link href="/changelog">Changelog</Link>
+        </nav>
+      </header>
+      <main className="relative flex h-[90vh] max-h-[820px] w-full max-w-[860px] flex-col rounded-[32px] border border-black/5 bg-white/70 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70">
+        <div className="sr-only">
+          <h2>Distraction-Free Local Notepad</h2>
+          <p>Write your thoughts with Markdown support, offline autosave, and complete privacy.</p>
+        </div>
+        <div className="h-full w-full animate-pulse bg-zinc-100/50 dark:bg-zinc-800/20 rounded-2xl" />
+      </main>
+    </div>
   );
 }

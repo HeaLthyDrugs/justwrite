@@ -1,11 +1,12 @@
-import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Privacy Policy | Justwrite",
+export const metadata = createPageMetadata({
+  title: "Privacy Policy",
   description: "Privacy Policy and data practices for Justwrite.",
-};
+  path: "/privacy-policy",
+});
 
 export default function PrivacyPolicyPage() {
   return (

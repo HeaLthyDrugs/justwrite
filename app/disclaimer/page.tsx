@@ -1,11 +1,12 @@
-import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Disclaimer | Justwrite",
+export const metadata = createPageMetadata({
+  title: "Disclaimer",
   description: "Disclaimer for Justwrite.",
-};
+  path: "/disclaimer",
+});
 
 export default function DisclaimerPage() {
   return (

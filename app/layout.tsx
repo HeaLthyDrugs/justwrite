@@ -75,6 +75,9 @@ export const metadata: Metadata = {
   other: {
     "google-adsense-account": "ca-pub-3459385721774517",
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+  },
 };
 
 export const viewport: Viewport = {
@@ -85,29 +88,47 @@ export const viewport: Viewport = {
   ],
 };
 
-const jsonLd = {
+const websiteJsonLd = {
   "@context": "https://schema.org",
-  "@type": "WebApplication",
-  name: "Justwrite",
-  description: siteConfig.description,
-  url: siteConfig.url,
-  applicationCategory: "ProductivityApplication",
-  operatingSystem: "Web",
-  browserRequirements: "Requires a modern web browser with JavaScript enabled",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-  author: {
-    "@type": "Person",
-    name: "Manish",
-  },
-  publisher: {
-    "@type": "Organization",
-    name: "Justwrite",
-    url: siteConfig.url,
-  },
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteConfig.url}/#website`,
+      name: siteConfig.name,
+      url: siteConfig.url,
+      description: siteConfig.description,
+      inLanguage: "en-US",
+    },
+    {
+      "@type": "WebApplication",
+      "@id": `${siteConfig.url}/#app`,
+      name: "Justwrite",
+      description: siteConfig.description,
+      url: siteConfig.url,
+      applicationCategory: "ProductivityApplication",
+      operatingSystem: "All (Web, PWA)",
+      browserRequirements: "Requires modern web browser with JavaScript enabled",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+      },
+      author: {
+        "@type": "Person",
+        name: "Manish",
+        url: siteConfig.url,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "Justwrite",
+        url: siteConfig.url,
+        logo: {
+          "@type": "ImageObject",
+          url: toAbsoluteUrl("/logo/justwrite-app-512.png"),
+        },
+      },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -125,7 +146,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd),
+            __html: JSON.stringify(websiteJsonLd),
           }}
         />
         <TooltipProvider>

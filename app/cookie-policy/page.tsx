@@ -1,11 +1,12 @@
-import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Cookie Policy | Justwrite",
+export const metadata = createPageMetadata({
+  title: "Cookie Policy",
   description: "Cookie Policy and storage usage details for Justwrite.",
-};
+  path: "/cookie-policy",
+});
 
 export default function CookiePolicyPage() {
   return (

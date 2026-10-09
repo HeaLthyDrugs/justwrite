@@ -1,15 +1,36 @@
 import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata, getBreadcrumbJsonLd } from "@/lib/seo";
 
-export const metadata = {
-  title: "About Justwrite | A Local-First Notes App",
-  description: "Learn more about Justwrite, a local-first, privacy-focused notes app built for distraction-free writing with end-to-end encryption.",
-};
+export const metadata = createPageMetadata({
+  title: "About",
+  description:
+    "Learn more about Justwrite, a local-first, privacy-focused notes app built for distraction-free writing with end-to-end encryption.",
+  path: "/about",
+  keywords: [
+    "about justwrite",
+    "private notes app",
+    "local first text editor",
+    "minimalist writing app",
+    "indie hacker productivity",
+  ],
+});
 
 export default function AboutPage() {
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "About", path: "/about" },
+  ]);
+
   return (
     <main className="flex min-h-screen w-full justify-center px-6 py-12 text-zinc-800 dark:text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full max-w-3xl text-left space-y-6">
         <h1 className="text-3xl font-semibold tracking-tight mb-6">About Justwrite</h1>
         

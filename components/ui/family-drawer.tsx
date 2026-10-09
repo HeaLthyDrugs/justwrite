@@ -163,10 +163,11 @@ export function FamilyDrawer({
   onFontSizeChange,
 }: FamilyDrawerProps) {
   const quickPages = [
-    { href: "/changelog", label: "Changelog", hasBadge: true },
+    { href: "/blog", label: "Blog & Guides" },
     { href: "/how-it-works", label: "How Book & Sharing Works" },
-    { href: "/about", label: "About" },
     { href: "/shortcuts", label: "Shortcuts" },
+    { href: "/about", label: "About" },
+    { href: "/changelog", label: "Changelog", hasBadge: true },
   ];
 
   const legalLinks = [

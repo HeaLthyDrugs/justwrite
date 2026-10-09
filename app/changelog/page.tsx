@@ -1,6 +1,20 @@
 import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata, getBreadcrumbJsonLd } from "@/lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Changelog",
+  description:
+    "See what's new in Justwrite. The latest features, privacy enhancements, speed updates, and fixes.",
+  path: "/changelog",
+  keywords: [
+    "justwrite updates",
+    "justwrite changelog",
+    "new features notes app",
+    "product updates",
+  ],
+});
 
 const changelogEntries = [
   {
@@ -83,8 +97,19 @@ const changelogEntries = [
 ];
 
 export default function ChangelogPage() {
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Changelog", path: "/changelog" },
+  ]);
+
   return (
     <main className="flex min-h-screen w-full justify-center px-6 py-12 text-zinc-800 dark:text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full max-w-3xl text-left">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold tracking-tight">Changelog</h1>

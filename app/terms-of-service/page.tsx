@@ -1,11 +1,12 @@
-import Link from "next/link";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Terms of Service | Justwrite",
+export const metadata = createPageMetadata({
+  title: "Terms of Service",
   description: "Terms of Service for Justwrite.",
-};
+  path: "/terms-of-service",
+});
 
 export default function TermsOfServicePage() {
   return (
@@ -40,7 +41,7 @@ export default function TermsOfServicePage() {
 
           <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mt-8 mb-2">5. Local Storage Disclaimer</h2>
           <p>
-            Justwrite utilizes your browser's local storage (such as IndexedDB and localStorage) to save your work. Clearing your browser data, running certain system cleanup tools, or using browsing in incognito/private modes may result in the permanent loss of your notes. We are not liable for any data loss that occurs on your device.
+            Justwrite utilizes your browser&apos;s local storage (such as IndexedDB and localStorage) to save your work. Clearing your browser data, running certain system cleanup tools, or using browsing in incognito/private modes may result in the permanent loss of your notes. We are not liable for any data loss that occurs on your device.
           </p>
 
           <h2 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100 mt-8 mb-2">6. Third-Party Services</h2>

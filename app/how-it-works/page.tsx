@@ -2,16 +2,36 @@ import Link from "next/link";
 import Image from "next/image";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata, getBreadcrumbJsonLd } from "@/lib/seo";
 
-export const metadata = {
-  title: "How Book & Sharing Work | Justwrite",
+export const metadata = createPageMetadata({
+  title: "How Book & Sharing Work",
   description:
     "A simple guide to Justwrite's accountless, end-to-end encrypted note syncing and private link sharing.",
-};
+  path: "/how-it-works",
+  keywords: [
+    "encrypted note sharing",
+    "private note sync",
+    "zero knowledge writing app",
+    "aes 256 notes sync",
+    "accountless note app",
+  ],
+});
 
 export default function HowItWorksPage() {
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "How It Works", path: "/how-it-works" },
+  ]);
+
   return (
     <main className="flex min-h-screen w-full justify-center px-6 py-12 text-zinc-800 dark:text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full max-w-3xl text-left space-y-8">
         {/* Title & Navigation */}
         <div>

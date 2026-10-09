@@ -1,12 +1,21 @@
-import Link from "next/link";
 import { Kbd } from "@/components/ui/kbd";
 import { AdBanner } from "@/components/ad-banner";
 import { Footer } from "@/components/footer";
+import { createPageMetadata, getBreadcrumbJsonLd } from "@/lib/seo";
 
-export const metadata = {
-  title: "Keyboard Shortcuts | Justwrite",
-  description: "Boost your productivity with Justwrite's keyboard shortcuts. Learn how to navigate and format your notes efficiently.",
-};
+export const metadata = createPageMetadata({
+  title: "Keyboard Shortcuts",
+  description:
+    "Boost your writing productivity with Justwrite's keyboard shortcuts. Navigate, format, and customize your workspace without touching the mouse.",
+  path: "/shortcuts",
+  keywords: [
+    "keyboard shortcuts",
+    "markdown shortcuts",
+    "fast note taking",
+    "writer productivity shortcuts",
+    "distraction free hotkeys",
+  ],
+});
 
 const shortcutRows = [
   { keys: ["Alt", "1"], action: "Create a new note" },
@@ -23,8 +32,19 @@ const shortcutRows = [
 ];
 
 export default function ShortcutsPage() {
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Shortcuts", path: "/shortcuts" },
+  ]);
+
   return (
     <main className="flex min-h-screen w-full items-center justify-center px-6 py-12 text-zinc-800 dark:text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full max-w-3xl text-left space-y-6">
         <h1 className="text-3xl font-semibold tracking-tight mb-6">Keyboard Shortcuts</h1>
         
