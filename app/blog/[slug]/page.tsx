@@ -1,7 +1,16 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AdBanner } from "@/components/ad-banner";
+import { BlogContextMenu } from "@/components/blog-context-menu";
 import { blogPosts } from "@/lib/blog";
+import { blogMarkdown } from "@/lib/blog-markdown";
+import {
+  siteConfig,
+  toAbsoluteUrl,
+  getBlogPostJsonLd,
+  getBreadcrumbJsonLd,
+} from "@/lib/seo";
 
 export function generateStaticParams() {
   return blogPosts.map((post) => ({
@@ -9,18 +18,57 @@ export function generateStaticParams() {
   }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const post = blogPosts.find((p) => p.slug === slug);
   if (!post) return { title: "Post Not Found" };
-  
+
+  const postUrl = toAbsoluteUrl(`/blog/${post.slug}`);
+  const pageTitle = post.title;
+
   return {
-    title: `${post.title} | Justwrite Blog`,
+    title: pageTitle,
     description: post.description,
+    keywords: post.tags,
+    alternates: {
+      canonical: postUrl,
+    },
+    openGraph: {
+      title: `${pageTitle} | Justwrite`,
+      description: post.description,
+      url: postUrl,
+      siteName: siteConfig.name,
+      type: "article",
+      publishedTime: post.date,
+      authors: ["Manish"],
+      tags: post.tags,
+      images: [
+        {
+          url: toAbsoluteUrl(siteConfig.ogImage),
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${pageTitle} | Justwrite`,
+      description: post.description,
+      images: [toAbsoluteUrl(siteConfig.ogImage)],
+    },
   };
 }
 
-export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
   const post = blogPosts.find((p) => p.slug === slug);
   if (!post) {
@@ -32,9 +80,44 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
+  const postUrl = toAbsoluteUrl(`/blog/${post.slug}`);
+  const rawMarkdown = blogMarkdown[slug] ?? "";
+  const blogPostJsonLd = getBlogPostJsonLd(post);
+  const breadcrumbJsonLd = getBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Blog", path: "/blog" },
+    { name: post.title, path: `/blog/${post.slug}` },
+  ]);
+
   return (
     <main className="flex min-h-screen w-full justify-center px-6 py-12 text-zinc-800 dark:text-zinc-100">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogPostJsonLd),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
+        }}
+      />
       <div className="w-full max-w-3xl text-left space-y-8">
+        <div className="flex items-center justify-between">
+          <Link
+            href="/blog"
+            className="text-xs font-mono text-zinc-500 underline underline-offset-4 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            ← Back to Blog
+          </Link>
+          <BlogContextMenu
+            post={post}
+            postUrl={postUrl}
+            markdownContent={rawMarkdown}
+          />
+        </div>
+
         <div>
           <h1 className="text-3xl font-semibold tracking-tight mb-4">{post.title}</h1>
           <div className="flex items-center gap-3 text-sm text-zinc-500 dark:text-zinc-400 mb-6">
