@@ -6,6 +6,16 @@ module.exports = {
     root: path.resolve(__dirname),
   },
   output: "standalone",
+  serverExternalPackages: ["tailwind-merge"],
+  webpack: (config, { dev, isServer }) => {
+    if (dev && isServer) {
+      config.optimization = {
+        ...(config.optimization ?? {}),
+        splitChunks: false,
+      };
+    }
+    return config;
+  },
   async headers() {
     return [
       {
@@ -30,4 +40,6 @@ module.exports = {
   },
 };
 
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+if (process.env.NODE_ENV === "development") {
+  import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+}
