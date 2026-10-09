@@ -3,6 +3,24 @@
 /_next/static/*
   Cache-Control: public,max-age=31536000,immutable
 
+/backgrounds/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
+/sounds/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
+/videos/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
+/screenshots/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
+/icons/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
+/logo/*
+  Cache-Control: public,max-age=604800,stale-while-revalidate=86400
+
 /ads.txt
   Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=86400

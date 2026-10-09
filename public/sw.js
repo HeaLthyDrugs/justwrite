@@ -1,19 +1,10 @@
-const CACHE_VERSION = "justwrite-v9";
+const CACHE_VERSION = "justwrite-v10";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const STATIC_ASSET_CACHE = `static-assets-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
 const APP_SHELL_URLS = [
   "/",
-  "/how-it-works",
-  "/blog",
-  "/about",
-  "/changelog",
-  "/shortcuts",
-  "/cookie-policy",
-  "/disclaimer",
-  "/privacy-policy",
-  "/terms-of-service",
   "/offline.html",
   "/manifest.webmanifest",
 ];
@@ -28,35 +19,6 @@ const STATIC_ASSET_URLS = [
   "/logo/justwrite-logo-dark.svg",
   "/logo/justwrite-app-192.png",
   "/logo/justwrite-app-512.png",
-  "/screenshots/justwrite-desktop-install.png",
-  "/screenshots/justwrite-mobile-install.png",
-  "/sounds/keystorkes.mp3",
-  "/sounds/spacebar.mp3",
-  "/sounds/typing/classic/key.mp3",
-  "/sounds/typing/classic/space.mp3",
-  "/sounds/typing/crisp/key.mp3",
-  "/sounds/typing/crisp/space.mp3",
-  "/sounds/typing/typewriter/key.mp3",
-  "/sounds/typing/typewriter/space.mp3",
-  "/sounds/typing/soft/key.mp3",
-  "/sounds/typing/soft/space.mp3",
-  "/sounds/ambient/rain.mp3",
-  "/sounds/ambient/cafe.mp3",
-  "/sounds/ambient/library.mp3",
-  "/sounds/ambient/night.mp3",
-  "/sounds/ambient/forest.mp3",
-  "/sounds/ambient/lofi-room.mp3",
-  "/icons/ambient/mode.svg",
-  "/icons/ambient/rain.svg",
-  "/icons/ambient/cafe.svg",
-  "/icons/ambient/library.svg",
-  "/icons/ambient/night.svg",
-  "/icons/ambient/forest.svg",
-  "/icons/ambient/lofi-room.svg",
-  "/backgrounds/1.jpg",
-  "/backgrounds/2.jpg",
-  "/backgrounds/3.jpg",
-  "/backgrounds/4.jpg",
 ];
 
 async function precache() {
@@ -109,22 +71,32 @@ function isCacheFirstAsset(url, request) {
   );
 }
 
-async function networkFirstPage(request) {
-  const cache = await caches.open(RUNTIME_CACHE);
+async function fetchWithTimeout(request, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(request);
-    if (response.ok && response.type === "basic") {
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    return (
-      (await cache.match(request)) ||
-      (await caches.match(request)) ||
-      (await caches.match("/offline.html"))
-    );
+    return await fetch(request, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+async function staleWhileRevalidatePage(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cachedResponse =
+    (await cache.match(request)) || (await caches.match(request));
+
+  const networkResponse = fetchWithTimeout(request, 2500)
+    .then((response) => {
+      if (response.ok && response.type === "basic") {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => cachedResponse || caches.match("/offline.html"));
+
+  return cachedResponse || networkResponse;
 }
 
 async function staleWhileRevalidate(request) {
@@ -164,7 +136,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === "navigate") {
-    event.respondWith(networkFirstPage(request));
+    event.respondWith(staleWhileRevalidatePage(request));
     return;
   }
 
