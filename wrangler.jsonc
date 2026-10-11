@@ -20,16 +20,14 @@
       "service": "justwrite"
     }
   ],
-  "r2_buckets": [
-    {
-      "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "justwrite-opennext-cache"
-    }
-  ],
   "kv_namespaces": [
     {
       "binding": "JUSTWRITE_SYNC_KV",
-      "id": "a25e9ab72dbe4f70b6f3956cb6fc375f"
+      "id": "c552d7998095418b95480667ce59ea6b"
+    },
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "56e80102a7914ae4a00e5de9100dd4d1"
     }
   ],
   "images": {
