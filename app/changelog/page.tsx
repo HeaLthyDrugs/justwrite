@@ -39,7 +39,6 @@ const changelogEntries = [
       "Added 0-60% Volume Range Slider for typing sounds with instant live feedback.",
       "Added organized dropdown menu for typing sound variants (Typewriter, Mechanical, Digital, Soft).",
       "Added browser native Spell Check toggle control in the Settings drawer.",
-      "Added Product Hunt badge integration in navigation bar and drawer header.",
     ],
   },
   {

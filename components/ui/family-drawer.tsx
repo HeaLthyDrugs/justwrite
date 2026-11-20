@@ -22,7 +22,6 @@ import {
   TextCheckIcon,
   TextNumberSignIcon,
 } from "@hugeicons/core-free-icons";
-import { ProductHuntBadge } from "@/components/product-hunt-badge";
 import { FontSwitcher } from "@/components/font-switcher";
 import { IconButton } from "@/components/ui/icon-button";
 import {
@@ -290,8 +289,6 @@ export function FamilyDrawer({
           <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={1.6} />
         </IconButton>
       </div>
-      <ProductHuntBadge className="mt-4" />
-
       <div className="relative mt-6 min-h-0 flex-1 overflow-hidden -mx-5 px-5 isolate">
         <div
           ref={scrollRef}

@@ -44,7 +44,6 @@ import {
   Menu01Icon,
 } from "@hugeicons/core-free-icons";
 import { FontSwitcher } from "@/components/font-switcher";
-import { ProductHuntBadge } from "@/components/product-hunt-badge";
 import { IconButton } from "@/components/ui/icon-button";
 import type { MenuItem } from "@/components/ui/gooey-menu";
 import { getStoredSyncCode, performNotesSync, getAutoSyncEnabled } from "@/lib/sync";
