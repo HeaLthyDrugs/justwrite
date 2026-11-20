@@ -1,22 +1,62 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { attachmentIdFromPath, attachmentUrlMap, revokeAttachmentUrls } from "@/lib/note-attachments";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MarkdownPreviewProps {
   body: string;
   fontSize: number;
   className?: string;
+  noteId?: string;
+  attachmentUrls?: Record<string, string>;
 }
 
 export function MarkdownPreview({
   body,
   fontSize,
   className,
+  noteId,
+  attachmentUrls: providedAttachmentUrls,
 }: MarkdownPreviewProps) {
   const hasContent = body.trim().length > 0;
+  const attachmentRefsKey = Array.from(
+    body.matchAll(/(?:^|[(/"'\s])attachments\/([a-zA-Z0-9_-]+)\.[a-zA-Z0-9]+(?=$|[?#)\s"'])/g),
+    (match) => match[1]
+  ).join("|");
+  const [storedAttachmentUrls, setStoredAttachmentUrls] = useState<Record<string, string>>({});
+  const [openedImage, setOpenedImage] = useState<{ src: string; alt: string } | null>(null);
+
+  useEffect(() => {
+    if (!noteId || providedAttachmentUrls) return;
+    let cancelled = false;
+    let urls: Record<string, string> = {};
+    if (!attachmentRefsKey) {
+      setStoredAttachmentUrls({});
+      return;
+    }
+    void attachmentUrlMap(noteId).then((loaded) => {
+      if (cancelled) {
+        revokeAttachmentUrls(loaded);
+        return;
+      }
+      urls = loaded;
+      setStoredAttachmentUrls(loaded);
+    }).catch(() => {
+      if (!cancelled) setStoredAttachmentUrls({});
+    });
+    return () => {
+      cancelled = true;
+      revokeAttachmentUrls(urls);
+      setStoredAttachmentUrls({});
+    };
+  }, [noteId, providedAttachmentUrls, attachmentRefsKey]);
+
+  const resolvedAttachmentUrls = providedAttachmentUrls ?? storedAttachmentUrls;
 
   return (
     <article
@@ -48,6 +88,37 @@ export function MarkdownPreview({
                   </a>
                 );
               },
+              img: ({ src, alt }) => {
+                const source = typeof src === "string" ? src : "";
+                const attachmentId = attachmentIdFromPath(source);
+                const resolvedSrc = attachmentId
+                  ? resolvedAttachmentUrls[attachmentId]
+                  : source;
+                if (!resolvedSrc) {
+                  return attachmentId ? (
+                    <span className="my-4 inline-flex rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700">
+                      Image unavailable
+                    </span>
+                  ) : null;
+                }
+                return (
+                  <button
+                    type="button"
+                    className="my-4 block max-w-full cursor-zoom-in rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500"
+                    onClick={() => setOpenedImage({ src: resolvedSrc, alt: alt ?? "Note image" })}
+                    aria-label={`Open image full screen: ${alt || "Note image"}`}
+                  >
+                    {/* Markdown image URLs may be remote, so use a native image element. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={resolvedSrc}
+                      alt={alt ?? ""}
+                      loading="lazy"
+                      className="max-h-[70vh] max-w-full rounded-xl object-contain"
+                    />
+                  </button>
+                );
+              },
             }}
           >
             {body}
@@ -58,6 +129,23 @@ export function MarkdownPreview({
           Nothing to preview yet.
         </div>
       )}
+      <Dialog open={openedImage !== null} onOpenChange={(open) => !open && setOpenedImage(null)}>
+        <DialogContent
+          showCloseButton
+          aria-describedby={undefined}
+          className="flex h-[min(94dvh,1000px)] w-[min(96vw,1400px)] max-w-none items-center justify-center border-0 bg-black/95 p-3 shadow-none sm:max-w-none"
+        >
+          <DialogTitle className="sr-only">{openedImage?.alt || "Full-screen image"}</DialogTitle>
+          {openedImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={openedImage.src}
+              alt={openedImage.alt}
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }

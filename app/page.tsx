@@ -13,6 +13,7 @@ import {
   type CSSProperties,
   type UIEvent,
   type KeyboardEvent,
+  type ClipboardEvent,
 } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -110,6 +111,15 @@ import {
   type TypingSoundVariantId,
 } from "@/lib/typing-sound-variants";
 import type { SpellCheckSegment } from "@/lib/spellcheck";
+import {
+  attachmentPath,
+  getNoteAttachments,
+  saveNoteAttachment,
+  deleteNoteAttachments,
+  deleteNoteAttachment,
+  type NoteAttachment,
+} from "@/lib/note-attachments";
+import { createZip } from "@/lib/zip";
 
 const MarkdownPreview = dynamic(
   () => import("@/components/markdown-preview").then((module) => module.MarkdownPreview),
@@ -1271,6 +1281,9 @@ export default function Home() {
         notes: remainingNotes,
       };
     });
+    void deleteNoteAttachments(noteId).catch(() => {
+      pushToast({ type: "error", title: "Image cleanup failed", description: "Some stored images could not be removed." });
+    });
     pushToast({
       type: "info",
       icon: Delete02Icon,
@@ -1308,14 +1321,17 @@ export default function Home() {
     });
   };
 
-  const downloadFile = (content: string, filename: string, type: string) => {
-    const blob = new Blob([content], { type });
+  const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = filename;
     anchor.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadFile = (content: string, filename: string, type: string) => {
+    downloadBlob(new Blob([content], { type }), filename);
   };
 
   const handleThemeToggle = () => {
@@ -1657,7 +1673,7 @@ export default function Home() {
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [closeDrawers, drawerOpen, settingsOpen]);
 
-  const handleExport = (format: ExportFormat) => {
+  const handleExport = async (format: ExportFormat) => {
     try {
       if (format === "txt") {
         downloadFile(body, "note.txt", "text/plain;charset=utf-8");
@@ -1670,6 +1686,24 @@ export default function Home() {
       }
 
       if (format === "md") {
+        const attachments = await getNoteAttachments(activeNote.id);
+        if (attachments.length > 0) {
+          const entries = await Promise.all(attachments.map(async (attachment) => ({
+            name: attachmentPath(attachment.id, attachment.mimeType),
+            data: new Uint8Array(await attachment.blob.arrayBuffer()),
+          })));
+          const archive = createZip([
+            { name: "note.md", data: new TextEncoder().encode(body) },
+            ...entries,
+          ]);
+          downloadBlob(archive, "note-with-images.zip");
+          pushToast({
+            type: "success",
+            title: "Markdown package exported",
+            description: "The ZIP contains your Markdown note and its images.",
+          });
+          return;
+        }
         downloadFile(body, "note.md", "text/markdown;charset=utf-8");
         pushToast({
           type: "success",
@@ -2083,6 +2117,86 @@ export default function Home() {
     setEditorScrollTop(event.currentTarget.scrollTop);
   };
 
+  const handleImagePaste = async (
+    event: ClipboardEvent<HTMLTextAreaElement>,
+    noteId: string
+  ) => {
+    const files = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file" && /^image\/(png|jpeg|webp|gif|avif)$/i.test(item.type))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+    if (files.length === 0) return;
+    event.preventDefault();
+    const textarea = event.currentTarget;
+    const selectionStart = textarea.selectionStart;
+    const selectionEnd = textarea.selectionEnd;
+    const added: NoteAttachment[] = [];
+
+    try {
+      for (const file of files) {
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error("Each pasted image must be 5 MB or smaller.");
+        }
+        const id = crypto.randomUUID();
+        const mimeType = file.type.toLowerCase();
+        const attachment: NoteAttachment = {
+          id,
+          noteId,
+          mimeType,
+          fileName: attachmentPath(id, mimeType).split("/").pop() ?? `${id}.png`,
+          blob: file,
+        };
+        await saveNoteAttachment(attachment);
+        added.push(attachment);
+      }
+
+      const markdown = added.map((attachment) =>
+        `![Pasted image](${attachmentPath(attachment.id, attachment.mimeType)})`
+      ).join("\n");
+      let caretPosition = 0;
+      setNotesState((previous) => ({
+        ...previous,
+        notes: previous.notes.map((note) => {
+          if (note.id !== noteId) return note;
+          const start = Math.min(selectionStart, note.body.length);
+          const end = Math.min(Math.max(selectionEnd, start), note.body.length);
+          const before = note.body.slice(0, start);
+          const after = note.body.slice(end);
+          const prefix = before.length > 0 && !before.endsWith("\n") ? "\n" : "";
+          const suffix = after.length > 0 && !after.startsWith("\n") ? "\n" : "";
+          const insertion = `${prefix}${markdown}${suffix}`;
+          caretPosition = before.length + insertion.length;
+          return {
+            ...note,
+            body: `${before}${insertion}${after}`,
+            updatedAt: new Date().toISOString(),
+          };
+        }),
+      }));
+      setMarkdownToolsEnabled(true);
+      setEditorMode("split");
+      window.requestAnimationFrame(() => {
+        if (textareaRef.current?.dataset.noteId === noteId) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(caretPosition, caretPosition);
+        }
+      });
+      pushToast({
+        type: "success",
+        title: files.length === 1 ? "Image added" : "Images added",
+        description: "The pasted image is ready in Markdown preview.",
+      });
+    } catch (error) {
+      await Promise.all(added.map((attachment) => deleteNoteAttachment(attachment.id).catch(() => undefined)));
+      pushToast({
+        type: "error",
+        title: "Could not paste image",
+        description: error instanceof Error ? error.message : "Image storage is unavailable.",
+        durationMs: 5000,
+      });
+    }
+  };
+
   const renderEditorTextarea = (className = "") => (
     <div className="relative h-full w-full">
       <div
@@ -2111,11 +2225,13 @@ export default function Home() {
       </div>
       <textarea
         ref={textareaRef}
+        data-note-id={activeNote.id}
         value={body}
         onChange={(event) => {
           closeDrawers();
           updateActiveNote({ body: event.target.value });
         }}
+        onPaste={(event) => { void handleImagePaste(event, activeNote.id); }}
         onFocus={closeDrawers}
         onPointerDown={closeDrawers}
         onScroll={handleEditorScroll}
@@ -2252,6 +2368,7 @@ export default function Home() {
               <MarkdownPreview
                 body={body}
                 fontSize={fontSize}
+                noteId={activeNote.id}
                 className="pt-20 md:pt-20 lg:pt-20"
               />
             ) : markdownToolsEnabled && editorMode === "split" ? (
@@ -2264,6 +2381,7 @@ export default function Home() {
                 <MarkdownPreview
                   body={body}
                   fontSize={fontSize}
+                  noteId={activeNote.id}
                   className="min-h-0 pt-20 md:pl-8 md:pt-20 lg:pl-10 lg:pt-20"
                 />
               </div>

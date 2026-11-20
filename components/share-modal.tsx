@@ -11,6 +11,7 @@ import {
 import { QRModal } from "./qr-modal";
 import { Note, getNoteDisplayTitle } from "@/lib/notes-storage";
 import { generateShareKey, encryptData } from "@/lib/crypto";
+import { getNoteAttachments, serializeAttachment } from "@/lib/note-attachments";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -33,12 +34,15 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, note })
 
     try {
       const shareKey = generateShareKey();
+      const attachments = await getNoteAttachments(note.id);
+      const portableAttachments = await Promise.all(attachments.map(serializeAttachment));
 
       const notePayload = JSON.stringify({
         title: getNoteDisplayTitle(note),
         body: note.body,
         createdAt: note.createdAt,
         updatedAt: note.updatedAt,
+        attachments: portableAttachments,
       });
 
       const encryptedPayload = await encryptData(notePayload, shareKey);

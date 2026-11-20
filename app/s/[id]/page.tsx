@@ -15,12 +15,19 @@ import { MarkdownPreview } from "@/components/markdown-preview";
 import { AdBanner } from "@/components/ad-banner";
 import { loadNotesSnapshot, saveNotesSnapshot, createEmptyNote, formatNoteDateTime } from "@/lib/notes-storage";
 import { decryptData, EncryptedPayload } from "@/lib/crypto";
+import {
+  deserializeAttachment,
+  saveNoteAttachment,
+  revokeAttachmentUrls,
+  type PortableNoteAttachment,
+} from "@/lib/note-attachments";
 
 interface SharedNoteData {
   title: string;
   body: string;
   createdAt: string;
   updatedAt: string;
+  attachments?: PortableNoteAttachment[];
 }
 
 export default function SharedNotePage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,8 +38,11 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState<string | null>(null);
   const [imported, setImported] = useState<boolean>(false);
   const [copiedContent, setCopiedContent] = useState<boolean>(false);
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    let active = true;
+    let urls: Record<string, string> = {};
     async function fetchAndDecrypt() {
       setIsLoading(true);
       setError(null);
@@ -67,6 +77,17 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
         const decryptedText = await decryptData(data.payload, shareKey);
         const parsed = JSON.parse(decryptedText) as SharedNoteData;
 
+        const entries = (parsed.attachments ?? []).map((item) => {
+          const attachment = deserializeAttachment(item);
+          return [attachment.id, URL.createObjectURL(attachment.blob)] as const;
+        });
+        urls = Object.fromEntries(entries);
+        if (!active) {
+          revokeAttachmentUrls(urls);
+          return;
+        }
+        setAttachmentUrls(urls);
+
         setNoteData(parsed);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to decrypt shared note.");
@@ -76,9 +97,13 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
     }
 
     fetchAndDecrypt();
+    return () => {
+      active = false;
+      revokeAttachmentUrls(urls);
+    };
   }, [resolvedParams.id]);
 
-  const handleImportNote = () => {
+  const handleImportNote = async () => {
     if (!noteData) return;
 
     let snapshot = loadNotesSnapshot();
@@ -86,6 +111,17 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
     newNote.body = noteData.body;
     newNote.createdAt = noteData.createdAt || new Date().toISOString();
     newNote.updatedAt = new Date().toISOString();
+
+    const attachments = (noteData.attachments ?? []).map((attachment) => ({
+      ...deserializeAttachment(attachment),
+      noteId: newNote.id,
+    }));
+    try {
+      await Promise.all(attachments.map(saveNoteAttachment));
+    } catch {
+      setError("Could not save the images for this note on this device.");
+      return;
+    }
 
     if (!snapshot) {
       snapshot = {
@@ -165,7 +201,7 @@ export default function SharedNotePage({ params }: { params: Promise<{ id: strin
 
             {/* Note Preview Container - Fixed height & responsive like app editor */}
             <article className="relative flex h-[68vh] min-h-[380px] max-h-[720px] w-full flex-1 flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/70 shadow-[0_24px_60px_rgba(15,15,15,0.08)] ring-1 ring-black/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#161618]/70 dark:ring-white/10">
-              <MarkdownPreview body={noteData.body} fontSize={18} className="h-full w-full" />
+              <MarkdownPreview body={noteData.body} fontSize={18} className="h-full w-full" attachmentUrls={attachmentUrls} />
             </article>
 
             {/* Action buttons below Note preview */}

@@ -1,5 +1,12 @@
 import { Note, NotesSnapshot } from "./notes-storage";
 import { encryptData, decryptData, hashSyncCode, EncryptedPayload } from "./crypto";
+import {
+  getNoteAttachments,
+  serializeAttachment,
+  deserializeAttachment,
+  saveNoteAttachment,
+  type PortableNoteAttachment,
+} from "./note-attachments";
 
 export const SYNC_CODE_STORAGE_KEY = "justwrite.sync.code.v1";
 export const LAST_SYNC_TIME_KEY = "justwrite.sync.last_time.v1";
@@ -154,16 +161,18 @@ export async function performNotesSync(
     );
     let remoteNotes: Note[] = [];
     let remoteDevices: DeviceInfo[] = [];
+    let remoteAttachments: PortableNoteAttachment[] = [];
 
     if (res.ok) {
       const data = (await res.json()) as { payload?: EncryptedPayload };
       if (data.payload) {
         try {
           const decryptedJson = await decryptData(data.payload, syncCode);
-          const parsed = JSON.parse(decryptedJson) as { notes?: Note[]; devices?: DeviceInfo[] };
+          const parsed = JSON.parse(decryptedJson) as { notes?: Note[]; devices?: DeviceInfo[]; attachments?: PortableNoteAttachment[] };
           if (Array.isArray(parsed.notes)) {
             remoteNotes = parsed.notes;
           }
+          remoteAttachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
           if (Array.isArray(parsed.devices)) {
             remoteDevices = parsed.devices;
           }
@@ -198,10 +207,26 @@ export async function performNotesSync(
       activeNoteId: activeNoteExists ? localSnapshot.activeNoteId : (mergedNotes[0]?.id ?? null),
     };
 
+    const localAttachments = (await Promise.all(
+      localSnapshot.notes.map((note) => getNoteAttachments(note.id))
+    )).flat();
+    const localPortableAttachments = await Promise.all(localAttachments.map(serializeAttachment));
+    const mergedAttachmentMap = new Map<string, PortableNoteAttachment>();
+    for (const attachment of [...localPortableAttachments, ...remoteAttachments]) {
+      if (mergedSnapshot.notes.some((note) => note.id === attachment.noteId)) {
+        mergedAttachmentMap.set(attachment.id, attachment);
+      }
+    }
+    const mergedAttachments = [...mergedAttachmentMap.values()];
+    await Promise.all(mergedAttachments.map((attachment) =>
+      saveNoteAttachment(deserializeAttachment(attachment))
+    ));
+
     // 4. Encrypt merged snapshot
     const encryptedPayload = await encryptData(
       JSON.stringify({
         notes: mergedNotes,
+        attachments: mergedAttachments,
         devices: updatedDevicesList,
         updatedAt: new Date().toISOString(),
       }),
@@ -257,22 +282,34 @@ export async function removeDeviceFromSync(
     );
     let remoteNotes: Note[] = localSnapshot.notes;
     let remoteDevices: DeviceInfo[] = [];
+    let remoteAttachments: PortableNoteAttachment[] = [];
 
     if (res.ok) {
       const data = (await res.json()) as { payload?: EncryptedPayload };
       if (data.payload) {
         const decryptedJson = await decryptData(data.payload, syncCode);
-        const parsed = JSON.parse(decryptedJson) as { notes?: Note[]; devices?: DeviceInfo[] };
+        const parsed = JSON.parse(decryptedJson) as { notes?: Note[]; devices?: DeviceInfo[]; attachments?: PortableNoteAttachment[] };
         if (Array.isArray(parsed.notes)) remoteNotes = parsed.notes;
         if (Array.isArray(parsed.devices)) remoteDevices = parsed.devices;
+        remoteAttachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
       }
     }
 
     const updatedDevices = remoteDevices.filter((d) => d.id !== deviceIdToRemove);
+    const localAttachments = (await Promise.all(
+      localSnapshot.notes.map((note) => getNoteAttachments(note.id))
+    )).flat();
+    const localPortableAttachments = await Promise.all(localAttachments.map(serializeAttachment));
+    const retainedNoteIds = new Set(remoteNotes.map((note) => note.id));
+    const attachmentMap = new Map<string, PortableNoteAttachment>();
+    for (const attachment of [...localPortableAttachments, ...remoteAttachments]) {
+      if (retainedNoteIds.has(attachment.noteId)) attachmentMap.set(attachment.id, attachment);
+    }
 
     const encryptedPayload = await encryptData(
       JSON.stringify({
         notes: remoteNotes,
+        attachments: [...attachmentMap.values()],
         devices: updatedDevices,
         updatedAt: new Date().toISOString(),
       }),

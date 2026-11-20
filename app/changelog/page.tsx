@@ -18,6 +18,15 @@ export const metadata = createPageMetadata({
 
 const changelogEntries = [
   {
+    date: "November 20, 2026",
+    title: "Pasted Images & Full-Screen Image Preview",
+    items: [
+      "Paste images directly into notes and see them rendered alongside Markdown in Split view.",
+      "Open Markdown preview images in an accessible full-screen viewer.",
+      "Keep pasted images with notes across offline storage, encrypted sync, sharing, and Markdown package export.",
+    ],
+  },
+  {
     date: "August 9, 2026",
     title: "Your Book (Zero-Knowledge E2EE Sync) & Instant Note Sharing",
     items: [
