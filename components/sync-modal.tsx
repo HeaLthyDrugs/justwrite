@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Book01Icon,
@@ -143,30 +143,48 @@ export const SyncModal: React.FC<SyncModalProps> = ({
   const [qrModalOpen, setQrModalOpen] = useState<boolean>(false);
   const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const syncInProgressRef = useRef(false);
 
   const performSync = useCallback(
     async (codeToUse: string) => {
-      if (isSyncing) return false;
+      if (syncInProgressRef.current) return false;
+      syncInProgressRef.current = true;
       setIsSyncing(true);
       setStatusMessage(null);
 
-      const res = await performNotesSync(snapshot, codeToUse);
-      setIsSyncing(false);
-
-      if (res.success && res.mergedSnapshot) {
-        onSnapshotUpdated(res.mergedSnapshot);
-        setLastSyncTime(getStoredLastSyncTime());
-        if (res.devices) {
-          setDevices(res.devices);
+      try {
+        const res = await performNotesSync(snapshot, codeToUse);
+        if (res.success && res.mergedSnapshot) {
+          if (JSON.stringify(res.mergedSnapshot) !== JSON.stringify(snapshot)) {
+            onSnapshotUpdated(res.mergedSnapshot);
+          }
+          setLastSyncTime(getStoredLastSyncTime());
+          if (res.devices) {
+            setDevices(res.devices);
+          }
+          return true;
+        } else {
+          setStatusMessage({ type: "error", text: res.error || "Sync failed" });
+          return false;
         }
-        return true;
-      } else {
-        setStatusMessage({ type: "error", text: res.error || "Sync failed" });
+      } catch (error) {
+        setStatusMessage({
+          type: "error",
+          text: error instanceof Error ? error.message : "Sync failed",
+        });
         return false;
+      } finally {
+        syncInProgressRef.current = false;
+        setIsSyncing(false);
       }
     },
-    [isSyncing, onSnapshotUpdated, snapshot]
+    [onSnapshotUpdated, snapshot]
   );
+
+  // Keep the latest snapshot and callback available without restarting the
+  // initial sync whenever applying a sync result causes the parent to render.
+  const performSyncRef = useRef(performSync);
+  performSyncRef.current = performSync;
 
   useEffect(() => {
     if (isOpen) {
@@ -180,9 +198,9 @@ export const SyncModal: React.FC<SyncModalProps> = ({
       setAutoSync(getAutoSyncEnabled());
       setStatusMessage(null);
 
-      void performSync(code);
+      void performSyncRef.current(code);
     }
-  }, [isOpen, performSync]);
+  }, [isOpen]);
 
   const handleCopyCode = async () => {
     try {
