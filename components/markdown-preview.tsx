@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
@@ -16,7 +16,38 @@ interface MarkdownPreviewProps {
   attachmentUrls?: Record<string, string>;
 }
 
-export function MarkdownPreview({
+interface PreviewBoundaryState {
+  hasError: boolean;
+}
+
+class PreviewErrorBoundary extends Component<{ children: ReactNode }, PreviewBoundaryState> {
+  state: PreviewBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): PreviewBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Markdown preview failed to render", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          role="alert"
+          className="flex h-full min-h-[240px] items-center justify-center px-8 text-center text-sm text-zinc-500 dark:text-zinc-400"
+        >
+          This note could not be rendered as a preview. Your text is saved; switch to Edit to continue.
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+function MarkdownPreviewContent({
   body,
   fontSize,
   className,
@@ -147,5 +178,13 @@ export function MarkdownPreview({
         </DialogContent>
       </Dialog>
     </article>
+  );
+}
+
+export function MarkdownPreview(props: MarkdownPreviewProps) {
+  return (
+    <PreviewErrorBoundary>
+      <MarkdownPreviewContent {...props} />
+    </PreviewErrorBoundary>
   );
 }

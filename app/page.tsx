@@ -2121,11 +2121,28 @@ export default function Home() {
     event: ClipboardEvent<HTMLTextAreaElement>,
     noteId: string
   ) => {
-    const files = Array.from(event.clipboardData.items)
-      .filter((item) => item.kind === "file" && /^image\/(png|jpeg|webp|gif|avif)$/i.test(item.type))
-      .map((item) => item.getAsFile())
-      .filter((file): file is File => file !== null);
-    if (files.length === 0) return;
+    const clipboard = event.clipboardData;
+    const filesByKey = new Map<string, File>();
+    const addFile = (file: File | null) => {
+      if (!file || !/^image\/(png|jpeg|webp|gif|avif)$/i.test(file.type)) return;
+      const key = `${file.name}:${file.type}:${file.size}:${file.lastModified}`;
+      filesByKey.set(key, file);
+    };
+
+    // Clipboard implementations differ: some expose images in items, others in files.
+    for (const item of Array.from(clipboard.items)) {
+      if (item.type.toLowerCase().startsWith("image/")) addFile(item.getAsFile());
+    }
+    for (const file of Array.from(clipboard.files)) addFile(file);
+
+    // Copying an image from a webpage can expose only HTML with an embedded data URL.
+    const html = clipboard.getData("text/html");
+    const containsEmbeddedImage =
+      html && /<img\b[^>]*\bsrc\s*=\s*["']data:image\/(png|jpeg|webp|gif|avif);base64,/i.test(html);
+    const clipboardAdvertisesImage = Array.from(clipboard.types).some((type) =>
+      type.toLowerCase().startsWith("image/")
+    );
+    if (filesByKey.size === 0 && !containsEmbeddedImage && !clipboardAdvertisesImage) return;
     event.preventDefault();
     const textarea = event.currentTarget;
     const selectionStart = textarea.selectionStart;
@@ -2133,6 +2150,21 @@ export default function Home() {
     const added: NoteAttachment[] = [];
 
     try {
+      if (html && typeof DOMParser !== "undefined") {
+        const document = new DOMParser().parseFromString(html, "text/html");
+        const embeddedImages = Array.from(document.images)
+          .map((image) => image.getAttribute("src") ?? "")
+          .filter((src) => /^data:image\/(png|jpeg|webp|gif|avif);base64,/i.test(src));
+        for (const src of embeddedImages) {
+          const response = await fetch(src);
+          const blob = await response.blob();
+          addFile(new File([blob], `pasted-image-${filesByKey.size + 1}`, { type: blob.type }));
+        }
+      }
+      const files = Array.from(filesByKey.values());
+      if (files.length === 0) {
+        throw new Error("The copied image format is not supported. Copy it as PNG, JPEG, WebP, GIF, or AVIF and try again.");
+      }
       for (const file of files) {
         if (file.size > 5 * 1024 * 1024) {
           throw new Error("Each pasted image must be 5 MB or smaller.");
