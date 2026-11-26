@@ -2161,7 +2161,17 @@ export default function Home() {
           addFile(new File([blob], `pasted-image-${filesByKey.size + 1}`, { type: blob.type }));
         }
       }
-      const files = Array.from(filesByKey.values());
+      const files: File[] = [];
+      const seenImageContents = new Set<string>();
+      for (const file of filesByKey.values()) {
+        const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+        const contentKey = Array.from(new Uint8Array(digest), (byte) =>
+          byte.toString(16).padStart(2, "0")
+        ).join("");
+        if (seenImageContents.has(contentKey)) continue;
+        seenImageContents.add(contentKey);
+        files.push(file);
+      }
       if (files.length === 0) {
         throw new Error("The copied image format is not supported. Copy it as PNG, JPEG, WebP, GIF, or AVIF and try again.");
       }
