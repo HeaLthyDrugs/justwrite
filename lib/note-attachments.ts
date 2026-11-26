@@ -119,7 +119,7 @@ export async function getNoteAttachmentCacheUsage(): Promise<NoteAttachmentCache
 
 export async function deleteAllNoteAttachments() {
   const usage = await getNoteAttachmentCacheUsage();
-  await withStore<void>("readwrite", (store) => store.clear());
+  await withStore<undefined>("readwrite", (store) => store.clear());
   notifyAttachmentCacheChanged();
   return usage;
 }
