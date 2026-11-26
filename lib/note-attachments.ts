@@ -14,9 +14,21 @@ export interface PortableNoteAttachment {
   data: string;
 }
 
+export interface NoteAttachmentCacheUsage {
+  count: number;
+  bytes: number;
+}
+
 const DATABASE_NAME = "justwrite-attachments";
 const DATABASE_VERSION = 1;
 const STORE_NAME = "attachments";
+export const NOTE_ATTACHMENT_CACHE_CHANGED_EVENT = "justwrite:attachment-cache-changed";
+
+function notifyAttachmentCacheChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(NOTE_ATTACHMENT_CACHE_CHANGED_EVENT));
+  }
+}
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -62,11 +74,15 @@ async function withStore<T>(mode: IDBTransactionMode, work: (store: IDBObjectSto
 }
 
 export function saveNoteAttachment(attachment: NoteAttachment) {
-  return withStore("readwrite", (store) => store.put(attachment));
+  return withStore("readwrite", (store) => store.put(attachment)).then(() => {
+    notifyAttachmentCacheChanged();
+  });
 }
 
 export function deleteNoteAttachment(id: string) {
-  return withStore("readwrite", (store) => store.delete(id));
+  return withStore("readwrite", (store) => store.delete(id)).then(() => {
+    notifyAttachmentCacheChanged();
+  });
 }
 
 export function getNoteAttachment(id: string) {
@@ -89,6 +105,25 @@ export async function getNoteAttachments(noteId: string): Promise<NoteAttachment
   });
 }
 
+export function getAllNoteAttachments(): Promise<NoteAttachment[]> {
+  return withStore<NoteAttachment[]>("readonly", (store) => store.getAll());
+}
+
+export async function getNoteAttachmentCacheUsage(): Promise<NoteAttachmentCacheUsage> {
+  const attachments = await getAllNoteAttachments();
+  return {
+    count: attachments.length,
+    bytes: attachments.reduce((total, attachment) => total + attachment.blob.size, 0),
+  };
+}
+
+export async function deleteAllNoteAttachments() {
+  const usage = await getNoteAttachmentCacheUsage();
+  await withStore<void>("readwrite", (store) => store.clear());
+  notifyAttachmentCacheChanged();
+  return usage;
+}
+
 export async function deleteNoteAttachments(noteId: string): Promise<void> {
   const attachments = await getNoteAttachments(noteId);
   if (attachments.length === 0) return;
@@ -101,6 +136,7 @@ export async function deleteNoteAttachments(noteId: string): Promise<void> {
     transaction.onerror = () => { database.close(); reject(transaction.error); };
     transaction.onabort = () => { database.close(); reject(transaction.error); };
   });
+  notifyAttachmentCacheChanged();
 }
 
 function bytesToBase64(bytes: Uint8Array): string {

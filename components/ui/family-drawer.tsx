@@ -39,6 +39,7 @@ import type {
   AmbientBackgroundId,
   AmbientBackgroundConfig,
 } from "@/lib/ambient-scenes";
+import type { NoteAttachmentCacheUsage } from "@/lib/note-attachments";
 import type { TypingSoundVariantId } from "@/lib/typing-sound-variants";
 
 interface FamilyDrawerProps {
@@ -79,6 +80,16 @@ interface FamilyDrawerProps {
   onSpellCheckEnabledChange: (enabled: boolean) => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  mediaCacheUsage: NoteAttachmentCacheUsage | null;
+  mediaCacheReadFailed: boolean;
+  onClearMediaCache: () => Promise<boolean>;
+}
+
+function formatMediaCacheSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 const AMBIENT_AUDIO_VISUALS: Record<
@@ -161,6 +172,9 @@ export function FamilyDrawer({
   onSpellCheckEnabledChange,
   fontSize,
   onFontSizeChange,
+  mediaCacheUsage,
+  mediaCacheReadFailed,
+  onClearMediaCache,
 }: FamilyDrawerProps) {
   const quickPages = [
     { href: "/blog", label: "Blog & Guides" },
@@ -188,6 +202,8 @@ export function FamilyDrawer({
   const [activeAmbientPicker, setActiveAmbientPicker] = useState<
     "background" | "audio" | null
   >(null);
+  const [confirmingMediaCacheClear, setConfirmingMediaCacheClear] = useState(false);
+  const [clearingMediaCache, setClearingMediaCache] = useState(false);
   const [ambientPickerPosition, setAmbientPickerPosition] = useState<{
     top: number;
     left: number;
@@ -222,6 +238,17 @@ export function FamilyDrawer({
   const selectedTypingSoundVariant =
     typingSoundVariants.find((variant) => variant.id === typingSoundVariantId) ??
     typingSoundVariants[0];
+
+  const handleConfirmClearMediaCache = async () => {
+    setClearingMediaCache(true);
+    try {
+      if (await onClearMediaCache()) {
+        setConfirmingMediaCacheClear(false);
+      }
+    } finally {
+      setClearingMediaCache(false);
+    }
+  };
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -347,6 +374,7 @@ export function FamilyDrawer({
         <div
           ref={scrollRef}
           onScroll={checkScrollFades}
+          data-settings-scroll
           data-scroll-fade={
             !showTopFade && !showBottomFade
               ? "none"
@@ -601,6 +629,45 @@ export function FamilyDrawer({
             </div>
           </div>
 
+          <div className="mt-1 border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
+            Pages
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {quickPages.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex items-center justify-between text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
+              >
+                <span>{item.label}</span>
+                {item.hasBadge && (
+                  <span className="relative flex h-2 w-2 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+          </div>
+
+          <div className="border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
+            Legal
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {legalLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+          </div>
           <div className="border-t border-black/5 pt-4 dark:border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-200">
@@ -744,45 +811,79 @@ export function FamilyDrawer({
             </div>
           </div>
 
-          <div className="mt-1 border-t border-black/5 pt-4 dark:border-white/10">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
-            Pages
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {quickPages.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex items-center justify-between text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
+          <div id="media-cache-settings" className="border-t border-black/5 pt-4 dark:border-white/10">
+            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
+              Media Cache
+            </div>
+            <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+              Pasted images are saved on this device so they stay available after reloads.
+            </p>
+            <div className="mt-3 rounded-2xl border border-black/5 bg-black/[0.025] px-3 py-2.5 dark:border-white/8 dark:bg-white/[0.035]">
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-zinc-600 dark:text-zinc-300">Stored images</span>
+                <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
+                  {mediaCacheUsage
+                    ? formatMediaCacheSize(mediaCacheUsage.bytes)
+                    : mediaCacheReadFailed
+                      ? "Unavailable"
+                      : "Checking…"}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                {mediaCacheUsage
+                  ? `${mediaCacheUsage.count} ${mediaCacheUsage.count === 1 ? "image" : "images"} on this device.`
+                  : mediaCacheReadFailed
+                    ? "Could not read this device’s storage."
+                    : "Checking storage…"}
+              </p>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Clear it to delete saved images here. Note text stays; synced copies may return.
+            </p>
+            {confirmingMediaCacheClear ? (
+              <div
+                role="alertdialog"
+                aria-label="Confirm clearing media cache"
+                className="mt-3 rounded-2xl border border-rose-500/20 bg-rose-500/[0.045] p-3 dark:border-rose-300/15 dark:bg-rose-300/[0.045]"
               >
-                <span>{item.label}</span>
-                {item.hasBadge && (
-                  <span className="relative flex h-2 w-2 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-100">
+                  Delete {mediaCacheUsage?.count ?? 0} stored {mediaCacheUsage?.count === 1 ? "image" : "images"} ({formatMediaCacheSize(mediaCacheUsage?.bytes ?? 0)})?
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                  This can’t be undone for this device. You can cancel and keep your images.
+                </p>
+                <div className="mt-3 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingMediaCacheClear(false)}
+                    disabled={clearingMediaCache}
+                    className="rounded-full px-3 py-1.5 text-[11px] font-medium text-zinc-600 transition-colors hover:bg-black/5 disabled:opacity-50 dark:text-zinc-300 dark:hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleConfirmClearMediaCache()}
+                    disabled={clearingMediaCache || !mediaCacheUsage?.count}
+                    className="rounded-full bg-rose-600 px-3 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-rose-500 dark:hover:bg-rose-400"
+                  >
+                    {clearingMediaCache ? "Clearing…" : "Delete images"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmingMediaCacheClear(true)}
+                disabled={!mediaCacheUsage?.count || mediaCacheReadFailed}
+                className="mt-3 rounded-full border border-black/10 px-3 py-1.5 text-[11px] font-semibold text-zinc-600 transition-colors hover:border-rose-500/30 hover:bg-rose-500/[0.04] hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/12 dark:text-zinc-300 dark:hover:border-rose-300/20 dark:hover:bg-rose-300/[0.05] dark:hover:text-rose-200"
+              >
+                Clear Media Cache
+              </button>
+            )}
           </div>
 
-          <div className="border-t border-black/5 pt-4 dark:border-white/10">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500/75 dark:text-zinc-400/70">
-            Legal
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {legalLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-xs font-medium text-zinc-700/90 transition-colors hover:text-zinc-900 dark:text-zinc-200/90 dark:hover:text-zinc-50"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-          </div>
+
         </div>
       </div>
       </div>

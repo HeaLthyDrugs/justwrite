@@ -5,7 +5,12 @@ import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
-import { attachmentIdFromPath, attachmentUrlMap, revokeAttachmentUrls } from "@/lib/note-attachments";
+import {
+  attachmentIdFromPath,
+  attachmentUrlMap,
+  NOTE_ATTACHMENT_CACHE_CHANGED_EVENT,
+  revokeAttachmentUrls,
+} from "@/lib/note-attachments";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface MarkdownPreviewProps {
@@ -14,6 +19,7 @@ interface MarkdownPreviewProps {
   className?: string;
   noteId?: string;
   attachmentUrls?: Record<string, string>;
+  onOpenMediaCache?: () => void;
 }
 
 interface PreviewBoundaryState {
@@ -53,6 +59,7 @@ function MarkdownPreviewContent({
   className,
   noteId,
   attachmentUrls: providedAttachmentUrls,
+  onOpenMediaCache,
 }: MarkdownPreviewProps) {
   const hasContent = body.trim().length > 0;
   const attachmentRefsKey = Array.from(
@@ -60,30 +67,56 @@ function MarkdownPreviewContent({
     (match) => match[1]
   ).join("|");
   const [storedAttachmentUrls, setStoredAttachmentUrls] = useState<Record<string, string>>({});
+  const [attachmentLookupReady, setAttachmentLookupReady] = useState(false);
+  const [attachmentLookupFailed, setAttachmentLookupFailed] = useState(false);
   const [openedImage, setOpenedImage] = useState<{ src: string; alt: string } | null>(null);
 
   useEffect(() => {
-    if (!noteId || providedAttachmentUrls) return;
-    let cancelled = false;
-    let urls: Record<string, string> = {};
-    if (!attachmentRefsKey) {
-      setStoredAttachmentUrls({});
+    if (providedAttachmentUrls) {
+      setAttachmentLookupReady(true);
+      setAttachmentLookupFailed(false);
       return;
     }
-    void attachmentUrlMap(noteId).then((loaded) => {
-      if (cancelled) {
-        revokeAttachmentUrls(loaded);
-        return;
-      }
-      urls = loaded;
-      setStoredAttachmentUrls(loaded);
-    }).catch(() => {
-      if (!cancelled) setStoredAttachmentUrls({});
-    });
+    if (!noteId || !attachmentRefsKey) {
+      setStoredAttachmentUrls({});
+      setAttachmentLookupReady(true);
+      setAttachmentLookupFailed(false);
+      return;
+    }
+
+    let cancelled = false;
+    let urls: Record<string, string> = {};
+    let requestVersion = 0;
+    const loadAttachmentUrls = () => {
+      const version = ++requestVersion;
+      revokeAttachmentUrls(urls);
+      urls = {};
+      setStoredAttachmentUrls({});
+      setAttachmentLookupReady(false);
+      setAttachmentLookupFailed(false);
+
+      void attachmentUrlMap(noteId).then((loaded) => {
+        if (cancelled || version !== requestVersion) {
+          revokeAttachmentUrls(loaded);
+          return;
+        }
+        urls = loaded;
+        setStoredAttachmentUrls(loaded);
+        setAttachmentLookupReady(true);
+      }).catch(() => {
+        if (cancelled || version !== requestVersion) return;
+        setAttachmentLookupFailed(true);
+        setAttachmentLookupReady(true);
+      });
+    };
+
+    loadAttachmentUrls();
+    window.addEventListener(NOTE_ATTACHMENT_CACHE_CHANGED_EVENT, loadAttachmentUrls);
     return () => {
       cancelled = true;
+      requestVersion += 1;
+      window.removeEventListener(NOTE_ATTACHMENT_CACHE_CHANGED_EVENT, loadAttachmentUrls);
       revokeAttachmentUrls(urls);
-      setStoredAttachmentUrls({});
     };
   }, [noteId, providedAttachmentUrls, attachmentRefsKey]);
 
@@ -127,9 +160,30 @@ function MarkdownPreviewContent({
                   : source;
                 if (!resolvedSrc) {
                   return attachmentId ? (
-                    <span className="my-4 inline-flex rounded-xl border border-zinc-200 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700">
-                      Image unavailable
-                    </span>
+                    <div
+                      role="status"
+                      className="my-4 flex w-fit max-w-full flex-col items-start gap-1 rounded-xl bg-zinc-100/70 px-3 py-2 text-sm text-zinc-500 dark:bg-white/[0.045] dark:text-zinc-400"
+                    >
+                      <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                        Image unavailable
+                      </span>
+                      <span className="text-xs">
+                        {!attachmentLookupReady
+                          ? "Checking saved image…"
+                          : attachmentLookupFailed
+                            ? "This browser’s image storage could not be read."
+                            : "Its saved copy may have been deleted from this device."}
+                      </span>
+                      {onOpenMediaCache ? (
+                        <button
+                          type="button"
+                          onClick={onOpenMediaCache}
+                          className="mt-0.5 text-xs font-medium text-zinc-700 underline decoration-zinc-400 underline-offset-2 transition-colors hover:text-zinc-950 dark:text-zinc-200 dark:decoration-zinc-500 dark:hover:text-white"
+                        >
+                          Open Media Cache settings
+                        </button>
+                      ) : null}
+                    </div>
                   ) : null;
                 }
                 return (

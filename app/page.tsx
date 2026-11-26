@@ -114,9 +114,11 @@ import type { SpellCheckSegment } from "@/lib/spellcheck";
 import {
   attachmentPath,
   getNoteAttachments,
+  getNoteAttachmentCacheUsage,
   saveNoteAttachment,
-  deleteNoteAttachments,
+  deleteAllNoteAttachments,
   deleteNoteAttachment,
+  NOTE_ATTACHMENT_CACHE_CHANGED_EVENT,
   type NoteAttachment,
 } from "@/lib/note-attachments";
 import { createZip } from "@/lib/zip";
@@ -544,6 +546,11 @@ export default function Home() {
     hasPreferenceConsent
   );
   const [notesState, setNotesState] = useState<NotesState>(getInitialNotesState);
+  const [mediaCacheUsage, setMediaCacheUsage] = useState<{
+    count: number;
+    bytes: number;
+  } | null>(null);
+  const [mediaCacheReadFailed, setMediaCacheReadFailed] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [spellCheckSegments, setSpellCheckSegments] = useState<SpellCheckSegment[]>([
     { text: "", misspelled: false },
@@ -554,6 +561,7 @@ export default function Home() {
   const spaceAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scrollToMediaCacheOnOpenRef = useRef(false);
   const pwaUpdateToastShownRef = useRef(false);
   const notesHoverCloseTimeoutRef = useRef<number | null>(null);
   const settingsHoverCloseTimeoutRef = useRef<number | null>(null);
@@ -566,6 +574,25 @@ export default function Home() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [isAutoSyncing, setIsAutoSyncing] = useState(false);
   const autoSyncDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const refreshMediaCacheUsage = useCallback(async () => {
+    try {
+      setMediaCacheUsage(await getNoteAttachmentCacheUsage());
+      setMediaCacheReadFailed(false);
+    } catch {
+      setMediaCacheUsage(null);
+      setMediaCacheReadFailed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    void refreshMediaCacheUsage();
+    window.addEventListener(NOTE_ATTACHMENT_CACHE_CHANGED_EVENT, refreshMediaCacheUsage);
+    return () => {
+      window.removeEventListener(NOTE_ATTACHMENT_CACHE_CHANGED_EVENT, refreshMediaCacheUsage);
+    };
+  }, [isHydrated, refreshMediaCacheUsage]);
 
   // Initial sync on mount
   useEffect(() => {
@@ -665,6 +692,19 @@ export default function Home() {
     return () => window.clearTimeout(timeoutId);
   }, [settingsOpen]);
 
+  useEffect(() => {
+    if (!settingsDrawerRendered || !scrollToMediaCacheOnOpenRef.current) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector<HTMLElement>("[data-settings-scroll]");
+      if (!scrollContainer) return;
+      scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: "smooth" });
+      scrollToMediaCacheOnOpenRef.current = false;
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [settingsDrawerRendered]);
+
   const closeDrawers = useCallback(() => {
     setNotesDrawerManualOpen(false);
     setSettingsDrawerManualOpen(false);
@@ -737,6 +777,26 @@ export default function Home() {
       }, durationMs);
     }
   }, []);
+
+  const handleClearMediaCache = useCallback(async (): Promise<boolean> => {
+    try {
+      const removed = await deleteAllNoteAttachments();
+      setMediaCacheUsage({ count: 0, bytes: 0 });
+      pushToast({
+        type: "success",
+        title: "Media cache cleared",
+        description: `${removed.count} ${removed.count === 1 ? "image" : "images"} removed from this device. Note text was kept.`,
+      });
+      return true;
+    } catch {
+      pushToast({
+        type: "error",
+        title: "Could not clear media cache",
+        description: "Your saved images were not removed. Try again.",
+      });
+      return false;
+    }
+  }, [pushToast]);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((previous) => previous.filter((item) => item.id !== id));
@@ -1281,9 +1341,6 @@ export default function Home() {
         notes: remainingNotes,
       };
     });
-    void deleteNoteAttachments(noteId).catch(() => {
-      pushToast({ type: "error", title: "Image cleanup failed", description: "Some stored images could not be removed." });
-    });
     pushToast({
       type: "info",
       icon: Delete02Icon,
@@ -1537,6 +1594,22 @@ export default function Home() {
 
     setSettingsDrawerManualOpen(true);
     setSettingsDrawerHoverOpen(false);
+  };
+
+  const handleOpenMediaCacheSettings = () => {
+    scrollToMediaCacheOnOpenRef.current = true;
+    setFocusMode(false);
+    setSettingsDrawerManualOpen(true);
+    setSettingsDrawerHoverOpen(false);
+
+    if (settingsDrawerRendered) {
+      window.requestAnimationFrame(() => {
+        const scrollContainer = document.querySelector<HTMLElement>("[data-settings-scroll]");
+        if (!scrollContainer) return;
+        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: "smooth" });
+        scrollToMediaCacheOnOpenRef.current = false;
+      });
+    }
   };
 
   const closeNotesDrawer = () => {
@@ -2239,6 +2312,9 @@ export default function Home() {
     }
   };
 
+  const showEditorFooterStatus =
+    !focusMode && (showWordCount || showSavedTimestamp || !isOnline);
+
   const renderEditorTextarea = (className = "") => (
     <div className="relative h-full w-full">
       <div
@@ -2287,6 +2363,12 @@ export default function Home() {
         className={`relative z-10 h-full w-full resize-none bg-transparent px-8 py-8 pb-24 leading-[var(--editor-line-height)] text-zinc-800 focus:outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500/80 md:px-12 md:py-10 md:pb-14 lg:px-16 lg:py-12 lg:pb-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden ${markdownToolsEnabled ? "pt-20 md:pt-20 lg:pt-20" : ""
           } ${notebookLinesEnabled ? "notebook-lines" : ""} ${className}`}
       />
+      {showEditorFooterStatus ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-20 bg-gradient-to-b from-transparent via-white/65 to-white/95 dark:via-[#161618]/70 dark:to-[#161618]/95"
+        />
+      ) : null}
     </div>
   );
 
@@ -2411,6 +2493,7 @@ export default function Home() {
                 body={body}
                 fontSize={fontSize}
                 noteId={activeNote.id}
+                onOpenMediaCache={handleOpenMediaCacheSettings}
                 className="pt-20 md:pt-20 lg:pt-20"
               />
             ) : markdownToolsEnabled && editorMode === "split" ? (
@@ -2424,14 +2507,15 @@ export default function Home() {
                   body={body}
                   fontSize={fontSize}
                   noteId={activeNote.id}
+                  onOpenMediaCache={handleOpenMediaCacheSettings}
                   className="min-h-0 pt-20 md:pl-8 md:pt-20 lg:pl-10 lg:pt-20"
                 />
               </div>
             ) : (
               renderEditorTextarea()
             )}
-            {!focusMode && (showWordCount || showSavedTimestamp || !isOnline) ? (
-              <div className="pointer-events-none absolute bottom-4 left-6 flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
+            {showEditorFooterStatus ? (
+              <div className="pointer-events-none absolute bottom-4 left-6 z-30 flex items-center gap-2 text-[10px] font-medium tracking-[0.02em] text-zinc-500/90 dark:text-zinc-400/90 md:bottom-5 md:left-8 md:text-[11px] lg:left-12">
                 {!isOnline ? (
                   <span className="rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[9px] font-semibold tracking-[0.06em] text-amber-700 dark:text-amber-300">
                     OFFLINE
@@ -2660,6 +2744,9 @@ export default function Home() {
         onSpellCheckEnabledChange={handleSpellCheckChange}
         fontSize={fontSize}
         onFontSizeChange={handleFontSizeChange}
+        mediaCacheUsage={mediaCacheUsage}
+        mediaCacheReadFailed={mediaCacheReadFailed}
+        onClearMediaCache={handleClearMediaCache}
       /> : null}
 
       {syncModalOpen ? <SyncModal
