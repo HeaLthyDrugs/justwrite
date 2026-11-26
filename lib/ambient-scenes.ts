@@ -16,7 +16,7 @@ export type AmbientBackgroundId =
 export interface AmbientAudioConfig {
   id: AmbientAudioId;
   label: string;
-  iconPath: string;
+  imagePath: string;
   assetPath: string;
 }
 
@@ -43,37 +43,37 @@ export const AMBIENT_AUDIOS: Record<AmbientAudioId, AmbientAudioConfig> = {
   rain: {
     id: "rain",
     label: "Rain",
-    iconPath: "/icons/ambient/rain.svg",
+    imagePath: "/images/ambient-audio/rain.webp",
     assetPath: "/sounds/ambient/rain.mp3",
   },
   cafe: {
     id: "cafe",
     label: "Coffee / Cafe",
-    iconPath: "/icons/ambient/cafe.svg",
+    imagePath: "/images/ambient-audio/cafe.webp",
     assetPath: "/sounds/ambient/cafe.mp3",
   },
   library: {
     id: "library",
     label: "Library",
-    iconPath: "/icons/ambient/library.svg",
+    imagePath: "/images/ambient-audio/library.webp",
     assetPath: "/sounds/ambient/library.mp3",
   },
   night: {
     id: "night",
     label: "Night",
-    iconPath: "/icons/ambient/night.svg",
+    imagePath: "/images/ambient-audio/night.webp",
     assetPath: "/sounds/ambient/night.mp3",
   },
   forest: {
     id: "forest",
     label: "Forest",
-    iconPath: "/icons/ambient/forest.svg",
+    imagePath: "/images/ambient-audio/forest.webp",
     assetPath: "/sounds/ambient/forest.mp3",
   },
   "lofi-room": {
     id: "lofi-room",
     label: "Lo-fi Room",
-    iconPath: "/icons/ambient/lofi-room.svg",
+    imagePath: "/images/ambient-audio/lofi-room.webp",
     assetPath: "/sounds/ambient/lofi-room.mp3",
   },
 };

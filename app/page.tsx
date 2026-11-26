@@ -736,7 +736,7 @@ export default function Home() {
       AMBIENT_AUDIO_ORDER.map((audioId) => ({
         id: audioId,
         label: AMBIENT_AUDIOS[audioId].label,
-        iconPath: AMBIENT_AUDIOS[audioId].iconPath,
+        imagePath: AMBIENT_AUDIOS[audioId].imagePath,
       })),
     []
   );

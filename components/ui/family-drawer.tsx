@@ -3,22 +3,16 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown01Icon,
-  BookOpen02Icon,
   BookOpenTextIcon,
   Cancel01Icon,
-  CloudLittleRainIcon,
   Clock01Icon,
-  Coffee02Icon,
-  HeadphonesIcon,
-  Moon02Icon,
   NoteAddIcon,
   SiriIcon,
   SpeakerIcon,
   Tick02Icon,
-  Tree01Icon,
   TextFontIcon,
   TextCheckIcon,
   TextNumberSignIcon,
@@ -36,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type {
   AmbientAudioId,
+  AmbientAudioConfig,
   AmbientBackgroundId,
   AmbientBackgroundConfig,
 } from "@/lib/ambient-scenes";
@@ -59,7 +54,7 @@ interface FamilyDrawerProps {
   ambientEnabled: boolean;
   onAmbientEnabledChange: (enabled: boolean) => void;
   ambientAudioId: AmbientAudioId;
-  ambientAudioOptions: Array<{ id: AmbientAudioId; label: string; iconPath: string }>;
+  ambientAudioOptions: Array<Pick<AmbientAudioConfig, "id" | "label" | "imagePath">>;
   onAmbientAudioChange: (audioId: AmbientAudioId) => void;
   ambientBackgroundId: AmbientBackgroundId;
   ambientBackgroundOptions: AmbientBackgroundConfig[];
@@ -91,52 +86,6 @@ function formatMediaCacheSize(bytes: number) {
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
-
-const AMBIENT_AUDIO_VISUALS: Record<
-  AmbientAudioId,
-  {
-    icon: IconSvgElement;
-    cardGradient: string;
-    iconAccent: string;
-  }
-> = {
-  rain: {
-    icon: CloudLittleRainIcon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(237,246,255,0.98),rgba(221,235,255,0.94)_56%,rgba(209,225,248,0.9))]",
-    iconAccent: "text-sky-400/85 dark:text-sky-300",
-  },
-  cafe: {
-    icon: Coffee02Icon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(255,245,233,0.98),rgba(255,233,209,0.94)_56%,rgba(249,221,190,0.9))]",
-    iconAccent: "text-orange-400/85 dark:text-orange-300",
-  },
-  library: {
-    icon: BookOpen02Icon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(238,252,244,0.98),rgba(221,246,234,0.94)_56%,rgba(204,236,221,0.9))]",
-    iconAccent: "text-emerald-400/85 dark:text-emerald-300",
-  },
-  night: {
-    icon: Moon02Icon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(244,241,255,0.98),rgba(233,228,252,0.94)_56%,rgba(219,212,241,0.9))]",
-    iconAccent: "text-violet-400/85 dark:text-violet-300",
-  },
-  forest: {
-    icon: Tree01Icon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(237,251,247,0.98),rgba(222,245,236,0.94)_56%,rgba(203,233,223,0.9))]",
-    iconAccent: "text-green-400/85 dark:text-green-300",
-  },
-  "lofi-room": {
-    icon: HeadphonesIcon,
-    cardGradient:
-      "bg-[radial-gradient(circle_at_16%_14%,rgba(255,255,255,0.92),transparent_40%),linear-gradient(145deg,rgba(248,240,255,0.98),rgba(239,228,252,0.94)_56%,rgba(226,214,241,0.9))]",
-    iconAccent: "text-fuchsia-400/85 dark:text-fuchsia-300",
-  },
-};
 
 export function FamilyDrawer({
   isOpen,
@@ -193,8 +142,6 @@ export function FamilyDrawer({
   const selectedAmbientAudio =
     ambientAudioOptions.find((audio) => audio.id === ambientAudioId) ??
     ambientAudioOptions[0];
-  const selectedAmbientAudioVisual =
-    AMBIENT_AUDIO_VISUALS[selectedAmbientAudio.id] ?? AMBIENT_AUDIO_VISUALS.rain;
   const selectedAmbientBackground =
     ambientBackgroundOptions.find(
       (background) => background.id === ambientBackgroundId
@@ -262,6 +209,20 @@ export function FamilyDrawer({
       document.removeEventListener("keydown", handleEscape);
     };
   }, []);
+
+  const renderAmbientAudioPreview = (
+    audioConfig: Pick<AmbientAudioConfig, "imagePath">
+  ) => (
+    <Image
+      src={audioConfig.imagePath}
+      alt=""
+      fill
+      sizes="160px"
+      className="rounded-[inherit] object-cover object-center"
+      loading="lazy"
+      draggable={false}
+    />
+  );
 
   const renderAmbientBackgroundPreview = (
     backgroundConfig: AmbientBackgroundConfig,
@@ -734,23 +695,15 @@ export function FamilyDrawer({
                     : "hover:border-white/80 dark:hover:border-white/35"
                     }`}
                 >
-                  <span
-                    className={`absolute inset-0 ${selectedAmbientAudioVisual.cardGradient}`}
-                  />
-                  <span className="absolute right-3 top-3 z-[2]">
-                    <HugeiconsIcon
-                      icon={selectedAmbientAudioVisual.icon}
-                      size={34}
-                      strokeWidth={1.9}
-                      className={`${selectedAmbientAudioVisual.iconAccent} drop-shadow-[0_2px_3px_rgba(255,255,255,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.42)]`}
-                    />
+                  <span className="absolute inset-0 overflow-hidden rounded-[inherit] bg-[#e8e4dc] transition-transform duration-300 motion-safe:group-hover:scale-[1.03]">
+                    {renderAmbientAudioPreview(selectedAmbientAudio)}
                   </span>
-                  <span className="absolute inset-0 bg-gradient-to-t from-white/22 via-transparent to-transparent dark:from-black/12" />
+                  <span className="absolute inset-0 bg-gradient-to-t from-[#f5f1e9]/95 via-[#f5f1e9]/10 to-transparent" />
                   <span className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/50" />
-                  <span className="absolute left-2 top-2 z-[2] rounded-full bg-white/42 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-600/90 backdrop-blur-sm dark:bg-white/28 dark:text-zinc-700/95">
+                  <span className="absolute left-2 top-2 z-[2] rounded-full bg-[#f5f1e9]/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-zinc-700 backdrop-blur-sm">
                     Audio
                   </span>
-                  <span className="absolute inset-x-2 bottom-2 z-[2] truncate text-xs font-semibold text-zinc-800/95 dark:text-zinc-700/95">
+                  <span className="absolute inset-x-2 bottom-2 z-[2] truncate text-xs font-semibold text-zinc-800">
                     {selectedAmbientAudio.label}
                   </span>
                 </button>
@@ -920,14 +873,11 @@ export function FamilyDrawer({
         </div>
         <div className="isolate grid grid-cols-2 overflow-hidden rounded-[26px]">
           {ambientPickerOptions.map((option, index) => {
-            const audioVisual = isAudioPicker
-              ? AMBIENT_AUDIO_VISUALS[option.id as AmbientAudioId]
-              : null;
-
             return (
               <button
                 key={option.id}
                 type="button"
+                aria-pressed={option.id === activeAmbientValue}
                 onClick={() => {
                   if (isAudioPicker) {
                     onAmbientAudioChange(option.id as AmbientAudioId);
@@ -936,7 +886,7 @@ export function FamilyDrawer({
                   }
                   setActiveAmbientPicker(null);
                 }}
-                className={`group relative isolate aspect-[1.22] overflow-hidden rounded-none text-left transition-[filter] ${
+                className={`group relative isolate aspect-[1.22] overflow-hidden rounded-none text-left outline-none transition-[filter] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-700 ${
                   isAudioPicker
                     ? "bg-white/52 hover:brightness-[1.03] dark:bg-white/14"
                     : "bg-white/45 hover:brightness-[1.03] dark:bg-white/10"
@@ -951,20 +901,8 @@ export function FamilyDrawer({
                 }`}
               >
                 <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
-                  {isAudioPicker ? (
-                    <>
-                      <span
-                        className={`absolute inset-0 ${audioVisual?.cardGradient ?? ""}`}
-                      />
-                      <span className="absolute right-3 top-11 z-[2]">
-                        <HugeiconsIcon
-                          icon={audioVisual?.icon ?? SpeakerIcon}
-                          size={38}
-                          strokeWidth={1.95}
-                          className={`${audioVisual?.iconAccent ?? "text-zinc-500 dark:text-zinc-200"} drop-shadow-[0_2px_3px_rgba(255,255,255,0.4)] dark:drop-shadow-[0_2px_3px_rgba(0,0,0,0.42)]`}
-                        />
-                      </span>
-                    </>
+                  {"imagePath" in option ? (
+                    renderAmbientAudioPreview(option)
                   ) : (
                     renderAmbientBackgroundPreview(
                       option as AmbientBackgroundConfig,
@@ -975,14 +913,14 @@ export function FamilyDrawer({
                 <div
                   className={`absolute inset-0 ${
                     isAudioPicker
-                      ? "bg-gradient-to-t from-white/28 via-transparent to-transparent dark:from-black/12"
+                      ? "bg-gradient-to-t from-[#f5f1e9]/95 via-[#f5f1e9]/10 to-transparent"
                       : "bg-gradient-to-t from-black/42 via-black/8 to-transparent dark:from-black/52"
                   }`}
                 />
                 <p
                   className={`absolute inset-x-2 bottom-2 truncate text-center text-xs font-semibold ${
                     isAudioPicker
-                      ? "text-zinc-800/95 dark:text-zinc-700/95"
+                      ? "text-zinc-800"
                       : "text-white/95"
                   }`}
                 >
