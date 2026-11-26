@@ -17,6 +17,7 @@ import {
   NoteAddIcon,
   SiriIcon,
   SpeakerIcon,
+  Tick02Icon,
   Tree01Icon,
   TextFontIcon,
   TextCheckIcon,
@@ -187,6 +188,10 @@ export function FamilyDrawer({
   const [activeAmbientPicker, setActiveAmbientPicker] = useState<
     "background" | "audio" | null
   >(null);
+  const [ambientPickerPosition, setAmbientPickerPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
   const ambientPickerRef = useRef<HTMLDivElement | null>(null);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
@@ -242,7 +247,7 @@ export function FamilyDrawer({
         alt={label}
         fill
         sizes="160px"
-        className="object-cover object-center"
+        className="rounded-[inherit] object-cover object-center"
         loading="lazy"
       />
     );
@@ -254,6 +259,55 @@ export function FamilyDrawer({
     resolvedActiveAmbientPicker === "audio" ? ambientAudioOptions : ambientBackgroundOptions;
   const isAudioPicker = resolvedActiveAmbientPicker === "audio";
   const activeAmbientValue = isAudioPicker ? ambientAudioId : ambientBackgroundId;
+  useEffect(() => {
+    if (!resolvedActiveAmbientPicker) return;
+
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (
+        ambientPickerRef.current?.contains(target) ||
+        document.getElementById("ambient-background-trigger")?.contains(target) ||
+        document.getElementById("ambient-audio-trigger")?.contains(target)
+      ) {
+        return;
+      }
+      setActiveAmbientPicker(null);
+    };
+
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer);
+  }, [resolvedActiveAmbientPicker]);
+
+  const toggleAmbientPicker = (picker: "background" | "audio") => {
+    if (activeAmbientPicker === picker) {
+      setActiveAmbientPicker(null);
+      return;
+    }
+
+    const trigger = document.getElementById(
+      picker === "audio" ? "ambient-audio-trigger" : "ambient-background-trigger"
+    );
+    const drawer = document.querySelector<HTMLElement>(
+      '[data-drawer-root="settings"]'
+    );
+    if (trigger && drawer) {
+      const triggerBounds = trigger.getBoundingClientRect();
+      const drawerBounds = drawer.getBoundingClientRect();
+      const pickerWidth = Math.min(310, window.innerWidth - 24);
+      const left = Math.min(
+        drawerBounds.right + 12,
+        window.innerWidth - pickerWidth - 12
+      );
+      const maxPickerHeight = Math.min(window.innerHeight * 0.62, 520);
+      const top = Math.max(
+        12,
+        Math.min(triggerBounds.top, window.innerHeight - maxPickerHeight - 12)
+      );
+      setAmbientPickerPosition({ top, left });
+    }
+    setActiveAmbientPicker(picker);
+  };
   useEffect(() => {
     if (!resolvedActiveAmbientPicker) {
       return;
@@ -585,17 +639,13 @@ export function FamilyDrawer({
                   id="ambient-background-trigger"
                   type="button"
                   disabled={!ambientEnabled}
-                  onClick={() =>
-                    setActiveAmbientPicker((current) =>
-                      current === "background" ? null : "background"
-                    )
-                  }
-                  className={`group relative aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "background"
-                    ? "ring-1 ring-zinc-900/55 dark:ring-zinc-100/60"
+                  onClick={() => toggleAmbientPicker("background")}
+                  className={`group relative isolate aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "background"
+                    ? "border-zinc-900/55 ring-1 ring-inset ring-zinc-900/55 dark:border-zinc-100/60 dark:ring-zinc-100/60"
                     : "hover:border-black/20 dark:hover:border-white/20"
                     }`}
                 >
-                  <span className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.04]">
+                  <span className="absolute inset-0 overflow-hidden rounded-[inherit] transition-transform duration-300 group-hover:scale-[1.04]">
                     {renderAmbientBackgroundPreview(selectedAmbientBackground, "")}
                   </span>
                   <span className="absolute inset-0 bg-gradient-to-t from-black/82 via-black/16 to-black/12" />
@@ -611,13 +661,9 @@ export function FamilyDrawer({
                   id="ambient-audio-trigger"
                   type="button"
                   disabled={!ambientEnabled}
-                  onClick={() =>
-                    setActiveAmbientPicker((current) =>
-                      current === "audio" ? null : "audio"
-                    )
-                  }
-                  className={`group relative aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "audio"
-                    ? "border-white/80 ring-1 ring-white/65 dark:border-white/45 dark:ring-white/45"
+                  onClick={() => toggleAmbientPicker("audio")}
+                  className={`group relative isolate aspect-[1.45] min-h-[86px] overflow-hidden rounded-[18px] border border-white/45 text-left outline-none transition-all focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-300 dark:border-white/12 dark:focus-visible:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-70 ${activeAmbientPicker === "audio"
+                    ? "border-white/80 ring-1 ring-inset ring-white/65 dark:border-white/45 dark:ring-white/45"
                     : "hover:border-white/80 dark:hover:border-white/35"
                     }`}
                 >
@@ -741,39 +787,26 @@ export function FamilyDrawer({
       </div>
       </div>
     </aside>
-    <button
-      type="button"
-      aria-hidden={!resolvedActiveAmbientPicker}
-      aria-label="Close ambient picker"
-      tabIndex={resolvedActiveAmbientPicker ? 0 : -1}
-      onClick={() => setActiveAmbientPicker(null)}
-      className={`fixed inset-0 z-[29] cursor-default bg-transparent transition-opacity ${resolvedActiveAmbientPicker
-        ? "pointer-events-auto opacity-100"
-        : "pointer-events-none opacity-0"
-        }`}
-    />
     <div
       ref={ambientPickerRef}
       aria-hidden={!resolvedActiveAmbientPicker}
       aria-label={isAudioPicker ? "Choose ambient audio" : "Choose ambient scene"}
       data-ambient-dropdown-content
-      data-drawer-root="settings"
       role="dialog"
-      className={`fixed inset-x-3 bottom-20 z-40 transition-all duration-300 sm:inset-x-6 sm:bottom-24 md:inset-x-auto md:bottom-auto md:left-[calc(320px+24px)] md:top-1/2 md:w-[310px] md:-translate-y-1/2 ${resolvedActiveAmbientPicker
-        ? "pointer-events-auto opacity-100 translate-y-0 md:translate-x-0"
-        : "pointer-events-none opacity-0 translate-y-2 md:-translate-x-3"
+      style={ambientPickerPosition ?? { top: 12, left: 12 }}
+      className={`fixed z-40 w-[310px] max-w-[calc(100vw-24px)] transition-[opacity,translate] duration-300 ease-out ${resolvedActiveAmbientPicker
+        ? "pointer-events-auto opacity-100 translate-x-0 translate-y-0"
+        : "pointer-events-none opacity-0 -translate-x-3 translate-y-0"
         }`}
     >
       <div
-        className={`max-h-[48vh] overflow-y-auto overflow-x-hidden rounded-[30px] squircle-outer border border-black/10 dark:border-white/15 bg-white/80 dark:bg-zinc-950/80 p-2 shadow-[0_24px_50px_rgba(0,0,0,0.22)] backdrop-blur-3xl md:max-h-[62vh]`}
+        className={`relative max-h-[48vh] overflow-y-auto overflow-x-hidden rounded-[30px] squircle-outer border border-black/10 dark:border-white/14 p-2.5 shadow-[0_24px_50px_rgba(0,0,0,0.22)] backdrop-blur-3xl md:max-h-[62vh] ${
+          isAudioPicker
+            ? "bg-[linear-gradient(145deg,rgba(239,246,247,0.88),rgba(248,249,252,0.84)_55%,rgba(239,241,249,0.88))] dark:bg-[linear-gradient(145deg,rgba(39,48,56,0.94),rgba(24,24,27,0.96)_55%,rgba(35,38,51,0.94))]"
+            : "bg-[linear-gradient(145deg,rgba(245,247,249,0.9),rgba(250,250,250,0.86)_55%,rgba(241,244,246,0.9))] dark:bg-[linear-gradient(145deg,rgba(38,43,49,0.94),rgba(24,24,27,0.96)_55%,rgba(36,39,45,0.94))]"
+        }`}
       >
-        <div
-          className={`overflow-hidden rounded-[22px] squircle-inner border p-2 backdrop-blur-2xl ${
-            isAudioPicker
-              ? "border-white/80 bg-[linear-gradient(165deg,rgba(240,251,247,0.86),rgba(230,238,255,0.8)_50%,rgba(246,236,255,0.82))] shadow-[0_16px_32px_rgba(151,177,196,0.22),inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/36 dark:bg-[linear-gradient(165deg,rgba(50,58,70,0.68),rgba(66,64,88,0.62)_52%,rgba(58,74,70,0.64))]"
-              : "border-white/80 bg-[linear-gradient(165deg,rgba(236,245,255,0.84),rgba(230,247,242,0.8)_50%,rgba(242,238,255,0.8))] shadow-[0_16px_32px_rgba(151,177,196,0.2),inset_0_1px_0_rgba(255,255,255,0.66)] dark:border-white/34 dark:bg-[linear-gradient(165deg,rgba(45,56,68,0.7),rgba(52,70,66,0.62)_52%,rgba(60,64,84,0.64))]"
-          }`}
-        >
+        <div className="relative z-[1]">
         <div className="sticky top-0 z-10 -mx-1 mb-1 flex items-center justify-between rounded-[18px] px-2 py-1">
           <button
             type="button"
@@ -784,8 +817,8 @@ export function FamilyDrawer({
             <HugeiconsIcon icon={Cancel01Icon} size={15} strokeWidth={1.7} />
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {ambientPickerOptions.map((option) => {
+        <div className="isolate grid grid-cols-2 overflow-hidden rounded-[26px]">
+          {ambientPickerOptions.map((option, index) => {
             const audioVisual = isAudioPicker
               ? AMBIENT_AUDIO_VISUALS[option.id as AmbientAudioId]
               : null;
@@ -802,23 +835,27 @@ export function FamilyDrawer({
                   }
                   setActiveAmbientPicker(null);
                 }}
-                className={`group relative aspect-[1.22] overflow-hidden rounded-[18px] text-left transition-all ${
+                className={`group relative isolate aspect-[1.22] overflow-hidden rounded-none text-left transition-[filter] ${
                   isAudioPicker
-                    ? "border border-white/70 bg-white/52 shadow-[inset_1px_1px_0_rgba(255,255,255,0.58),inset_-1px_-1px_0_rgba(207,219,235,0.25),0_10px_18px_rgba(145,164,183,0.18)] dark:border-white/35 dark:bg-white/14"
-                    : "border border-white/66 bg-white/45 shadow-[inset_1px_1px_0_rgba(255,255,255,0.56),inset_-1px_-1px_0_rgba(207,219,235,0.2),0_10px_18px_rgba(145,164,183,0.14)] dark:border-white/30 dark:bg-white/10"
+                    ? "bg-white/52 hover:brightness-[1.03] dark:bg-white/14"
+                    : "bg-white/45 hover:brightness-[1.03] dark:bg-white/10"
                 } ${
-                  option.id === activeAmbientValue
-                    ? "border-white/85 ring-1 ring-white/70 dark:border-white/50 dark:ring-white/45"
-                    : "hover:border-white/85 dark:hover:border-white/45"
+                  index % 2 === 0 && index < ambientPickerOptions.length - 1
+                    ? "border-r border-white/30 dark:border-white/12"
+                    : ""
+                } ${
+                  index < ambientPickerOptions.length - 2
+                    ? "border-b border-white/30 dark:border-white/12"
+                    : ""
                 }`}
               >
-                <div className="absolute inset-0 transition-transform duration-300 group-hover:scale-[1.03]">
+                <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
                   {isAudioPicker ? (
                     <>
                       <span
                         className={`absolute inset-0 ${audioVisual?.cardGradient ?? ""}`}
                       />
-                      <span className="absolute right-3 top-3 z-[2]">
+                      <span className="absolute right-3 top-11 z-[2]">
                         <HugeiconsIcon
                           icon={audioVisual?.icon ?? SpeakerIcon}
                           size={38}
@@ -841,9 +878,8 @@ export function FamilyDrawer({
                       : "bg-gradient-to-t from-black/42 via-black/8 to-transparent dark:from-black/52"
                   }`}
                 />
-                <div className="absolute inset-0 rounded-[18px] ring-1 ring-inset ring-white/18" />
                 <p
-                  className={`absolute inset-x-2 bottom-2 truncate text-xs font-semibold ${
+                  className={`absolute inset-x-2 bottom-2 truncate text-center text-xs font-semibold ${
                     isAudioPicker
                       ? "text-zinc-800/95 dark:text-zinc-700/95"
                       : "text-white/95"
@@ -851,12 +887,17 @@ export function FamilyDrawer({
                 >
                   {option.label}
                 </p>
+                {option.id === activeAmbientValue ? (
+                  <span className="absolute right-2 top-2 z-[3] flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-zinc-800 shadow-md ring-1 ring-black/10 dark:bg-zinc-900/85 dark:text-white dark:ring-white/15">
+                    <HugeiconsIcon icon={Tick02Icon} size={16} strokeWidth={2.2} />
+                  </span>
+                ) : null}
               </button>
             );
           })}
         </div>
-        </div>
       </div>
+    </div>
     </div>
     </>
   );
