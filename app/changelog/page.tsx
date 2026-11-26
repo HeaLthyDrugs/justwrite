@@ -18,6 +18,26 @@ export const metadata = createPageMetadata({
 
 const changelogEntries = [
   {
+    date: "November 26, 2026",
+    title: "Painted Audio Scenes & Reliable Image Storage",
+    items: [
+      "Replaced all six ambient audio icons with soft, hand-painted-style scenes in the picker and selected-audio card.",
+      "Saved pasted images on this device so they remain available after reloading notes.",
+      "Added Media Cache settings to show image count and storage use, with confirmation before clearing saved images.",
+      "Added clearer messages for missing images and unreadable image storage, with a shortcut to Media Cache settings.",
+      "Fixed duplicate images when the clipboard supplies the same image more than once.",
+      "Polished ambient pickers for light and dark themes, with accessible selection states and keyboard focus.",
+    ],
+  },
+  {
+    date: "November 21, 2026",
+    title: "Markdown Preview & Image Paste Fixes",
+    items: [
+      "Improved clipboard support for copied image files and embedded images.",
+      "Added a recovery message when a Markdown preview cannot render, so you can continue in Edit mode.",
+    ],
+  },
+  {
     date: "November 20, 2026",
     title: "Pasted Images & Full-Screen Image Preview",
     items: [
